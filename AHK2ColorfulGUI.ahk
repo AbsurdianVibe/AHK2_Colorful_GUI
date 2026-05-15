@@ -155,14 +155,14 @@ class Data extends ConfigGUI{
     }
 
         static Motyw := {
-        Tlo:              "363533",
-        Tekst:            "E0E0E0",
-        Ramka:            "484745",
-        Przycisk:         "403F3D",
-        Focus:            "504F4D",
-        Nieaktywny:       "808080",
-        Ostrzezenie:      "bd4646",
-        Wklesly:          "302F2D",
+        Tlo:              "c363533",
+        Tekst:            "cE0E0E0",
+        Ramka:            "c484745",
+        Przycisk:         "c403F3D",
+        Focus:            "c504F4D",
+        Nieaktywny:       "c808080",
+        Ostrzezenie:      "cbd4646",
+        Wklesly:          "c302F2D",
         ParamFocus:       0.1,
         ParamHover:       0.05,
         FactorNieaktywny: 0.4,
@@ -251,7 +251,7 @@ Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "
             else if (Type(v) == "Object" && Type(provided.%k%) == "Object")
                 provided.%k% := Utils.MergeOptions(provided.%k%, v)
             else if ((Type(v) == "Integer" || Type(v) == "Float") && IsNumber(provided.%k%))
-                provided.%k% := (Type(v) == "Integer") ? Integer(provided.%k%) : Float(provided.%k%)
+                provided.%k% := Number(provided.%k%)
         }
         return provided
     }
@@ -1615,7 +1615,7 @@ Class ExWinAndPopups extends Logika {
     /**
      * Uniwersalna funkcja wyświetlająca dymek (Tooltip), zintegrowana z motywem SilnikGUI.
      * Łączy funkcjonalność statycznego wyświetlania, śledzenia myszy oraz "strażnika" nad kontrolką.
-     * @param {String} [tresc=""] - Tekst do wyświetlenia. Pusty ciąg usuwa dymek.
+     * @param {String} [tresc=""] - Tekst do wyświetlenia. Pusty ciąg usuwa dymek. `n`n=pusta linia, `n..`n=1px, `n.[X].`n=X pikseli odstępu.
      * @param {Object} [opcje] - Opcjonalny obiekt konfiguracyjny z parametrami:
      * - [ON: 1] {Integer} - Zezwala na wyświetlanie (0 wyłącza, domyślnie 1). Pusty ciąg znaków (usuwanie dymka) działa zawsze.
      * - [czas: 0] {Number} - Czas wyświetlania w sekundach (domyślnie 0 = bez limitu).
@@ -2169,10 +2169,10 @@ class CtlFactory extends ExWinAndPopups {
             ramkaObj := this.Ramka(poleEdit, 0, 0, "", Grubosc)
         ; [FIX] Inteligentna karetka: Pamięć pozycji, brak to wieloliniowe do początku (0), jednoliniowe do końca
         poleEdit.OnEvent("LoseFocus", (ctrl, *) => (SendMessage(0x00B0, wp:=Buffer(4), 0, ctrl), ctrl.LastCaretPos := NumGet(wp, "UInt")))
-        poleEdit.OnEvent("Focus", (ctrl, *) => GetKeyState("LButton", "P") ? "" : (pos := HasProp(ctrl, "LastCaretPos") ? ctrl.LastCaretPos : ((trybWalidacji == 3) ? 0 : StrLen(ctrl.Value)), PostMessage(0xB1, pos, pos, ctrl)))
+        poleEdit.OnEvent("Focus", (ctrl, *) => SetTimer(() => (HasProp(ctrl, "LBtnDownTick") && A_TickCount - ctrl.LBtnDownTick < 50) ? "" : (pos := HasProp(ctrl, "LastCaretPos") ? ctrl.LastCaretPos : ((trybWalidacji == 3) ? 0 : StrLen(ctrl.Value)), PostMessage(0xB1, pos, pos, ctrl)), -10))
         
         ; Znacznik interakcji dla centralnego routera fokusu
-        poleEdit.MouseDownAction := (ctrl, *) => ""
+        poleEdit.MouseDownAction := (ctrl, *) => ctrl.LBtnDownTick := A_TickCount
         
         ; Powiązanie kontrolek-dzieci z rodzicem (dla Hover/Focus)
         if (etykieta != "") {
@@ -2432,7 +2432,7 @@ class CtlFactory extends ExWinAndPopups {
                  ctrl.SelectedIndex := res.V
                  ctrl.Value := Prefix . ctrl.Opcje[ctrl.SelectedIndex]
                  if (ctrl.Callback)
-                     ctrl.Callback(ctrl, ctrl.SelectedIndex)
+                     ctrl.Callback.Call(ctrl, ctrl.SelectedIndex)
              }
         }
         ValueCtrl.DefineProp("VScrollAction", {Call: _ScrollAction})
@@ -2447,7 +2447,7 @@ class CtlFactory extends ExWinAndPopups {
             if (ValueCtrl.PopupGui) {
                 ValueCtrl.Value := Prefix . ValueCtrl.Opcje[ValueCtrl.SelectedIndex]
                 if (ValueCtrl.Callback)
-                    ValueCtrl.Callback(ValueCtrl, ValueCtrl.SelectedIndex)
+                    ValueCtrl.Callback.Call(ValueCtrl, ValueCtrl.SelectedIndex)
                 Zamknij()
             } else {
                 Otworz()
@@ -2528,7 +2528,7 @@ class CtlFactory extends ExWinAndPopups {
                     itemObj := {Main: t, Left: l, Right1: r1, Right2: r2}
                     pGui.ListCtrls.Push(itemObj)
                     
-                    bindClick := ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback(ValueCtrl, idx), Zamknij())).Bind(i, opcja)
+                    bindClick := ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback.Call(ValueCtrl, idx), Zamknij())).Bind(i, opcja)
                     bindHover := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
                     
                     t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r1.OnEvent("Click", bindClick)
@@ -2538,7 +2538,7 @@ class CtlFactory extends ExWinAndPopups {
                 } else {
                     t := pGui.Add("Text", "x" . Ramkapopupu . " " . yPos . " w" . (szerokosc - (2 * Ramkapopupu)) . " h" . WysWiersza . " +0x200 Background" . bg, Prefix . opcja)
                     pGui.ListCtrls.Push(t)
-                    t.OnEvent("Click", ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback(ValueCtrl, idx), Zamknij())).Bind(i, opcja))
+                    t.OnEvent("Click", ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback.Call(ValueCtrl, idx), Zamknij())).Bind(i, opcja))
                     t.HoverAction := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
                 }
             }
@@ -2676,12 +2676,19 @@ class CtlFactory extends ExWinAndPopups {
         ; Min zawartość (Marginesy+Kontrolka+Ramki)
         NowaSzer := MargL + SzerKontr + MargP + (2 * RamkaOkna)
 
-        ; 4. Resize okna/kontrolki
-        this.GuiObj.GetPos(&x, &y, &w, &h)
+                ; 4. Resize okna/kontrolki
+        this.GuiObj.GetPos(&x, &y, &w, &h) 
         
+        if (HasProp(this.Stan, "MinW") && this.Stan.MinW > NowaSzer)
+            NowaSzer := this.Stan.MinW
+        
+        if (this.CallbackLayout)
+            this.CallbackLayout.Call(NowaSzer - (2 * RamkaOkna), (this.Stan.CzyPokazano && !this.Stan.UseChild) ? RamkaOkna : 0, WysokoscLayout, hWiersza)
+
         ; [FIX] Dynamiczne obliczanie bezpiecznej szerokości na podstawie INNYCH kontrolek
         ; Zapobiega ucinaniu statycznej treści przy zwężaniu, ale pozwala na shrink (kurczenie).
         SafeContent := this.ObliczObszarRoboczy(ctrl)
+
         extraFrame := (this.Stan.UseChild && RamkaOkna > 0) ? (2 * RamkaOkna) : 0
         NowaSzer := Max(NowaSzer, MinW, SafeContent.W + extraFrame)
         NowaSzer := Min(NowaSzer, LimitOkna) ; Kaganiec na całe okno
@@ -3268,6 +3275,8 @@ class SilnikGUI extends SubWindows {
         this.Stan.PadD := PadD
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
+        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Integer(m[1]) : 0
+
 
         this.GuiObj := Gui(opcje, tytul)
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji

@@ -29,22 +29,4 @@ A complete manual with all technical details and instructions will be added here
 
 Include the file in your AHK v2 script. Use the `SilnikGUI` class to create a new window.
 
-```ahk
-#Requires AutoHotkey v2.0
-#Include AHK2ColorfulGUI.ahk
-
-; Create a new window
-App := SilnikGUI("My App Title")
-
-; Add a config row (Label + Input field)
-App.DodajWierszKonfiguracji("Username:", "DefaultName")
-
-; Add a custom button
-App.DodajPrzycisk("Click Me", MyFunction)
-
-; Show the window
-App.Pokaz("w400 h300")
-
-MyFunction(ctrl, info) {
-    MsgBox("Button clicked!")
-}
+Or run `DEMO.ahk` first to see my GUI engine in action.
