@@ -15,8 +15,11 @@ I am moving to other programming languages. I will "freeze" (stop updating) this
 - Code cleanup (refactoring).
 - Better configuration strategy for client scripts.
 
-## 📚 Full Manual
-A complete manual with all technical details and instructions will be added here in the future.
+## 📚 Full Manual & Code Docs
+
+- **Full Manual:** A complete manual with all technical details and instructions will be added here in the future.
+- **In-Code Documentation:** Almost all important methods have full documentation inside the code. It uses the **JSDoc** format. The comments are in Polish, but you can use a translation tool (let he who has never used a "Comment Translate" extension cast the first stone! 😂).
+- **Demo Code:** The best way to learn how the engine works is to check the provided demo code. It gives you a lot of knowledge very quickly.
 
 ## Features
 
