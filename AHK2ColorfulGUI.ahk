@@ -25,6 +25,8 @@ class ConfigGUI {
     static GruboscRamki := 2
     ; [RamkaPanelu=2] - Wewnętrzny odstęp paneli. ;todo czy to powinno   
     static RamkaPanelu := 2
+    ; [PadL=0] - Margines z lewej strony, (silnik).
+    static PadL := 0
     ;[PadR=0] - Margines z prawej strony, (silnik).
     static PadR := 0
     ; [PadD=0] - Margines od dołu.(sinik)
@@ -92,6 +94,7 @@ class Data extends ConfigGUI{
         UseChild: SilnikGUI.UseChild,
         GruboscRamki: SilnikGUI.GruboscRamki,
         RamkaPanelu: SilnikGUI.RamkaPanelu,
+        PadL: SilnikGUI.PadL,
         PadR: SilnikGUI.PadR,
         PadD: SilnikGUI.PadD,
         AutoFitW: SilnikGUI.AutoFitW,
@@ -1622,8 +1625,8 @@ Class ExWinAndPopups extends Logika {
      * - [trybPozycji: "Mouse"] {Object|String} - "Mouse", "Screen", {Hwnd:id}=Kotwica, {SkipMonitor:true}=Śledzenie.
          * - [Align: "+Down"] {String} - Deklaratywny układ: "[+-m]Kierunek[Offset]". [+-]: względem okna, [m]: względem myszy. Kierunek: np. Left, CenterX.
          * - [Move: ""] {String} - Flagi ruchu: "XMTrack"/"YMTrack" (mysz), "XStop"/"YStop" (zamrożenie), "XATrack"/"YATrack" (kotwica).
-     * - [DelayON: TipDelayON: 0] {Integer} - Czas opóźnienia przed pojawieniem się dymka w ms.
-     * - [DelayOFF: TipDelayOFF: 0] {Integer} - Czas opóźnienia wygaszania dymka w ms.
+     * - [DelayON: 0] {Integer} - Czas opóźnienia przed pojawieniem się dymka w ms.
+     * - [DelayOFF: 0] {Integer} - Czas opóźnienia wygaszania dymka w ms.
      * - [kolorTla: ""] {String} - Kolor tła.
      * - [kolorRamki: ""] {String} - Kolor ramki.
      * - [kolorTekstu: ""] {String} - Kolor czcionki.
@@ -1632,10 +1635,11 @@ Class ExWinAndPopups extends Logika {
      * - [rozmiarCzcionki: 10] {Integer} - Rozmiar czcionki w pkt.
      * - [czyPogrubione: 0] {Integer} - Czy czcionka ma być pogrubiona (0/1).
      * - [Transparent: 0.0] {Float} - Przezroczystość dymka (0.0 - 1.0).
+     * - [TransClick: ""] {Boolean|String} - Przenikanie kliknięć (true/false, "" = auto wg trybu).
      */
     static CustomTooltip(tresc := "", opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {Align: "+Down", Move: "", ON: 1, czas: 0, DelayON: this.TipDelayON, DelayOFF: this.TipDelayOFF, trybPozycji: "Mouse", kolorTla: "", kolorTekstu: "", kolorRamki: "", MargPion: 4, MargPoz: 8, rozmiarCzcionki: 10, czyPogrubione: 0, Transparent: ""})
-        Align:= opcje.Align, Move:= opcje.Move, ON := opcje.ON, czas := opcje.czas, DelayON := opcje.DelayON, DelayOFF := opcje.DelayOFF, trybPozycji := opcje.trybPozycji, kolorTla := opcje.kolorTla, kolorTekstu := opcje.kolorTekstu, kolorRamki := opcje.kolorRamki, MargPion := opcje.MargPion, MargPoz := opcje.MargPoz, rozmiarCzcionki := opcje.rozmiarCzcionki, czyPogrubione := opcje.czyPogrubione, Transparent := opcje.Transparent
+        opcje := Utils.MergeOptions(opcje?, {Align: "+Down", Move: "", ON: 1, czas: 0, DelayON: this.TipDelayON, DelayOFF: this.TipDelayOFF, trybPozycji: "Mouse", kolorTla: "", kolorTekstu: "", kolorRamki: "", MargPion: 4, MargPoz: 8, rozmiarCzcionki: 10, czyPogrubione: 0, Transparent: "", TransClick: ""})
+        Align:= opcje.Align, Move:= opcje.Move, ON := opcje.ON, czas := opcje.czas, DelayON := opcje.DelayON, DelayOFF := opcje.DelayOFF, trybPozycji := opcje.trybPozycji, kolorTla := opcje.kolorTla, kolorTekstu := opcje.kolorTekstu, kolorRamki := opcje.kolorRamki, MargPion := opcje.MargPion, MargPoz := opcje.MargPoz, rozmiarCzcionki := opcje.rozmiarCzcionki, czyPogrubione := opcje.czyPogrubione, Transparent := opcje.Transparent, TransClick := opcje.TransClick
         ; [ADAPTER] Kompatybilność wsteczna + bezpieczne kierowanie typów (Mouse, Screen, Anchor)
         trybStr := (trybPozycji == 0 || trybPozycji == "0" || trybPozycji == "Mouse") ? "Mouse" : (IsObject(trybPozycji) ? "Anchor" : "Screen")
 
@@ -1658,7 +1662,7 @@ Class ExWinAndPopups extends Logika {
         static TimerSledzenia := 0
         static TimerOpoznienia := 0
         static TempMonitor := 0
-        static OstatniaTresc := "", OstatniKolorTla := "", OstatniKolorTekstu := "", OstatniKolorRamki := "", OstatniMargPion := "", OstatniMargPoz := "", OstatniRozmiar := "", OstatniePogrubienie := "", OstatniTryb := "", OstatnieIgX := 0, OstatnieIgY := 0, OstatniTransparent := 1.0
+        static OstatniaTresc := "", OstatniKolorTla := "", OstatniKolorTekstu := "", OstatniKolorRamki := "", OstatniMargPion := "", OstatniMargPoz := "", OstatniRozmiar := "", OstatniePogrubienie := "", OstatniTryb := "", OstatnieIgX := 0, OstatnieIgY := 0, OstatniTransparent := 1.0, OstatniTransClick := ""
         static OstatniSilnikTooltipa := 0
         static OstatniCel := 0
         StareGui := 0
@@ -1672,7 +1676,14 @@ Class ExWinAndPopups extends Logika {
         if (TempMonitor)
             TempMonitor(), TempMonitor := 0
 
-        hCel := (trybStr == "Anchor" && HasProp(trybPozycji, "Hwnd")) ? trybPozycji.Hwnd : 0
+        hCel := 0
+        if (trybStr == "Anchor" && HasProp(trybPozycji, "Hwnd")) {
+            try hCel := trybPozycji.Hwnd
+            catch { ; Przechwytuje błąd zniszczonej kontrolki (async delay)
+                if (tresc != "")
+                    return
+            }
+        }
         
         ; Pobierz uchwyt okna nadrzędnego (GA_ROOT = 2) dla relacji +Owner
         hOwner := hCel ? DllCall("GetAncestor", "Ptr", hCel, "UInt", 2, "Ptr") : 0
@@ -1748,7 +1759,7 @@ Class ExWinAndPopups extends Logika {
         (kolorRamki == "")  && kolorRamki := SilnikGUI.Motyw.Ramka
 
         Rysuj() {
-            CzyPrzebudowacStyl := !IsObject(GuiTip) || (trybStr != OstatniTryb) || (igX != OstatnieIgX) || (igY != OstatnieIgY) || (kolorTla != OstatniKolorTla) || (kolorTekstu != OstatniKolorTekstu) || (kolorRamki != OstatniKolorRamki) || (MargPion != OstatniMargPion) || (MargPoz != OstatniMargPoz) || (rozmiarCzcionki != OstatniRozmiar) || (czyPogrubione != OstatniePogrubienie) || (Transparent != OstatniTransparent)
+            CzyPrzebudowacStyl := !IsObject(GuiTip) || (trybStr != OstatniTryb) || (igX != OstatnieIgX) || (igY != OstatnieIgY) || (kolorTla != OstatniKolorTla) || (kolorTekstu != OstatniKolorTekstu) || (kolorRamki != OstatniKolorRamki) || (MargPion != OstatniMargPion) || (MargPoz != OstatniMargPoz) || (rozmiarCzcionki != OstatniRozmiar) || (czyPogrubione != OstatniePogrubienie) || (Transparent != OstatniTransparent) || (TransClick !== OstatniTransClick)
             
             NoweSegmenty := []
             pos := 1, dlugosc := StrLen(tresc)
@@ -1793,12 +1804,12 @@ Class ExWinAndPopups extends Logika {
                 }
                 GuiTip.Move(,, maxW + 2*gruboscRamki, aktualneY + gruboscRamki)
             } else {
-                isPhantom := (trybStr == "Mouse")
-                needsAlpha := (isPhantom || Transparent < 1.0)
-                NoweGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x08000000 " . (needsAlpha ? ((isPhantom ? "+E0x20 " : "")) : "+E0x02000000 ") . "-DPIScale" . (hOwner ? " +Owner" . hOwner : "")) 
+                czyPrzenika := (TransClick !== "") ? TransClick : (trybStr == "Mouse")
+                needsAlpha := (czyPrzenika || Transparent < 1.0)
+                NoweGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x08000000 " . (needsAlpha ? ((czyPrzenika ? "+E0x20 " : "")) : "+E0x02000000 ") . "-DPIScale" . (hOwner ? " +Owner" . hOwner : "")) 
                 if (needsAlpha) {
                     alphaVal := Round(255 * Transparent)
-                    (isPhantom && alphaVal == 255) && alphaVal := 254
+                    (czyPrzenika && alphaVal == 255) && alphaVal := 254
                     WinSetTransparent(alphaVal, NoweGui.Hwnd)
                 }
                 NoweGui.BackColor := kolorRamki
@@ -1827,7 +1838,7 @@ Class ExWinAndPopups extends Logika {
                 GuiTip := NoweGui
                 Utils.SetTag(GuiTip.Hwnd, "IsSilnikTooltip")
             }
-            OstatniaTresc := tresc, OstatniKolorTla := kolorTla, OstatniKolorTekstu := kolorTekstu, OstatniKolorRamki := kolorRamki, OstatniMargPion := MargPion, OstatniMargPoz := MargPoz, OstatniRozmiar := rozmiarCzcionki, OstatniePogrubienie := czyPogrubione, OstatniCel := hCel, OstatniTryb := trybStr, OstatnieIgX := igX, OstatnieIgY := igY, OstatniTransparent := Transparent
+        OstatniaTresc := tresc, OstatniKolorTla := kolorTla, OstatniKolorTekstu := kolorTekstu, OstatniKolorRamki := kolorRamki, OstatniMargPion := MargPion, OstatniMargPoz := MargPoz, OstatniRozmiar := rozmiarCzcionki, OstatniePogrubienie := czyPogrubione, OstatniCel := hCel, OstatniTryb := trybStr, OstatnieIgX := igX, OstatnieIgY := igY, OstatniTransparent := Transparent, OstatniTransClick := TransClick
         }    
         Rysuj()
 
@@ -2125,6 +2136,8 @@ class CtlFactory extends ExWinAndPopups {
         opcje := Utils.MergeOptions(opcje?, {trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0})
         trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, EditOpt := opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
+        SzerPola := SzerPola - (2 * SzRamki)
+        WysPola := WysPola - (2 * SzRamki)
 
         wymWiersz := SilnikGUI.ZmierzTekst("Wg", FontName, "s" . FontSize)
         hWiersza := wymWiersz.h
@@ -2254,8 +2267,12 @@ class CtlFactory extends ExWinAndPopups {
             ))
         }
             
-        ; Zapobiega nakładaniu ramek
-        this.Stan.ChildGui.Add("Text", "xp y+" . Grubosc . " w0 h0 Hidden")
+        ; Bounding Box - pozycjonowanie dla kolejnych kontrolek (xp, xm, y+)
+        SzerCalkowita := SzerFinalnaEtykiety + SzerPola + (2 * Grubosc) + ((InfoRight && SzerFinalnaEtykiety > 0) ? 10 : 0)
+        WysCalkowita := Max(WysWiersza, WysInput + (2 * Grubosc))
+        BoundingBox := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " w" . SzerCalkowita . " h" . WysCalkowita . " Hidden")
+        BoundingBox.IsDummy := true
+        poleEdit.BoundingBox := BoundingBox
 
         ; [TAGOWANIE WinAPI] Oznacz elementy wiersza dla #HotIf
         Utils.SetTag(poleEdit.Hwnd, "IsSilnikInput")
@@ -2265,7 +2282,11 @@ class CtlFactory extends ExWinAndPopups {
             for c in ramkaObj.Ctrls
                 Utils.SetTag(c.Hwnd, "IsSilnikInput")
 
-        return SilnikGUI.GrupaKontrolek([poleEdit], (etykieta != "") ? (SzRamki > 0 ? [poleEdit, ramkaObj, txtCtrl] : [poleEdit, txtCtrl]) : (SzRamki > 0 ? [poleEdit, ramkaObj] : [poleEdit]))
+        ElementyGrupy := [poleEdit, BoundingBox]
+        (etykieta != "") && ElementyGrupy.Push(txtCtrl)
+        (SzRamki > 0) && ElementyGrupy.Push(ramkaObj)
+
+        return SilnikGUI.GrupaKontrolek([poleEdit], ElementyGrupy)
     }
 
     /**
@@ -2277,7 +2298,7 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {Gui.Checkbox} - Zwraca obiekt kontrolki Checkbox z dodaną właściwością `LabelX` (współrzędna X etykiety).
      */
     DodajCheckbox(tekst, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {czyZaznaczony: false, pozycja: "xm", InfoRight: 1})
+        opcje := Utils.MergeOptions(opcje?, {czyZaznaczony: false, pozycja: "", InfoRight: 1})
         czyZaznaczony := opcje.czyZaznaczony, pozycja := opcje.pozycja, InfoRight := opcje.InfoRight
         Skala := A_ScreenDPI / 96
         WymiarBox := Round(14 * Skala)
@@ -2301,7 +2322,14 @@ class CtlFactory extends ExWinAndPopups {
             ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc)
         }
 
-        txt.GetPos(&labelX)
+        txt.GetPos(&labelX, , &tW, &tH)
+
+        ; Bounding Box - pozycjonowanie dla kolejnych kontrolek (xp, xm, y+)
+        SzerCalkowita := tW + WymiarBox + (2 * Grubosc) + 10
+        WysCalkowita := Max(tH, WymiarBox + (2 * Grubosc))
+        BoundingBox := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " w" . SzerCalkowita . " h" . WysCalkowita . " Hidden")
+        BoundingBox.IsDummy := true
+        CheckMark.BoundingBox := BoundingBox
 
         ; 4. Konfiguracja Obiektu
         CheckMark.LabelX := labelX
@@ -2367,7 +2395,7 @@ class CtlFactory extends ExWinAndPopups {
         for c in ramkaObj.Ctrls
             Utils.SetTag(c.Hwnd, "IsSilnikInput")
 
-        return SilnikGUI.GrupaKontrolek([CheckMark], [CheckMark, ramkaObj, txt])
+        return SilnikGUI.GrupaKontrolek([CheckMark], [CheckMark, ramkaObj, txt, BoundingBox])
     }
     
     /**
@@ -2874,9 +2902,14 @@ class SubWindows extends CtlFactory {
         this.GuiObj.GetClientPos(,, &wPanel, &hPanel)
         
         if !HasProp(this, "DummyCtrl") {
+            gRamki := this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki
             this.DummyCtrl := RodzicPanelu.Add("Text", pozycja . " w" . wPanel . " h" . hPanel . " BackgroundTrans")
+            this.DummyCtrl.GetPos(&cX, &cY)
+            this.DummyCtrl.Move(cX + gRamki, cY + gRamki) ; Korekta o grubość ramki
+            
             this.DummyCtrl.PanelObj := this
             this.DummyCtrl.Rola := "Panel"
+
             this.DummyCtrl.DefineProp("Move", {Call: (ctrl, p*) => (
                 ctrl.GetPos(&oldX, &oldY),
                 Gui.Control.Prototype.Move.Call(ctrl, p*),
@@ -2884,7 +2917,7 @@ class SubWindows extends CtlFactory {
                 ctrl.PanelObj.GuiObj.Move(cX, cY),
                 ctrl.PanelObj.PrzesunPopupy(cX - oldX, cY - oldY)
             )})
-            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki)
+            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki)
             this.DummyCtrl.Ramka.ParentCtrl := this.DummyCtrl
             this.DummyCtrl.MouseDownAction := (ctrl, *) => DllCall("SetFocus", "Ptr", ctrl.PanelObj.Stan.FocusSink.Hwnd)
             
@@ -2996,6 +3029,7 @@ class SilnikGUI extends SubWindows {
      * - [dragBezPaska: 1] {Integer} - Czy umożliwić przeciąganie okna bez paska (1 lub 0).
      * - [MainGUI: false] {Boolean|Function} - Zamyka wszystkie inne instancje SilnikGUI i ubija skrypt: [true] - po posprzątaniu mechanizmów SilnikGUI skrypt zostanie zakmniety prostym ExitApp, [function] - callback po zamknięciu okien -jeśli twój skrypt  ma własny  mechanimz zamykania, podaj go tu, zostanie wykonany po posprzątaniu SilnikGUI)
      * - [RamkaPanelu: 2] {Integer} - Wewnętrzny odstęp paneli.
+     * - [PadL: 0] {Integer} - Margines z lewej strony.
      * - [PadR: 0] {Integer} - Margines z prawej strony.
      * - [PadD: 0] {Integer} - Margines od dołu.
      * - [AutoFitW: 0] {Number} - Dopasowanie szerokości.
@@ -3250,8 +3284,8 @@ class SilnikGUI extends SubWindows {
 
     ; główny konstruktor, dokumentacja w static Call
     __New(tytul, opcje := "", parametry?) {
-        parametry := Utils.MergeOptions(parametry?, {pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: SilnikGUI.ResizeMarg, GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent:0.0})
-        pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent
+        parametry := Utils.MergeOptions(parametry?, {pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: SilnikGUI.ResizeMarg, GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent:0.0})
+        pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadL := parametry.PadL, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent
         
         if !InStr(opcje, "-DPIScale")
             opcje .= " -DPIScale "
@@ -3271,6 +3305,7 @@ class SilnikGUI extends SubWindows {
         this.Stan.dragBezPaska := dragBezPaska
         this.Stan.MainGUI := MainGUI
         this.Stan.RamkaPanelu := RamkaPanelu
+        this.Stan.PadL := PadL
         this.Stan.PadR := PadR
         this.Stan.PadD := PadD
         this.Stan.AutoFitW := AutoFitW
@@ -3282,7 +3317,7 @@ class SilnikGUI extends SubWindows {
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
         this.GuiObj.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
-        this.GuiObj.MarginX := 0
+        this.GuiObj.MarginX := PadL
         this.GuiObj.MarginY := 0
         
         if (Transparent != 0.0){
@@ -3305,7 +3340,7 @@ class SilnikGUI extends SubWindows {
             this.Stan.ChildGui := Gui("-Caption -Border +Parent" . this.Stan.ClipGui.Hwnd . " +E0x10000 +0x02000000")
             this.Stan.ChildGui.BackColor := SilnikGUI.Motyw.Tlo
             this.Stan.ChildGui.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
-            this.Stan.ChildGui.MarginX := 0
+            this.Stan.ChildGui.MarginX := PadL
             this.Stan.ChildGui.MarginY := 0
             this.Stan.ChildGui.Silnik := this
             

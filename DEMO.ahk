@@ -12,62 +12,74 @@ App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
     CSBarH: 1, 
     GruboscRamki: 2, 
     ResizeMarg: 8,
-    PadD: 20
+    PadD: 20,
+    PadR: 20,
+    PadL: 20
 })
-
+PadL := 20
 ; --- Header ---
-App.Add("Text", "X10 w630 h30 Center BackgroundFFFFFF", "Welcome to AHK2ColorfulGUI Demo").SetFont("s16 bold")
+App.Stan.ChildGui.SetFont("s16 bold")
+Welcome := App.Add("Text", "X"  . padL+10 . "  y20 h30", "Welcome to AHK2ColorfulGUI Demo")
 
-; --- Inputs ---
-App.Add("Text", "xm y+15 w600 cAAAAAA", "--- Input Fields ---").SetFont("s12 italic")
+App.Stan.ChildGui.SetFont("s10 norm")
+App.Stan.ChildGui.SetFont("s12 italic")
+Welcome2 := App.Add("Text", "x"  . padL +10. " y+15 cAAAAAA", "--- Input Fields ---")
 
 ; String Validation (Type 2)
-App.DodajWierszKonfiguracji("Username:", "Guest User", {
+ConfigLine1 := App.DodajWierszKonfiguracji("Username:", "Guest User", {
     trybWalidacji: 2, 
     SzerPola: 200,
-    pozycja: "xm"
+    SzerText: 90,
+    pozycja: "y+20 xp"
 })
 
 ; Integer Validation (Type 0) with limits and scroll step
-App.DodajWierszKonfiguracji("Volume (Int):", 50, {
+ConfigLine2 := App.DodajWierszKonfiguracji("Volume (Int):", 50, {
     trybWalidacji: 0, 
     minVal: 0, 
     maxVal: 100, 
     skok: 5,
-    SzerPola: 100
+    SzerText: 90,
+    SzerPola: 100,
+    pozycja: "y+10 xp"
 })
 
 ; Float Validation (Type 1) with limits
-App.DodajWierszKonfiguracji("Speed (Float):", 1.25, {
+ConfigLine3 := App.DodajWierszKonfiguracji("Speed (Float):", 1.25, {
     trybWalidacji: 1, 
     minVal: 0.1, 
     maxVal: 5.0, 
     skok: 0.1,
-    SzerPola: 100
+    SzerText: 90,
+    SzerPola: 100,
+    pozycja: "y+10 xp"
 })
 
 ; Multiline (Type 3)
-App.DodajWierszKonfiguracji("Description:", "Line 1: AHK is great!`nLine 2: ColorfulGUI is awesome!", {
+ConfigLine4 := App.DodajWierszKonfiguracji("Description:", "Line 1: AHK is great!`nLine 2: ColorfulGUI is awesome!", {
     trybWalidacji: 3, 
     WysInput: 3, 
-    SzerPola: 250
+    SzerText: 90,
+    SzerPola: 250,
+    pozycja: "y+10 xp"
 })
-
+;only visual frame around several controls (does not move them automaticly)
+App.Ramka(ConfigLine1,ConfigLine4,10)
 ; --- Toggles and Selectors ---
 App.Add("Text", "xm y+20 w600 cAAAAAA", "--- Controls ---").SetFont("s12 italic")
 
 ; Checkbox
-chk := App.DodajCheckbox("Enable Advanced Mode", {czyZaznaczony: true, InfoRight: 1})
+chk := App.DodajCheckbox("Enable Advanced Mode", {pozycja: "x60", czyZaznaczony: true, InfoRight: 0})
 chk.OnEvent("Click", (ctrl, *) => SilnikGUI.CustomTooltip(ctrl.Value ? "Enabled!" : "Disabled!", {czas: 2000, trybPozycji: "Mouse"}))
 
 ; DropDown List
 App.DodajDDList(["First Option", "Second Option", "Third Option", "Fourth Option"], 
     (ctrl, idx) => SilnikGUI.CustomTooltip("Selected: " ctrl.Opcje[idx], {czas: 2000, trybPozycji: "Mouse"}), 
-    2, 200, "xm"
+    2, 200, "xp"
 )
 
 ; --- Interactive Buttons ---
-App.Add("Text", "xm y+20 w600 cAAAAAA", "--- Dialogs & Tooltips ---").SetFont("s12 italic")
+App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---").SetFont("s12 italic")
 
 ; Custom Error Dialog
 App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (
@@ -76,7 +88,7 @@ App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (
 
 ; Custom Tooltip
 App.DodajPrzycisk("Show Tooltip", (ctrl, *) => (
-    SilnikGUI.CustomTooltip("This is a stylized tooltip!`nIt follows the mouse and supports`nmultiple lines.`n.[3].`n...And separators!", {czas: 3000, czyPogrubione: 1})
+    SilnikGUI.CustomTooltip("This is a stylized tooltip!`nIt follows the mouse and supports`nmultiple lines.`n.[3].`n...And separators!", {transparent : 0.2, czas: 3000, czyPogrubione: 1})
 ), "x+10 yp w150 h30")
 
 ; Auto-expanding dialog demo
@@ -89,14 +101,14 @@ App.DodajPrzycisk("Dynamic Window", (ctrl, *) => (
 App.DodajPrzycisk("Tab tracking demo", (ctrl, *) => ShowTabTrackingDemo(), "x+10 yp w150 h30")
 
 ; --- Panels ---
-App.Add("Text", "xm y+20 w600 cAAAAAA", "--- Panels & Scrolling ---").SetFont("s12 italic")
+App.Add("Text", "xm y+20", "--- Panels & Scrolling ---").SetFont("s12 italic")
 
 ; Nested Scrollable Sub-Panel
 SubPanel := App.DodajPanel(2, 1, 1, {PadD: 10})
 SubPanel.Add("Text", "xm", "I am a nested panel!")
 Loop 5
     SubPanel.DodajCheckbox("Sub-item " A_Index, {pozycja: "xm"})
-SubPanel.PokazPanel(App, "x10 y+10", "w250 h100")
+SubPanel.PokazPanel(App, "y+10", "w250 h100")
 
 ; Scrollable Text Panel
 LongText := "This is line 1 inside the text panel........`nThis is line 2.`nKeep scrolling down...`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nEnd of text."
@@ -153,4 +165,4 @@ ShowTabTrackingDemo() {
 }
 
 ; Render main window
-App.Pokaz("y20 w650 h700")
+App.Pokaz("y20")
