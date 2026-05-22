@@ -1,9 +1,6 @@
 # Ignoruj folder z wydaniami gotowymi do wysyłki
 dist/
 
-# Ignoruj folder z logami diagnostycznymi
-QPC_Logs/
-
 # Ignoruj wszystkie pliki exe
 *.exe
 
