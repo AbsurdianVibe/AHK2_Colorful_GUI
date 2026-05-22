@@ -20,7 +20,7 @@ PadL := 20
 ; --- Header ---
 App.Stan.ChildGui.SetFont("s16 bold")
 Welcome := App.Add("Text", "X"  . padL+10 . "  y20 h30", "Welcome to AHK2ColorfulGUI Demo")
-
+Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", {DelayON: 1000,czas: 3000, trybPozycji:Welcome}),
 App.Stan.ChildGui.SetFont("s10 norm")
 App.Stan.ChildGui.SetFont("s12 italic")
 Welcome2 := App.Add("Text", "x"  . padL +10. " y+15 cAAAAAA", "--- Input Fields ---")

@@ -1616,26 +1616,30 @@ class Logika extends Grafika {
 
 Class ExWinAndPopups extends Logika {
     /**
-     * Uniwersalna funkcja wyświetlająca dymek (Tooltip), zintegrowana z motywem SilnikGUI.
-     * Łączy funkcjonalność statycznego wyświetlania, śledzenia myszy oraz "strażnika" nad kontrolką.
-     * @param {String} [tresc=""] - Tekst do wyświetlenia. Pusty ciąg usuwa dymek. `n`n=pusta linia, `n..`n=1px, `n.[X].`n=X pikseli odstępu.
-     * @param {Object} [opcje] - Opcjonalny obiekt konfiguracyjny z parametrami:
-     * - [ON: 1] {Integer} - Zezwala na wyświetlanie (0 wyłącza, domyślnie 1). Pusty ciąg znaków (usuwanie dymka) działa zawsze.
-     * - [czas: 0] {Number} - Czas wyświetlania w sekundach (domyślnie 0 = bez limitu).
-     * - [trybPozycji: "Mouse"] {Object|String} - "Mouse", "Screen", {Hwnd:id}=Kotwica, {SkipMonitor:true}=Śledzenie.
-         * - [Align: "+Down"] {String} - Deklaratywny układ: "[+-m]Kierunek[Offset]". [+-]: względem okna, [m]: względem myszy. Kierunek: np. Left, CenterX.
-         * - [Move: ""] {String} - Flagi ruchu: "XMTrack"/"YMTrack" (mysz), "XStop"/"YStop" (zamrożenie), "XATrack"/"YATrack" (kotwica).
-     * - [DelayON: 0] {Integer} - Czas opóźnienia przed pojawieniem się dymka w ms.
-     * - [DelayOFF: 0] {Integer} - Czas opóźnienia wygaszania dymka w ms.
-     * - [kolorTla: ""] {String} - Kolor tła.
-     * - [kolorRamki: ""] {String} - Kolor ramki.
-     * - [kolorTekstu: ""] {String} - Kolor czcionki.
-     * - [MargPion: 4] {Integer} - Margines pionowy w px.
-     * - [MargPoz: 8] {Integer} - Margines poziomy w px.
-     * - [rozmiarCzcionki: 10] {Integer} - Rozmiar czcionki w pkt.
-     * - [czyPogrubione: 0] {Integer} - Czy czcionka ma być pogrubiona (0/1).
-     * - [Transparent: 0.0] {Float} - Przezroczystość dymka (0.0 - 1.0).
-     * - [TransClick: ""] {Boolean|String} - Przenikanie kliknięć (true/false, "" = auto wg trybu).
+     
+     * Universal tooltip function integrated with SilnikGUI theme.
+     * Combines static display, mouse tracking, and control watchdog.
+     * @param {String} [tresc=""] - Text to display. Empty string kills tooltip. `n`n=empty line, `n..`n=1px gap, `n.[X].`n=X px gap.
+     * @param {Object} [opcje] - Optional config object with parameters:
+     * - [ON: 1] {Integer} - Allows rendering (0 disables). Empty string (kill tooltip) always works.
+     * - [czas: 0] {Number} - Display time in ms (default 0 = no limit).
+     * - [trybPozycji: "Mouse"] {Object|String} - "Mouse", "Screen", or Object. REQUIRED for Anchor: pass the GUI control object (e.g. trybPozycji: myControl). {SkipMonitor:true} = tracking.
+     * - [Align: "+Down"] {String} - Declarative layout: "[+-m]Direction[Offset]". [+-]: window relative, [m]: mouse relative. Direction: e.g. Left, CenterX.
+     * - [Move: ""] {String} - Movement flags: "XMTrack"/"YMTrack" (mouse), "XStop"/"YStop" (freeze), "XATrack"/"YATrack" (anchor).
+     * - [DelayON: 0] {Integer} - Delay before showing tooltip (ms).
+     * - [DelayOFF: 0] {Integer} - Delay before killing tooltip (ms).
+     * - [kolorTla: ""] {String} - Background color.
+     * - [kolorRamki: ""] {String} - Border color.
+     * - [kolorTekstu: ""] {String} - Text color.
+     * - [MargPion: 4] {Integer} - Vertical margin (px).
+     * - [MargPoz: 8] {Integer} - Horizontal margin (px).
+     * - [rozmiarCzcionki: 10] {Integer} - Font size (pt).
+     * - [czyPogrubione: 0] {Integer} - Bold font (0/1).
+     * - [Transparent: 0.0] {Float} - Tooltip transparency (0.0 - 1.0).
+     * - [TransClick: ""] {Boolean|String} - Click-through mode (true/false, "" = auto by mode).
+     * 
+     * @example Bind to hover: `myControl.HoverAction := (*) => SilnikGUI.CustomTooltip("Text", {trybPozycji: myControl})`
+     * @note Lambda `(*)` is required to absorb default arguments passed by the SilnikGUI engine.
      */
     static CustomTooltip(tresc := "", opcje?) {
         opcje := Utils.MergeOptions(opcje?, {Align: "+Down", Move: "", ON: 1, czas: 0, DelayON: this.TipDelayON, DelayOFF: this.TipDelayOFF, trybPozycji: "Mouse", kolorTla: "", kolorTekstu: "", kolorRamki: "", MargPion: 4, MargPoz: 8, rozmiarCzcionki: 10, czyPogrubione: 0, Transparent: "", TransClick: ""})
@@ -1748,8 +1752,9 @@ Class ExWinAndPopups extends Logika {
             TimerOpoznienia := () => SilnikGUI.CustomTooltip(tresc, opcje)
             SetTimer(TimerOpoznienia, -DelayON)
             
-            if (trybStr == "Anchor" && !HasProp(trybPozycji, "SkipMonitor"))
-                TempMonitor := SilnikGUI.MonitorujWyjscie(() => SilnikGUI.CustomTooltip(""), [hCel], "Hover", 0, DelayOFF)
+                 if (trybStr == "Anchor" && hCel && !HasProp(trybPozycji, "SkipMonitor"))
+            TempMonitor := SilnikGUI.MonitorujWyjscie(() => SilnikGUI.CustomTooltip(""), [hCel], "Hover", 0, 0)
+
             return
         }
 
