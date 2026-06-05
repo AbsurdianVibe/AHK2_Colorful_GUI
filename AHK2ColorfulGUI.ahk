@@ -192,6 +192,34 @@ class Utils extends Data {
 Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "0"), ".")
 
     /**
+     * Scales physical dimensions (x, y, w, h) in AHK options string based on current DPI.
+     * Handles explicit values and relative modifiers (e.g., xp+10, y-20, w100).
+     * @param {String} optionsStr - AHK options string.
+     * @returns {String} Scaled options string.
+     */
+    static ScaleOptions(optionsStr) {
+        if (Type(optionsStr) !== "String")
+            return optionsStr
+            
+        myDpiScale := A_ScreenDPI / 96
+        if (myDpiScale == 1.0)
+            return optionsStr
+            
+        myPos := 1
+        myLastPos := 1
+        myNewOptions := ""
+        
+        while (myPos := RegExMatch(optionsStr, "i)(^|\s)([xywh][pms]*(?:[+-])?)(\d+)", &myMatch, myPos)) {
+            myNewOptions .= SubStr(optionsStr, myLastPos, myMatch.Pos - myLastPos)
+            myNewOptions .= myMatch[1] . myMatch[2] . Round(myMatch[3] * myDpiScale)
+            myPos := myMatch.Pos + myMatch.Len
+            myLastPos := myPos
+        }
+        
+        return myNewOptions . SubStr(optionsStr, myLastPos)
+    }
+
+    /**
      * Konwertuje współrzędne kontrolki z obszaru klienta okna na ekranowe.
      * @param {GuiCtrl|Integer} obj - Obiekt kontrolki źródłowej (lub 0 dla kursora).
      * @param {Integer} hwnd - Uchwyt okna odniesienia (Client Area).
@@ -542,8 +570,13 @@ class Grafika extends Motyw {
      * @param {String} [Kolor=""] - Kolor ramki (domyślnie z motywu).
      * @param {Integer} [Grubosc=2] - Grubość linii.
      * @param {Intiger} [Dynamic=0] - obsługa dynamicznego move
+     * @param {Boolean} [ApplyScale=true] - Czy skalować margines i grubość linii zgodnie z DPI ekranu.
      */
-    Ramka(StartCtrl, EndCtrl := 0, Margin := 10, Kolor := "", Grubosc := 2, Dynamic := 0) {
+    Ramka(StartCtrl, EndCtrl := 0, Margin := 10, Kolor := "", Grubosc := 2, Dynamic := 0 , ApplyScale := true) {
+        Skala := A_ScreenDPI / 96
+        Margin := ApplyScale ? Round(Margin * Skala) : Margin
+        Grubosc := ApplyScale ? Round(Grubosc * Skala) : Grubosc
+
         InputObj := StartCtrl ; Zachowaj referencję do potencjalnej GrupyKontrolek
         ; Obsługa Wrapperów (GrupaKontrolek)
         if (HasProp(StartCtrl, "MainCtrl")) {
@@ -2098,14 +2131,18 @@ class CtlFactory extends ExWinAndPopups {
      * @param {String} Type - Typ kontrolki (np. "Text", "Edit", "Button").
      * @param {String} [Options=""] - Opcje pozycyjne i stylowe.
      * @param {String} [Text=""] - Tekst kontrolki.
+     * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
      * @tag WinAPI: "IsSilnikControl"
      * @returns {GuiCtrl} - Utworzona kontrolka.
      */
-    Add(Type, Options := "", Text := "") {
+    Add(Type, Options := "", Text := "", ApplyScale := true) {
+        if (ApplyScale)
+            Options := Utils.ScaleOptions(Options)
+        
         ctrl := this.Stan.ChildGui.Add(Type, Options, Text)
         this.Stan.Kontrolki.Push(ctrl)
         Utils.SetTag(ctrl.Hwnd, "IsSilnikControl")
-        return ctrl
+        return SilnikGUI.GrupaKontrolek([ctrl], [ctrl])
     }
 
     /** 
@@ -2134,12 +2171,13 @@ class CtlFactory extends ExWinAndPopups {
      * - [TextCol: "SilnikGUI.Motyw.Tekst"] {String} Kolor tekstu (nazwa lub hex).
      * - [Backlight: 1] {Number} podświetlenie tła Edita (0-1).
      * - [InfoRight: 0] {Integer} Etykieta z prawej strony (1) lub z lewej (0).
+     * - [ApplyScale: true] {Boolean} Applies DPI scaling to numeric and positional options.
      * @tag WinAPI: "IsSilnikInput" (dla wszystkich elementów wiersza).
      * @returns {Gui.Edit} - Zwraca obiekt kontrolki Edit, aby można było pobrać z niego wartość.
      */
     DodajWierszKonfiguracji(etykieta, wartoscDomyslna, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0})
-        trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, EditOpt := opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
+        opcje := Utils.MergeOptions(opcje?, {trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true})
+        trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, EditOpt := opcje.ApplyScale ? Utils.ScaleOptions(opcje.EditOpt) : opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
         SzerPola := SzerPola - (2 * SzRamki)
         WysPola := WysPola - (2 * SzRamki)
@@ -2151,11 +2189,11 @@ class CtlFactory extends ExWinAndPopups {
 
         ; Flaga dynamicznego pola (dopasowanie do tekstu)
         CzyDynamicznePole := (ResizeEditW || ResizeEditH)
-        SzerPola := Round(SzerPola * Skala)
-        WysPola  := Round(WysPola * Skala)
-        WysWiersza := hWiersza + Round(4 * Skala)
+        SzerPola := opcje.ApplyScale ? Round(SzerPola * Skala) : SzerPola
+        WysPola  := opcje.ApplyScale ? Round(WysPola * Skala) : WysPola
+        WysWiersza := hWiersza + (opcje.ApplyScale ? Round(4 * Skala) : 4)
         WysInput   := WysPola > 0 ? WysPola : (trybWalidacji!=3 ? hWiersza : (WysInput>0 ? (hWiersza * WysInput) : (hWiersza * (StrSplit(String(wartoscDomyslna), "`n", "`r").Length + 1))))
-        Grubosc    := Round(SzRamki * Skala)
+        Grubosc    := opcje.ApplyScale ? Round(SzRamki * Skala) : SzRamki
 
         ; Stabilizacja pozycji Y przy użyciu elementu Dummy
         dummy := this.Stan.ChildGui.Add("Text", pozycja . " w0 h0 Hidden")
@@ -2184,7 +2222,7 @@ class CtlFactory extends ExWinAndPopups {
         poleEdit.SetFont("s" . FontSize . " " . TextCol, FontName)
         this.Stan.Kontrolki.Push(poleEdit)
         if SzRamki > 0
-            ramkaObj := this.Ramka(poleEdit, 0, 0, "", Grubosc)
+            ramkaObj := this.Ramka(poleEdit, 0, 0, "", Grubosc,,0)
         ; [FIX] Inteligentna karetka: Pamięć pozycji, brak to wieloliniowe do początku (0), jednoliniowe do końca
         poleEdit.OnEvent("LoseFocus", (ctrl, *) => (SendMessage(0x00B0, wp:=Buffer(4), 0, ctrl), ctrl.LastCaretPos := NumGet(wp, "UInt")))
         poleEdit.OnEvent("Focus", (ctrl, *) => SetTimer(() => (HasProp(ctrl, "LBtnDownTick") && A_TickCount - ctrl.LBtnDownTick < 50) ? "" : (pos := HasProp(ctrl, "LastCaretPos") ? ctrl.LastCaretPos : ((trybWalidacji == 3) ? 0 : StrLen(ctrl.Value)), PostMessage(0xB1, pos, pos, ctrl)), -10))
@@ -2299,15 +2337,16 @@ class CtlFactory extends ExWinAndPopups {
      * @desc Customowa implementacja: Emuluje Checkbox na bazie kontrolek Text, bez użycia natywnego komponentu.
      * @param {String} tekst - Etykieta kontrolki.
      * @param {Object} [opcje] - Opcje: {[czyZaznaczony: false], [pozycja: "xm"], [InfoRight: 1]pozycja: "xm", InfoRight: 1}.
+     * - [ApplyScale: true] {Boolean} Applies DPI scaling to numeric and positional options.
      * @tag WinAPI: "IsSilnikInput" (dla znaczników, tekstu i ramki).
      * @returns {Gui.Checkbox} - Zwraca obiekt kontrolki Checkbox z dodaną właściwością `LabelX` (współrzędna X etykiety).
      */
     DodajCheckbox(tekst, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {czyZaznaczony: false, pozycja: "", InfoRight: 1})
-        czyZaznaczony := opcje.czyZaznaczony, pozycja := opcje.pozycja, InfoRight := opcje.InfoRight
+        opcje := Utils.MergeOptions(opcje?, {czyZaznaczony: false, pozycja: "", InfoRight: 1, ApplyScale: true})
+        czyZaznaczony := opcje.czyZaznaczony, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, InfoRight := opcje.InfoRight
         Skala := A_ScreenDPI / 96
-        WymiarBox := Round(14 * Skala)
-        Grubosc   := Round(2 * Skala)
+        WymiarBox := opcje.ApplyScale ? Round(14 * Skala) : 14
+        Grubosc   := opcje.ApplyScale ? Round(2 * Skala) : 2
 
         dummy := this.Stan.ChildGui.Add("Text", pozycja . " w0 h0 Hidden"), dummy.GetPos(&dX, &dY)
         dummy.IsDummy := true
@@ -2316,7 +2355,7 @@ class CtlFactory extends ExWinAndPopups {
             CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX+Grubosc) . " y" . (dY+Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
             CheckMark.SetFont("s12 bold")
             this.Stan.Kontrolki.Push(CheckMark)
-            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc)
+            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc,,0)
             txt := this.Stan.ChildGui.Add("Text", "x+10 yp +0x100", tekst)
         } else {
             txt := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " h" . (WymiarBox + 2*Grubosc) . " +0x200 +0x100", tekst)
@@ -2324,7 +2363,7 @@ class CtlFactory extends ExWinAndPopups {
             CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX + wEtyk + 10 + Grubosc) . " y" . (dY+Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
             CheckMark.SetFont("s12 bold")
             this.Stan.Kontrolki.Push(CheckMark)
-            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc)
+            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc,,0)
         }
 
         txt.GetPos(&labelX, , &tW, &tH)
@@ -2413,14 +2452,20 @@ class CtlFactory extends ExWinAndPopups {
      * @param {Intiger} [Padding=0] - Czy wyśrodkować tekst (w kotwicy i popupie) 0= centrowanie.
      * @param {Integer} [Ramkapopupu=1] - Grubość ramki okna popup (domyślnie 1px).
      * @param {Integer} [SeparatorW=1] - Grubość separatora pionowego (domyślnie 1px).
+     * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to numeric and positional options.
      * @tag WinAPI: "IsSilnikInput" (dla tekstu, strzałki i ramki).
      */
-    DodajDDList(opcje, callback := 0, wybranyIndex := 1, szerokosc := 200, pozycja := "xm", Padding := 0, Ramkapopupu := 1, SeparatorW := 1) {
+    DodajDDList(opcje, callback := 0, wybranyIndex := 1, szerokosc := 200, pozycja := "xm", Padding := 0, Ramkapopupu := 1, SeparatorW := 1, ApplyScale := true) {
+        if (ApplyScale) {
+            pozycja := Utils.ScaleOptions(pozycja)
+            szerokosc := Round(szerokosc * (A_ScreenDPI / 96))
+            Ramkapopupu := Round(Ramkapopupu * (A_ScreenDPI / 96))
+        }
         Skala := A_ScreenDPI / 96
-        WysWiersza := Round(22 * Skala)
-        Grubosc := Round(2 * Skala)
-        ArrowW := Round(20 * Skala)
-        SepW := Round(SeparatorW * Skala)
+        WysWiersza := ApplyScale ? Round(22 * Skala) : 22
+        Grubosc := ApplyScale ? Round(2 * Skala) : 2
+        ArrowW := ApplyScale ? Round(20 * Skala) : 20
+        SepW := ApplyScale ? Round(SeparatorW * Skala) : SeparatorW
         Prefix := Format("{:" . (Padding) . "}", "")
         ParsedAlign := SilnikGUI.ParsujAlign("+Down +Left")
         
@@ -2446,7 +2491,7 @@ class CtlFactory extends ExWinAndPopups {
         ArrowCtrl.ParentCtrl := ValueCtrl
         ValueCtrl.ArrowCtrl := ArrowCtrl ; Przypisanie PRZED Ramka(), aby objęła strzałkę
         this.Stan.Kontrolki.Push(ValueCtrl)
-        ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc)
+        ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc,,0)
         ramkaObj.ParentCtrl := ValueCtrl
         ValueCtrl.Ramka := ramkaObj
 
@@ -2525,7 +2570,7 @@ class CtlFactory extends ExWinAndPopups {
             pos := SilnikGUI.DopasujDoKotwicy("Anchor", {x: rX, y: rY, w: rW, h: rH}, szerokosc, wysokoscListy + (2 * Ramkapopupu), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, {L: mL, T: mT, R: mR, B: mB})
 
             ; 2. GUI Popup
-            pGui := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x08000000 +Owner" . this.GuiObj.Hwnd)
+            pGui := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x08000000 +Owner" . this.GuiObj.Hwnd . " -DPIScale")
             hRoot := DllCall("GetAncestor", "Ptr", this.GuiObj.Hwnd, "UInt", 2, "Ptr")
             if IsNumber(pAlpha := WinGetTransparent(hRoot)) {
                 WinSetTransparent(pAlpha, pGui.Hwnd)
@@ -2604,11 +2649,14 @@ class CtlFactory extends ExWinAndPopups {
      * @param {String} tekst - Napis na przycisku.
      * @param {Func} funkcjaKlikniecia - Funkcja wywoływana po kliknięciu (callback).
      * @param {String} [opcje="xm w80 h30"] - Ciąg opcji AHK określający pozycję i wymiary (np. "x10 y10 w100 h40").
+     * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
      * @tag WinAPI: "IsSilnikInput" (dla przycisku i ramki).
      */
-    DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "xm w80 h30") {
+    DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "xm w80 h30", ApplyScale := true) {
+        if (ApplyScale)
+            opcje := Utils.ScaleOptions(opcje)
         Skala := A_ScreenDPI / 96
-        Grubosc := Round(2 * Skala)
+        Grubosc := ApplyScale ? Round(2 * Skala) : 2
 
         ; 1. DUMMY: Rezerwacja przestrzeni w layoucie (Bounding Box)
         ; Tworzymy ukryty element, aby AHK przeliczył pozycje (xm, yp itp.) i wymiary
@@ -2641,7 +2689,7 @@ class CtlFactory extends ExWinAndPopups {
 
         ; 4. RAMKA (Rysowana na zewnątrz przycisku -> Pokrywa się z krawędziami Dummy)
         ; Margin=0, ponieważ kompensację zrobiliśmy ręcznie w kroku 2
-        ramkaObj := this.Ramka(btn, 0, 0, "", Grubosc)
+        ramkaObj := this.Ramka(btn, 0, 0, "", Grubosc,,0)
 
         ; Powiązania dla MonitorujStan (Podświetlanie całej grupy)
         ramkaObj.ParentCtrl := btn
@@ -2900,15 +2948,17 @@ class SubWindows extends CtlFactory {
      * @param {SilnikGUI} RodzicPanelu - Instancja silnika nadrzędnego.
      * @param {String} [pozycja="xm"] - Pozycja wewnątrz rodzica.
      * @param {Object} [opcje=""] - Opcje dla metody Pokaz
+     * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
      * @tag WinAPI: "IsSilnikPanel" (dla zastępczego DummyCtrl i ramki).
      */
-    PokazPanel(RodzicPanelu, pozycja := "xm", opcje := "") {
+    PokazPanel(RodzicPanelu, pozycja := "xm", opcje := "", ApplyScale := true) {
         this.Pokaz(opcje)
         this.GuiObj.GetClientPos(,, &wPanel, &hPanel)
         
         if !HasProp(this, "DummyCtrl") {
             gRamki := this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki
-            this.DummyCtrl := RodzicPanelu.Add("Text", pozycja . " w" . wPanel . " h" . hPanel . " BackgroundTrans")
+            myScaledPos := ApplyScale ? Utils.ScaleOptions(pozycja) : pozycja
+            this.DummyCtrl := RodzicPanelu.Add("Text", myScaledPos . " w" . wPanel . " h" . hPanel . " BackgroundTrans", "", false)
             this.DummyCtrl.GetPos(&cX, &cY)
             this.DummyCtrl.Move(cX + gRamki, cY + gRamki) ; Korekta o grubość ramki
             
@@ -2922,7 +2972,7 @@ class SubWindows extends CtlFactory {
                 ctrl.PanelObj.GuiObj.Move(cX, cY),
                 ctrl.PanelObj.PrzesunPopupy(cX - oldX, cY - oldY)
             )})
-            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki)
+            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki,,0)
             this.DummyCtrl.Ramka.ParentCtrl := this.DummyCtrl
             this.DummyCtrl.MouseDownAction := (ctrl, *) => DllCall("SetFocus", "Ptr", ctrl.PanelObj.Stan.FocusSink.Hwnd)
             
@@ -2952,12 +3002,13 @@ class SubWindows extends CtlFactory {
      * - [FontName=SilnikGUI.Statics.DomyslnaCzcionka.Name] {String} - Nazwa czcionki.
      * - [FontSize=SilnikGUI.Statics.DomyslnaCzcionka.Size] {Integer} - Rozmiar czcionki w pkt.
      * - [Backlight=0] {Integer} - Poziom podświetlenia (0 = brak, 1 = delikatne, 2 = mocne).
+     * - [ApplyScale=true] {Boolean} - Applies DPI scaling to options.
      * @tag WinAPI: "IsSilnikPanel" (panel) oraz "IsSilnikInput" (pole tekstowe).
      * @return {SilnikGUI} - Instancja utworzonego sub-panelu.
      */
     DodajPanelTxt(tekst, w, h, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, Backlight: 0})
-        pozycja := opcje.pozycja, gruboscRamki := opcje.gruboscRamki, infLine := opcje.InfiniteLine, FontName := opcje.FontName, FontSize := opcje.FontSize, Backlight := opcje.Backlight
+        opcje := Utils.MergeOptions(opcje?, {pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, Backlight: 0, ApplyScale: true})
+        pozycja := opcje.pozycja, gruboscRamki := opcje.gruboscRamki, infLine := opcje.InfiniteLine, FontName := opcje.FontName, FontSize := opcje.FontSize, Backlight := opcje.Backlight, ApplyScale := opcje.ApplyScale
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
 
         p := this.DodajPanel(gruboscRamki, 1, infLine ? 1 : 0, {PadR: 0, PadD: 0, AutoFitW: infLine ? 999999 : 0, AutoFitH: 999999})
@@ -2966,8 +3017,12 @@ class SubWindows extends CtlFactory {
         opcjeWiersza := {trybWalidacji: 3, pozycja: "x0 y0", ResizeEditW: infLine, ResizeEditH: true, SzRamki: 0, AutoCenter: false, EditOpt: "Left", FontName: FontName, FontSize: FontSize, BackCol: BackCol, TextCol: TextCol, Backlight: Backlight}
 
         Skala := A_ScreenDPI / 96
-        opcjeWiersza.SzerPola := Max(10, w - (infLine ? 0 : (bs + gruboscRamki))) / Skala
-        opcjeWiersza.WysPola := Max(10, h) / Skala
+        wFizyczne := ApplyScale ? Round(w * Skala) : w
+        hFizyczne := ApplyScale ? Round(h * Skala) : h
+        
+        opcjeWiersza.SzerPola := Max(10, wFizyczne - (infLine ? 0 : (bs + p.Stan.RamkaPanelu)))
+        opcjeWiersza.WysPola := Max(10, hFizyczne)
+        opcjeWiersza.ApplyScale := false
             
         editGrp := p.DodajWierszKonfiguracji("", tekst, opcjeWiersza)
         editGrp.MainCtrl.FlexH := infLine
@@ -2985,7 +3040,7 @@ class SubWindows extends CtlFactory {
         editGrp.MainCtrl.OnEvent("Change", (c, *) => SetTimer(ObjBindMethod(p, "SledzKaretke", c), -10))
         
         ; [FIX] Ręczne przypisanie właściwości zapobiega awarii RegExMatch w metodzie Pokaz()
-        p.PokazPanel(this, pozycja, "w" w " h" h)
+        p.PokazPanel(this, pozycja, "w" w " h" h, ApplyScale)
         return p
     }
     ;zaslepka dla  VSC
@@ -3300,29 +3355,31 @@ class SilnikGUI extends SubWindows {
         if (pokazPasek == 0 && !InStr(opcje, "-Caption"))
             opcje .= " -Caption "
         
+        Skala := A_ScreenDPI / 96
+
         this.Stan.UseChild := createChild
         this.Stan.CSBarV := CSBarV
         this.Stan.CSBarH := CSBarH
         this.Stan.PokazPasek := pokazPasek
         this.Stan.zamknijNaEsc := zamknijNaEsc
-        this.Stan.ResizeMarg := ResizeMarg
-        this.Stan.GruboscRamki := GruboscRamki
+        this.Stan.ResizeMarg := Round(ResizeMarg * Skala)
+        this.Stan.GruboscRamki := Round(GruboscRamki * Skala)
         this.Stan.dragBezPaska := dragBezPaska
         this.Stan.MainGUI := MainGUI
-        this.Stan.RamkaPanelu := RamkaPanelu
-        this.Stan.PadL := PadL
-        this.Stan.PadR := PadR
-        this.Stan.PadD := PadD
+        this.Stan.RamkaPanelu := Round(RamkaPanelu * Skala)
+        this.Stan.PadL := Round(PadL * Skala)
+        this.Stan.PadR := Round(PadR * Skala)
+        this.Stan.PadD := Round(PadD * Skala)
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
-        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Integer(m[1]) : 0
+        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala) : 0
 
 
         this.GuiObj := Gui(opcje, tytul)
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
         this.GuiObj.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
-        this.GuiObj.MarginX := PadL
+        this.GuiObj.MarginX := this.Stan.PadL
         this.GuiObj.MarginY := 0
         
         if (Transparent != 0.0){
@@ -3335,17 +3392,17 @@ class SilnikGUI extends SubWindows {
         ; CHILD GUI (Kontener treści)
         if (this.Stan.UseChild) {
             ; [FIX] Viewport (Maska przycinająca) - Pośrednik między Parentem a Canvasem
-            this.Stan.ClipGui := Gui("-Caption -Border +Parent" . this.GuiObj.Hwnd . " +E0x10000 +0x02000000")
+            this.Stan.ClipGui := Gui("-Caption -Border +Parent" . this.GuiObj.Hwnd . " +E0x10000 +0x02000000 -DPIScale")
             this.Stan.ClipGui.BackColor := SilnikGUI.Motyw.Tlo
             this.Stan.ClipGui.MarginX := 0, this.Stan.ClipGui.MarginY := 0
             this.Stan.ClipGui.Silnik := this ; Przepięcie dla Raycastingu
             
             ; [FIX] +E0x10000 (WS_EX_CONTROLPARENT) - Umożliwia rekurencyjne tabowanie (wejście do kontenera)
             ; Parentem Childa jest teraz ClipGui, a nie GuiObj
-            this.Stan.ChildGui := Gui("-Caption -Border +Parent" . this.Stan.ClipGui.Hwnd . " +E0x10000 +0x02000000")
+            this.Stan.ChildGui := Gui("-Caption -Border +Parent" . this.Stan.ClipGui.Hwnd . " +E0x10000 +0x02000000 -DPIScale")
             this.Stan.ChildGui.BackColor := SilnikGUI.Motyw.Tlo
             this.Stan.ChildGui.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
-            this.Stan.ChildGui.MarginX := PadL
+            this.Stan.ChildGui.MarginX := this.Stan.PadL
             this.Stan.ChildGui.MarginY := 0
             this.Stan.ChildGui.Silnik := this
             
@@ -3407,6 +3464,8 @@ class SilnikGUI extends SubWindows {
      * @param [Opt= ""] {String} Dodatkowe opcje dla metody Show (np. "w500 h300 NA").
      */
     Pokaz(Opt:= "") {
+        myDpiScale := A_ScreenDPI / 96
+
         ; Statyczna weryfikacja zdolności przyjmowania focusu (WS_TABSTOP = 0x10000)
         maTabstop := false
         skanujFocus(g) {
@@ -3442,16 +3501,16 @@ class SilnikGUI extends SubWindows {
         extraFrame := (this.Stan.UseChild && grubosc > 0) ? (2 * grubosc) : 0
 
         ; Ekstrakcja wymiarów z Opt (nadpisuje wartości dynamiczne)
-        finalW := RegExMatch(Opt, "i)(?:^|\s)w(\d+)", &mW) ? mW[1] : (staticW + extraFrame)
-        finalH := RegExMatch(Opt, "i)(?:^|\s)h(\d+)", &mH) ? mH[1] : (staticH + extraFrame)
+        finalW := RegExMatch(Opt, "i)(?:^|\s)w(\d+)", &mW) ? Round(mW[1] * myDpiScale) : (staticW + extraFrame)
+        finalH := RegExMatch(Opt, "i)(?:^|\s)h(\d+)", &mH) ? Round(mH[1] * myDpiScale) : (staticH + extraFrame)
 
         ; [FIX] Zastosowanie kagańca (limitów) na starcie okna
         if (this.Stan.AutoFitW > 0 && !RegExMatch(Opt, "i)(?:^|\s)w(\d+)")) {
-            LimitW := (this.Stan.AutoFitW <= 1) ? (A_ScreenWidth * this.Stan.AutoFitW) : this.Stan.AutoFitW
+            LimitW := (this.Stan.AutoFitW <= 1) ? (A_ScreenWidth * this.Stan.AutoFitW) : Round(this.Stan.AutoFitW * myDpiScale)
             finalW := Round(Min(finalW, LimitW))
         }
         if (this.Stan.AutoFitH > 0 && !RegExMatch(Opt, "i)(?:^|\s)h(\d+)")) {
-            LimitH := (this.Stan.AutoFitH <= 1) ? (A_ScreenHeight * this.Stan.AutoFitH) : this.Stan.AutoFitH
+            LimitH := (this.Stan.AutoFitH <= 1) ? (A_ScreenHeight * this.Stan.AutoFitH) : Round(this.Stan.AutoFitH * myDpiScale)
             finalH := Round(Min(finalH, LimitH))
         }
 
@@ -3842,7 +3901,17 @@ class SilnikGUI extends SubWindows {
         Gui => this.MainCtrl.Gui
         AnchorCtrl => HasProp(this.MainCtrl, "Ramka") ? this.MainCtrl.Ramka : this.MainCtrl
 
-        Move(x:="", y:="", w:="", h:="") {
+        /**
+         * Moves the control group.
+         * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
+         */
+        Move(x:="", y:="", w:="", h:="", ApplyScale := true) {
+            Skala := A_ScreenDPI / 96
+            x := (ApplyScale && x !== "") ? Round(x * Skala) : x
+            y := (ApplyScale && y !== "") ? Round(y * Skala) : y
+            w := (ApplyScale && w !== "") ? Round(w * Skala) : w
+            h := (ApplyScale && h !== "") ? Round(h * Skala) : h
+            
             ; 1. Przygotowanie (Offset ramki)
             off := (HasProp(this.MainCtrl, "GruboscRamki") ? this.MainCtrl.GruboscRamki : 0)
             
@@ -4358,7 +4427,7 @@ class SilnikGUI extends SubWindows {
             this.StanInt := {Tryb: "Brak"}
             
             ; [STRATEGIA 3] Tworzenie niezależnego pod-okna dla paska (Sub-Container)
-            this.BarGui := Gui("-Caption -Border +Parent" . Silnik.GuiObj.Hwnd . " +0x02000000")
+            this.BarGui := Gui("-Caption -Border +Parent" . Silnik.GuiObj.Hwnd . " +0x02000000 -DPIScale")
             this.BarGui.BackColor := SilnikGUI.Motyw.Tlo
             this.BarGui.Silnik := Silnik ; Przekazanie referencji (pozwala podświetlać ramkę przy Hover)
             GuiObj := this.BarGui
