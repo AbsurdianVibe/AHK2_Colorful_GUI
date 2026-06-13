@@ -2280,6 +2280,7 @@ class CtlFactory extends ExWinAndPopups {
                 try ctrl.GetMethod("OnEvent")("Change", ctrl)
             }
             poleEdit.VScrollAction := ScrollAction
+            poleEdit.HArrowNeed := true
         } else if (trybWalidacji == 2) {
             poleEdit.HArrowNeed := true
         } else if (trybWalidacji == 3) {
