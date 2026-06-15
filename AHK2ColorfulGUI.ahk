@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
-    
-class ConfigGUI { 
+
+class ConfigGUI {
     static _TickRate := 15
     ; [TickRate=15] - Globalne taktowanie silnika (ms). Wartości <15 wymuszają wysoką rozdzielczość zegara (timeBeginPeriod).
     static TickRate {
@@ -23,7 +23,7 @@ class ConfigGUI {
     static UseChild := true
     ;[GruboscRamki=2] - Grubość ramek okna, (silnik).
     static GruboscRamki := 2
-    ; [RamkaPanelu=2] - Wewnętrzny odstęp paneli. ;todo czy to powinno   
+    ; [RamkaPanelu=2] - Wewnętrzny odstęp paneli. ;todo czy to powinno
     static RamkaPanelu := 2
     ; [PadL=0] - Margines z lewej strony, (silnik).
     static PadL := 0
@@ -45,26 +45,26 @@ class ConfigGUI {
     Static TipDelayON := 200
     ; [TipDelayOFF=200] - Opóźnienie wygaszania CustomTooltipów (ms).
     Static TipDelayOFF := 200
-    ;[CallbackLayout=0] - Własna funkcja klienta do dynamicznego pozycjonowania kontrolek (wywoływana przy każdym resize). 
-     ; - Sygnatura: (Szerokosc, OffsetX, Wysokosc, WysWiersza) => void.
-     ; - Szerokosc - Czysta, dostępna przestrzeń robocza w poziomie (po odjęciu ramek, marginesów i ewentualnych pasków przewijania). Główny parametr do wyliczania Gap i szerokości kontrolek.
-     ; - OffsetX - Wewnętrzne przesunięcie X (np. gdy używamy systemowego paska, a okno wymusza dodatkowy offset ramki). Zawsze dodawaj tę wartość do wyliczonego X.
-     ; - Wysokosc - Opcjonalna dostępna przestrzeń robocza w pionie.
-     ; - WysWiersza - Opcjonalna standardowa wysokość wiersza wynikająca z wybranej czcionki.
-     ; - INSTRUKCJA: Wewnątrz przypisanej funkcji należy wykonywać wyłącznie matematykę oraz wywoływać metodę .Move(x, y, w, h) na własnych kontrolkach. Silnik sam zadba o debouncing (blokadę spamu wywołań) oraz odświeżenie GDI po wykonaniu callbacku.
-    CallbackLayout:= 0
-    
+    ;[CallbackLayout=0] - Własna funkcja klienta do dynamicznego pozycjonowania kontrolek (wywoływana przy każdym resize).
+    ; - Sygnatura: (Szerokosc, OffsetX, Wysokosc, WysWiersza) => void.
+    ; - Szerokosc - Czysta, dostępna przestrzeń robocza w poziomie (po odjęciu ramek, marginesów i ewentualnych pasków przewijania). Główny parametr do wyliczania Gap i szerokości kontrolek.
+    ; - OffsetX - Wewnętrzne przesunięcie X (np. gdy używamy systemowego paska, a okno wymusza dodatkowy offset ramki). Zawsze dodawaj tę wartość do wyliczonego X.
+    ; - Wysokosc - Opcjonalna dostępna przestrzeń robocza w pionie.
+    ; - WysWiersza - Opcjonalna standardowa wysokość wiersza wynikająca z wybranej czcionki.
+    ; - INSTRUKCJA: Wewnątrz przypisanej funkcji należy wykonywać wyłącznie matematykę oraz wywoływać metodę .Move(x, y, w, h) na własnych kontrolkach. Silnik sam zadba o debouncing (blokadę spamu wywołań) oraz odświeżenie GDI po wykonaniu callbacku.
+    CallbackLayout := 0
+
 }
-class Data extends ConfigGUI{
+class Data extends ConfigGUI {
     ; obiekt główny: SilnikGUI. Zawiera wszystkie funkcje, właściwości i klasy pomocnicze. Jest to jedyny obiekt, który jest bezpośrednio tworzony przez użytkownika (np. Appa := SilnikGUI(...)). Wszystkie inne klasy są zagnieżdżone wewnątrz SilnikGUI jako statyczne właściwości lub są tworzone jako instancje wewnątrz SilnikGUI.
     GuiObj := 0
 
 
     ; Obiekt stanu SilnikGUI, NIE MODYFIKOWAĆ!
     Stan := {
-        ClipGui: 0, 
+        ClipGui: 0,
         ChildGui: 0,
-        FocusSink: 0,  
+        FocusSink: 0,
         VBar: 0,
         HBar: 0,
         Corner: 0,
@@ -78,10 +78,10 @@ class Data extends ConfigGUI{
         Dzieci: [],
         PopupActive: false,
         DebounceRedraw: 0,
-        MonState: {LastFocus: 0, LastHover: 0, LastRealFocus: 0, WasFlashing: false, LastInput: {x:0, y:0, win:0, ctl:0, foc:0, act:0, lbtn:0}, LastRenderLBtn: 0},
+        MonState: { LastFocus: 0, LastHover: 0, LastRealFocus: 0, WasFlashing: false, LastInput: { x: 0, y: 0, win: 0, ctl: 0, foc: 0, act: 0, lbtn: 0 }, LastRenderLBtn: 0 },
         RootHwnd: 0,
         LastActiveState: -1,
-        LastObszar: {W: 0, H: 0},
+        LastObszar: { W: 0, H: 0 },
         LastObszarTick: 0,
         LastLayoutState: 0,
         AktualnyKolorRamki: "",
@@ -148,8 +148,8 @@ class Data extends ConfigGUI{
         AktywneInstancje: [],      ; Globalny rejestr do Raycastingu
         AktywneBledy: [],          ; Stos otwartych okien błędów
         OstatniScrollTick: 0,      ; Zegar blokady wizualnej (Hover) i interakcji
-        DomyslnaCzcionka: {Name: "Segoe UI", Size: 10},
-        StanMButtonScroll: {Aktywny: false, TrybToggle: false, Instancja: 0, StartX: 0, StartY: 0, TickStart: 0, OstatnieVx: 0, OstatnieVy: 0, AccumX: 0.0, AccumY: 0.0, Fake: 0, LastCurId: 0, LastClipDir: "", LastScale: 1.0, Opcje: {}, CanX: false, CanY: false},
+        DomyslnaCzcionka: { Name: "Segoe UI", Size: 10 }, FontMultiplier: 1.0,
+        StanMButtonScroll: { Aktywny: false, TrybToggle: false, Instancja: 0, StartX: 0, StartY: 0, TickStart: 0, OstatnieVx: 0, OstatnieVy: 0, AccumX: 0.0, AccumY: 0.0, Fake: 0, LastCurId: 0, LastClipDir: "", LastScale: 1.0, Opcje: {}, CanX: false, CanY: false },
         PetlaMButtonScrollObj: 0,
         ZakonczMButtonScrollObj: 0,
         GlobalMouseHook: 0,
@@ -157,20 +157,20 @@ class Data extends ConfigGUI{
         unikalneInstancje: Map() ; Rejestr instancji Singleton
     }
 
-        static Motyw := {
-        Tlo:              "c363533",
-        Tekst:            "cE0E0E0",
-        Ramka:            "c484745",
-        Przycisk:         "c403F3D",
-        Focus:            "c504F4D",
-        Nieaktywny:       "c808080",
-        Ostrzezenie:      "cbd4646",
-        Wklesly:          "c302F2D",
-        ParamFocus:       0.1,
-        ParamHover:       0.05,
+    static Motyw := {
+        Tlo: "c363533",
+        Tekst: "cE0E0E0",
+        Ramka: "c484745",
+        Przycisk: "c403F3D",
+        Focus: "c504F4D",
+        Nieaktywny: "c808080",
+        Ostrzezenie: "cbd4646",
+        Wklesly: "c302F2D",
+        ParamFocus: 0.1,
+        ParamHover: 0.05,
         FactorNieaktywny: 0.4,
-        FactorRamki:      0.2,
-        Tryb:             1          ; 0=Auto, 1=Ciemny, 2=Jasny
+        FactorRamki: 0.2,
+        Tryb: 1          ; 0=Auto, 1=Ciemny, 2=Jasny
     }
     static MapaKolorow := Map(
         "white", "FFFFFF", "silver", "C0C0C0", "gray", "808080", "black", "000000",
@@ -183,13 +183,13 @@ class Data extends ConfigGUI{
  * Klasa pomocnicza zawierająca ogólne narzędzia systemowe i matematyczne.
  */
 class Utils extends Data {
-/**
- * @desc Formatuje liczbę do 2 miejsc po przecinku i usuwa nieznaczące zera.
- * @param {Number} liczba - Wartość wejściowa.
- * @param {Integer} [prec=2] - Liczba miejsc po przecinku.
- * @return {String} Zoptymalizowana tekstowa reprezentacja liczby.
- */
-Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "0"), ".")
+    /**
+     * @desc Formatuje liczbę do 2 miejsc po przecinku i usuwa nieznaczące zera.
+     * @param {Number} liczba - Wartość wejściowa.
+     * @param {Integer} [prec=2] - Liczba miejsc po przecinku.
+     * @return {String} Zoptymalizowana tekstowa reprezentacja liczby.
+     */
+    Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "0"), ".")
 
     /**
      * Scales physical dimensions (x, y, w, h) in AHK options string based on current DPI.
@@ -200,22 +200,22 @@ Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "
     static ScaleOptions(optionsStr) {
         if (Type(optionsStr) !== "String")
             return optionsStr
-            
-        myDpiScale := A_ScreenDPI / 96
+
+        myDpiScale := (A_ScreenDPI / 96) * SilnikGUI.Statics.FontMultiplier
         if (myDpiScale == 1.0)
             return optionsStr
-            
+
         myPos := 1
         myLastPos := 1
         myNewOptions := ""
-        
+
         while (myPos := RegExMatch(optionsStr, "i)(^|\s)([xywh][pms]*(?:[+-])?)(\d+)", &myMatch, myPos)) {
             myNewOptions .= SubStr(optionsStr, myLastPos, myMatch.Pos - myLastPos)
             myNewOptions .= myMatch[1] . myMatch[2] . Round(myMatch[3] * myDpiScale)
             myPos := myMatch.Pos + myMatch.Len
             myLastPos := myPos
         }
-        
+
         return myNewOptions . SubStr(optionsStr, myLastPos)
     }
 
@@ -233,13 +233,13 @@ Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "
         if !obj {
             pt := Buffer(8), DllCall("GetCursorPos", "Ptr", pt)
             x := NumGet(pt, 0, "Int"), y := NumGet(pt, 4, "Int")
-            return {x: x, y: y, w: 0, h: 0}
+            return { x: x, y: y, w: 0, h: 0 }
         }
         obj.GetPos(&x, &y, &w, &h)
         pz := Buffer(8), NumPut("Int", x, "Int", y, pz)
         DllCall("ClientToScreen", "Ptr", hwnd, "Ptr", pz)
         x := NumGet(pz, 0, "Int"), y := NumGet(pz, 4, "Int")
-        return {x: x, y: y, w: w, h: h}
+        return { x: x, y: y, w: w, h: h }
     }
 
     /**
@@ -264,7 +264,7 @@ Static FormatNum(liczba, prec) => RTrim(RTrim(Format("{:." prec "f}", liczba), "
         }
         DllCall("ScreenToClient", "Ptr", hwnd, "Ptr", pt)
         x := NumGet(pt, 0, "Int"), y := NumGet(pt, 4, "Int")
-        return {x: x, y: y, w: w, h: h}
+        return { x: x, y: y, w: w, h: h }
     }
 
     /**
@@ -302,7 +302,7 @@ class Motyw extends Utils {
 
 
     ; Mapa nazw kolorów HTML/CSS
-   
+
 
     /**
      * Konwertuje nazwę koloru lub format z prefixami na czysty HEX.
@@ -342,7 +342,7 @@ class Motyw extends Utils {
     static MieszajKolory(Kolor1, Kolor2, waga := 0.5) {
         h1 := Motyw.PobierzHex(Kolor1)
         h2 := Motyw.PobierzHex(Kolor2)
-        
+
         if (StrLen(h1) != 6 || StrLen(h2) != 6 || !IsXDigit(h1) || !IsXDigit(h2))
             return StrReplace(Kolor2, "c", "")
 
@@ -369,7 +369,7 @@ class Motyw extends Utils {
     static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := 0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1) {
         ; Czyszczenie HEX
         bazowy := RegExReplace(Motyw.PobierzHex(bazowyHex), "[^0-9a-fA-F]", "")
-        warn   := RegExReplace(Motyw.PobierzHex(warnHex), "[^0-9a-fA-F]", "")
+        warn := RegExReplace(Motyw.PobierzHex(warnHex), "[^0-9a-fA-F]", "")
 
         ; Awaryjnie: Ciemny szary
         if (StrLen(bazowy) != 6)
@@ -383,31 +383,31 @@ class Motyw extends Utils {
         ; Luminancja > 128 = Jasny
         if ((r * 299 + g * 587 + b * 114) / 1000 > 128) {
             isLight := true
-            factorRamka      := -Abs(factorRamka)
+            factorRamka := -Abs(factorRamka)
             factorNieaktywny := -Abs(factorNieaktywny)
-            factorTekst      := -Abs(factorTekst)
-            factorPrzycisk   := -Abs(factorPrzycisk)
-            paramFocus       := -Abs(paramFocus)
+            factorTekst := -Abs(factorTekst)
+            factorPrzycisk := -Abs(factorPrzycisk)
+            paramFocus := -Abs(paramFocus)
         }
 
         ; 1. Parametry globalne
-        SilnikGUI.Motyw.Tlo              := bazowy
-        SilnikGUI.Motyw.FactorRamki      := factorRamka
+        SilnikGUI.Motyw.Tlo := bazowy
+        SilnikGUI.Motyw.FactorRamki := factorRamka
         SilnikGUI.Motyw.FactorNieaktywny := factorNieaktywny
-        SilnikGUI.Motyw.Ramka            := SilnikGUI.Odcien(bazowy, factorRamka)
-        SilnikGUI.Motyw.Przycisk         := SilnikGUI.Odcien(bazowy, factorPrzycisk)
-        SilnikGUI.Motyw.Focus            := SilnikGUI.Odcien(bazowy, factorPrzycisk + paramFocus)
-        SilnikGUI.Motyw.ParamFocus       := paramFocus
-        SilnikGUI.Motyw.ParamHover       := paramFocus*0.6
-        
+        SilnikGUI.Motyw.Ramka := SilnikGUI.Odcien(bazowy, factorRamka)
+        SilnikGUI.Motyw.Przycisk := SilnikGUI.Odcien(bazowy, factorPrzycisk)
+        SilnikGUI.Motyw.Focus := SilnikGUI.Odcien(bazowy, factorPrzycisk + paramFocus)
+        SilnikGUI.Motyw.ParamFocus := paramFocus
+        SilnikGUI.Motyw.ParamHover := paramFocus * 0.6
+
         if (isLight)
             SilnikGUI.Motyw.Wklesly := SilnikGUI.Odcien(bazowy, factorWklesly)
         else
             SilnikGUI.Motyw.Wklesly := SilnikGUI.Odcien(bazowy, factorWklesly)
-        
+
         ; 2. Teksty (Prefix 'c' dla Gui)
-        SilnikGUI.Motyw.Tekst     := "c" . SilnikGUI.Odcien(bazowy, factorTekst)
-        
+        SilnikGUI.Motyw.Tekst := "c" . SilnikGUI.Odcien(bazowy, factorTekst)
+
         ; Bez prefixu (elastyczne)
         SilnikGUI.Motyw.Nieaktywny := SilnikGUI.Odcien(bazowy, factorNieaktywny)
         SilnikGUI.Motyw.Ostrzezenie := warn
@@ -419,7 +419,6 @@ class Motyw extends Utils {
  * Rysowanie ramek, style, tooltipy i okna błędów.
  */
 class Grafika extends Motyw {
-
 
 
     /**
@@ -439,7 +438,7 @@ class Grafika extends Motyw {
      */
     static RysujObrys(guiObj, x, y, w, h, kolorRamki, grubosc := 2, fixed := false, wypelnienie := false) {
         Ctrls := []
-        
+
         if (wypelnienie) {
             ; --- TRYB 1: SOLID (Pojedynczy blok tła) ---
             ; Używany dla teł kontrolek (np. Edit, ListBox)
@@ -449,16 +448,16 @@ class Grafika extends Motyw {
         } else {
             ; --- TRYB 2: 4 PASKI (Ramka pusta w środku) ---
             ; Używany dla ramek ozdobnych i grup. Gwarantuje brak kolizji w centrum.
-            
+
             ; Top & Bot (Pełna szerokość)
             Top := guiObj.Add("Text", "x" . x . " y" . y . " w" . w . " h" . grubosc . " +0x4000000 +0x100 Background" . kolorRamki)
             Bot := guiObj.Add("Text", "x" . x . " y" . (y + h - grubosc) . " w" . w . " h" . grubosc . " +0x4000000 +0x100 Background" . kolorRamki)
-            
+
             ; Left & Right (Wysokość pomniejszona o grubości góra/dół, aby nie nakładać się na rogi)
-            hSide := Max(0, h - 2*grubosc)
-            Left  := guiObj.Add("Text", "x" . x . " y" . (y + grubosc) . " w" . grubosc . " h" . hSide . " +0x4000000 +0x100 Background" . kolorRamki)
+            hSide := Max(0, h - 2 * grubosc)
+            Left := guiObj.Add("Text", "x" . x . " y" . (y + grubosc) . " w" . grubosc . " h" . hSide . " +0x4000000 +0x100 Background" . kolorRamki)
             Right := guiObj.Add("Text", "x" . (x + w - grubosc) . " y" . (y + grubosc) . " w" . grubosc . " h" . hSide . " +0x4000000 +0x100 Background" . kolorRamki)
-            
+
             Ctrls.Push(Top, Bot, Left, Right)
             MainCtrl := Top ; Kotwica pozycyjna
         }
@@ -472,7 +471,7 @@ class Grafika extends Motyw {
         }
 
         MainCtrl.GetPos(&rX, &rY)
-        
+
         ; Proxy Object (Udaje pojedynczą kontrolkę)
         Proxy := {
             Gui: guiObj,
@@ -480,46 +479,46 @@ class Grafika extends Motyw {
             x: rX, y: rY, w: w, h: h,
             Ctrls: Ctrls,
             ; Kompatybilność wsteczna (dla MonitorujWyjscie i logiki resize)
-            Top: (wypelnienie ? MainCtrl : Ctrls[1]), 
-            Bot: (wypelnienie ? MainCtrl : Ctrls[2]), 
-            Left: (wypelnienie ? MainCtrl : Ctrls[3]), 
+            Top: (wypelnienie ? MainCtrl : Ctrls[1]),
+            Bot: (wypelnienie ? MainCtrl : Ctrls[2]),
+            Left: (wypelnienie ? MainCtrl : Ctrls[3]),
             Right: (wypelnienie ? MainCtrl : Ctrls[4])
         }
 
-        Proxy.DefineProp("Move", {Call: (this, nx:="", ny:="", nw:="", nh:="") => (
-            (nx!="") && this.x := nx, (ny!="") && this.y := ny, (nw!="") && this.w := nw, (nh!="") && this.h := nh,
-            (wypelnienie) 
+        Proxy.DefineProp("Move", { Call: (this, nx := "", ny := "", nw := "", nh := "") => (
+            (nx != "") && this.x := nx, (ny != "") && this.y := ny, (nw != "") && this.w := nw, (nh != "") && this.h := nh,
+            (wypelnienie)
                 ? this.Ctrls[1].Move(this.x, this.y, this.w, this.h)
-                : (
-                    this.Top.Move(this.x, this.y, this.w, grubosc),
-                    this.Bot.Move(this.x, this.y + this.h - grubosc, this.w, grubosc),
-                    this.Left.Move(this.x, this.y + grubosc, grubosc, Max(0, this.h - 2*grubosc)),
-                    this.Right.Move(this.x + this.w - grubosc, this.y + grubosc, grubosc, Max(0, this.h - 2*grubosc))
-                )
-        )})
+            : (
+                this.Top.Move(this.x, this.y, this.w, grubosc),
+                this.Bot.Move(this.x, this.y + this.h - grubosc, this.w, grubosc),
+                this.Left.Move(this.x, this.y + grubosc, grubosc, Max(0, this.h - 2 * grubosc)),
+                this.Right.Move(this.x + this.w - grubosc, this.y + grubosc, grubosc, Max(0, this.h - 2 * grubosc))
+            )
+        ) })
 
-        Proxy.DefineProp("GetPos", {Call: (this, &x?, &y?, &w?, &h?) => (
+        Proxy.DefineProp("GetPos", { Call: (this, &x?, &y?, &w?, &h?) => (
             this.Ctrls[1].GetPos(&tx, &ty),
             (IsSet(x) && x := tx),
             (IsSet(y) && y := ty),
             (IsSet(w) && w := this.w),
             (IsSet(h) && h := this.h)
-        )})
+        ) })
 
         Batch(metoda, args*) {
             for c in Ctrls
                 c.%metoda%(args*)
         }
 
-        Proxy.DefineProp("Opt", {Call: (this, o) => Batch("Opt", o)})
-        Proxy.DefineProp("OnEvent", {Call: (this, evt, cb) => Batch("OnEvent", evt, cb)})
-        Proxy.DefineProp("Redraw", {Call: (this) => Batch("Redraw")})
-        
+        Proxy.DefineProp("Opt", { Call: (this, o) => Batch("Opt", o) })
+        Proxy.DefineProp("OnEvent", { Call: (this, evt, cb) => Batch("OnEvent", evt, cb) })
+        Proxy.DefineProp("Redraw", { Call: (this) => Batch("Redraw") })
+
         Proxy.DefineProp("ParentCtrl", {
-            set: (this, val) => Batch("DefineProp", "ParentCtrl", {Value: val}),
+            set: (this, val) => Batch("DefineProp", "ParentCtrl", { Value: val }),
             get: (this) => this.Ctrls[1].ParentCtrl
         })
-        
+
         return Proxy
     }
 
@@ -529,10 +528,10 @@ class Grafika extends Motyw {
      */
     static ObliczBoundingBox(Cele) {
         if !IsObject(Cele)
-            return {x: 0, y: 0, w: 0, h: 0}
+            return { x: 0, y: 0, w: 0, h: 0 }
         if (Type(Cele) != "Array")
             Cele := [Cele]
-            
+
         minX := 99999, minY := 99999, maxX := -99999, maxY := -99999
         CheckBounds(obj) {
             if !obj
@@ -558,8 +557,8 @@ class Grafika extends Motyw {
             (HasProp(c, "PlaceholderCtrl")) && CheckBounds(c.PlaceholderCtrl)
         }
         if (minX == 99999)
-            return {x: 0, y: 0, w: 0, h: 0}
-        return {x: minX, y: minY, w: maxX - minX, h: maxY - minY}
+            return { x: 0, y: 0, w: 0, h: 0 }
+        return { x: minX, y: minY, w: maxX - minX, h: maxY - minY }
     }
 
     /**
@@ -572,7 +571,7 @@ class Grafika extends Motyw {
      * @param {Intiger} [Dynamic=0] - obsługa dynamicznego move
      * @param {Boolean} [ApplyScale=true] - Czy skalować margines i grubość linii zgodnie z DPI ekranu.
      */
-    Ramka(StartCtrl, EndCtrl := 0, Margin := 10, Kolor := "", Grubosc := 2, Dynamic := 0 , ApplyScale := true) {
+    Ramka(StartCtrl, EndCtrl := 0, Margin := 10, Kolor := "", Grubosc := 2, Dynamic := 0, ApplyScale := true) {
         Skala := A_ScreenDPI / 96
         Margin := ApplyScale ? Round(Margin * Skala) : Margin
         Grubosc := ApplyScale ? Round(Grubosc * Skala) : Grubosc
@@ -588,12 +587,12 @@ class Grafika extends Motyw {
 
         if !StartCtrl
             return
-            
+
         ; 1. Wybierz cele (Głupi mechanizm: Start -> End)
         Cele := []
         if (EndCtrl) {
             sIdx := 0, eIdx := 0
-            
+
             ; [FIX] Buduj mapę znanych kontrolek, aby odzyskać właściwości (.Ramka) utracone przy iteracji GuiObj
             Znane := Map()
             for c in this.Stan.Kontrolki
@@ -637,18 +636,18 @@ class Grafika extends Motyw {
         ; 3. Rysuj
         if (box.w > 0) {
             Outer := SilnikGUI.RysujObrys(StartCtrl.Gui,
-            box.x - Margin - Grubosc, box.y - Margin - Grubosc, 
-            box.w + 2*Margin + 2*Grubosc, 
-            box.h + 2*Margin + 2*Grubosc, 
-            (Kolor == "" ? SilnikGUI.Motyw.Ramka : Kolor), 
-            Grubosc, (Kolor != ""), wypelnienie)
+                box.x - Margin - Grubosc, box.y - Margin - Grubosc,
+                box.w + 2 * Margin + 2 * Grubosc,
+                box.h + 2 * Margin + 2 * Grubosc,
+                (Kolor == "" ? SilnikGUI.Motyw.Ramka : Kolor),
+                Grubosc, (Kolor != ""), wypelnienie)
 
             ; [AUTO-BINDING] Automatyczne odświeżanie przy ruchu celów (Observer Pattern)
             ; Zamiast ręcznego .Dopasuj(), wpinamy się w metodę .Move() kontrolek
-            if (Dynamic==1) {
+            if (Dynamic == 1) {
                 Odswiez := (*) => (
                     b := Grafika.ObliczBoundingBox(Cele),
-                    (b.w > 0) && Outer.Move(b.x - Margin - Grubosc, b.y - Margin - Grubosc, b.w + 2*Margin + 2*Grubosc, b.h + 2*Margin + 2*Grubosc)
+                    (b.w > 0) && Outer.Move(b.x - Margin - Grubosc, b.y - Margin - Grubosc, b.w + 2 * Margin + 2 * Grubosc, b.h + 2 * Margin + 2 * Grubosc)
                 )
 
                 for c in Cele {
@@ -656,15 +655,15 @@ class Grafika extends Motyw {
                         c.RamkaHooks := []
                         ; Hookowanie metody Move: Wykonaj oryginał -> Wykonaj odświeżanie ramek
                         OrigMove := HasProp(c, "Move") ? c.Move : c.Base.Move
-                        c.DefineProp("Move", {Call: (self, p*) => (OrigMove(self, p*), RunHooks(self))})
+                        c.DefineProp("Move", { Call: (self, p*) => (OrigMove(self, p*), RunHooks(self)) })
                         RunHooks(self) {
                             for cb in self.RamkaHooks
-                               cb()
+                                cb()
                         }
                     }
                     c.RamkaHooks.Push(Odswiez)
                 }
-                
+
                 ; [FIX] Oznacz elementy ramki dynamicznej, aby Pokaz() ich nie przesuwał
                 ; (Ramka sama się przesunie na właściwe miejsce dzięki hookom na kontrolkach-celach)
                 for c in Outer.Ctrls ; Teraz działa poprawnie dla obu trybów (1 lub 4 kontrolki)
@@ -693,13 +692,13 @@ class Grafika extends Motyw {
      */
     static NadajStyl(ctrl, stan, kolorRamki := "", kolorPrzycisku := "", kolorTekstu := "", KolorMotywu := "") {
         ; 1. Wylicz parametr (Ternary)
-        param := (stan=3 ? SilnikGUI.Motyw.ParamFocus+SilnikGUI.Motyw.ParamHover : (stan=2 ? SilnikGUI.Motyw.ParamFocus : (stan=1 ? SilnikGUI.Motyw.ParamHover : 0)))
-        DajKolor := (baza, wplyw) => (wplyw=0 ? baza : SilnikGUI.Odcien(baza, wplyw)) ; Lambda pomocnicza
+        param := (stan = 3 ? SilnikGUI.Motyw.ParamFocus + SilnikGUI.Motyw.ParamHover : (stan = 2 ? SilnikGUI.Motyw.ParamFocus : (stan = 1 ? SilnikGUI.Motyw.ParamHover : 0)))
+        DajKolor := (baza, wplyw) => (wplyw = 0 ? baza : SilnikGUI.Odcien(baza, wplyw)) ; Lambda pomocnicza
         (kolorRamki == "") && kolorRamki := SilnikGUI.Motyw.Ramka
         (kolorPrzycisku == "") && kolorPrzycisku := SilnikGUI.Motyw.Przycisk
         (kolorTekstu == "") && kolorTekstu := SilnikGUI.Motyw.Tekst
         (KolorMotywu == "") && KolorMotywu := SilnikGUI.Motyw.Tlo
-        
+
         ; 2. Aplikuj styl (Switch)
         switch (HasProp(ctrl, "Rola") ? ctrl.Rola : ctrl.Type) {
             ; [FIX] Odwrócona kolejność: Najpierw RAMKA (Tło), potem KONTROLKA (Treść)
@@ -743,7 +742,7 @@ class Grafika extends Motyw {
             return
         for i, c in listaCtrls {
             bg := (i == wybranyIdx) ? SilnikGUI.Motyw.Focus : SilnikGUI.Motyw.Przycisk
-            ram := (i == wybranyIdx) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka,SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
+            ram := (i == wybranyIdx) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka, SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
             if (HasProp(c, "Main")) { ; Obsługa złożonych elementów (Center Mode)
                 c.Main.Opt("Background" . bg . " Redraw")
                 (HasProp(c, "Left")) && c.Left.Opt("Background" . bg . " Redraw")
@@ -772,7 +771,7 @@ class Grafika extends Motyw {
             ; [FIX] Ignoruj tylko Dummy. Ramki (IsFrame) są częścią layoutu i muszą być mierzone!
             if (HasProp(ctrl, "IsDummy") && ctrl.IsDummy)
                 continue
-            
+
             ; [FIX] Pomijanie aktualnie skalowanej kontrolki i jej dekoracji (zapobiega blokowaniu shrinka)
             if (ignorujCtrl && (ctrl.Hwnd == ignorujCtrl.Hwnd || (HasProp(ctrl, "ParentCtrl") && ctrl.ParentCtrl.Hwnd == ignorujCtrl.Hwnd)))
                 continue
@@ -781,7 +780,7 @@ class Grafika extends Motyw {
             maxW := Max(maxW, cX + cW + this.Stan.PadR)
             maxH := Max(maxH, cY + cH + this.Stan.PadD)
         }
-        res := {W: maxW, H: maxH}
+        res := { W: maxW, H: maxH }
         if (!ignorujCtrl) {
             this.Stan.LastObszar := res
             this.Stan.LastObszarTick := A_TickCount
@@ -812,7 +811,7 @@ class Logika extends Grafika {
             if SilnikGUI.Statics.StanMButtonScroll.Aktywny
                 return (SilnikGUI.ZakonczMButtonScroll(), 1)
             if SilnikGUI.Statics.AktywnaInstancjaSuwaka
-                return 0 
+                return 0
             if SilnikGUI.PasekPrzewijania.CzyGotowyNaMButtonScroll(true, &Silnik)
                 return (SilnikGUI.PasekPrzewijania.UruchomMButtonScroll(Silnik), 1)
         }
@@ -822,7 +821,7 @@ class Logika extends Grafika {
         if (msg == 0x020A || msg == 0x020E) {
             delta := (wParam >> 16)
             (delta > 0x7FFF) && delta -= 0x10000 ; Konwersja na signed int
-            
+
             isHScroll := (msg == 0x020E)
             kierunek := isHScroll ? ((delta > 0) ? -1 : 1) : ((delta > 0) ? 1 : -1)
 
@@ -843,16 +842,16 @@ class Logika extends Grafika {
             SilnikGUI.AkcjaScrollBar(kierunek, isHScroll)
             return 1
         }
-        
+
         ; 2. KLAWIATURA (WM_KEYDOWN - 0x100, WM_SYSKEYDOWN - 0x0104 dla Alt)
         if (msg == 0x0100 || msg == 0x0104) {
-            vk := wParam            
+            vk := wParam
             if (vk == 0x0D) {  ; ENTER
                 stan := SilnikGUI.PobierzStanEnter()
                 if (stan == 1) ; Obsługiwana kontrolka
                     return (SilnikGUI.AkcjaEnter(), 0)
                 if (stan == 2) ; [FIX] WM_NEXTDLGCTL (0x28): 0=Next, 1=Prev. Rozkaz systemowy, nie narusza stanu klawiszy (Ctrl/Shift).
-                    return (PostMessage(0x0028, GetKeyState("Shift"), 0, , "ahk_id " DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr")), 0)           
+                    return (PostMessage(0x0028, GetKeyState("Shift"), 0, , "ahk_id " DllCall("GetAncestor", "Ptr", hwnd, "UInt", 2, "Ptr")), 0)
             }
             if (vk == 0x1B) { ; ESC
                 if SilnikGUI.Statics.StanMButtonScroll.Aktywny
@@ -861,40 +860,40 @@ class Logika extends Grafika {
             ; --- STRZAŁKI (Standard + Numpad, Pion + Poziom) ---
             isUp := (vk == 0x26 || vk == 0x68), isDown := (vk == 0x28 || vk == 0x62)
             isLeft := (vk == 0x25 || vk == 0x64), isRight := (vk == 0x27 || vk == 0x66)
-            
+
             if (isUp || isDown || isLeft || isRight) {
                 kierunek := (isUp || isLeft) ? 1 : -1
                 isHoriz := (isLeft || isRight)
-                
+
                 ctrl := SilnikGUI.PobierzKontrolkeFocus()
-                
+
                 ; 1. Kontrolki natywne (Edit) potrzebują systemowego zachowania
                 if (ctrl && (HasProp(ctrl, "ArrowNeed") || (isHoriz && HasProp(ctrl, "HArrowNeed")) || (!isHoriz && HasProp(ctrl, "VArrowNeed")))) {
                     if (HasProp(ctrl, "SledzKaretke") && ctrl.SledzKaretke)
                         SetTimer(ObjBindMethod(ctrl.Gui.Silnik, "SledzKaretke", ctrl), -10)
                     return ; Przepuść zdarzenie do systemu
                 }
-                
+
                 prop := isHoriz ? "HScrollAction" : "VScrollAction"
-                
+
                 ; 2. Kontrolki UI - systemowy Auto-Repeat Delay
                 if (ctrl && HasProp(ctrl, prop))
                     return (ctrl.%prop%(kierunek), 0)
                 if (ctrl && HasProp(ctrl, "ScrollAction"))
                     return (ctrl.ScrollAction(kierunek), 0)
-                
+
                 ; 3. Płynny scroll okna (własny Timer omijający 500ms blokadę systemu)
                 if ((lParam >> 30) & 1)
                     return 0 ; Ignoruj systemowy auto-repeat
-                    
+
                 keyName := GetKeyName(Format("vk{:x}", vk))
-                
+
                 WypompujPed() {
                     if !GetKeyState(keyName, "P")
-                        return SetTimer(WypompujPed, 0)                    
+                        return SetTimer(WypompujPed, 0)
                     SilnikGUI.AkcjaScrollBar(kierunek, isHoriz, true)
                 }
-                
+
                 WypompujPed() ; Pierwszy natychmiastowy skok
                 SetTimer(WypompujPed, this.ConfigScroll.ArT) ; Start płynnej serii
                 return 0
@@ -928,14 +927,14 @@ class Logika extends Grafika {
         ; 1. KLAWIATURA (Bezpośredni strzał do silnika z fokusem)
         if (arrows) {
             if (ctrl := SilnikGUI.PobierzKontrolkeFocus()) && HasProp(ctrl, "Gui") && HasProp(ctrl.Gui, "Silnik")
-                SilnikGUI.PasekPrzewijania._WykonajScrollNaSilniku(ctrl.Gui.Silnik, kierunek, isHoriz, {Vstep: this.ConfigScroll.stepYAr, Hstep: this.ConfigScroll.stepXAr})
+                SilnikGUI.PasekPrzewijania._WykonajScrollNaSilniku(ctrl.Gui.Silnik, kierunek, isHoriz, { Vstep: this.ConfigScroll.stepYAr, Hstep: this.ConfigScroll.stepXAr })
             return
         }
 
         isHoriz := isHScroll || GetKeyState("Shift", "P")
-        
+
         ; 2. MYSZ (Z-Order Climb przez WinAPI z obsługą +Owner)
-        stanMyszy := {trybMyszy: true, chronKontrolki: ignorujKontrolki, ctrlPobrano: false, ctrlUnderMouse: 0, Vstep: this.ConfigScroll.stepYWh, Hstep: this.ConfigScroll.stepXWh}
+        stanMyszy := { trybMyszy: true, chronKontrolki: ignorujKontrolki, ctrlPobrano: false, ctrlUnderMouse: 0, Vstep: this.ConfigScroll.stepYWh, Hstep: this.ConfigScroll.stepXWh }
 
         curr := SilnikGUI.GetRealHwndUnderMouse()
         hDesktop := DllCall("GetDesktopWindow", "Ptr")
@@ -945,7 +944,7 @@ class Logika extends Grafika {
                     Silnik := g.Silnik
                     Utils.ScreenToClient(0, Silnik.GuiObj.Hwnd, &cX, &cY)
                     stanMyszy.cX := cX, stanMyszy.cY := cY
-                    
+
                     if SilnikGUI.PasekPrzewijania._WykonajScrollNaSilniku(Silnik, kierunek, isHoriz, stanMyszy)
                         return
                 }
@@ -974,8 +973,7 @@ class Logika extends Grafika {
         }
         return false
     }
-    
-    
+
 
     static PobierzKontrolkeFocus() {
         try {
@@ -995,7 +993,7 @@ class Logika extends Grafika {
         sX := NumGet(pt, 0, "Int"), sY := NumGet(pt, 4, "Int")
         hCtrl := (A_PtrSize == 8) ? DllCall("WindowFromPoint", "Int64", NumGet(pt, 0, "Int64"), "Ptr") : DllCall("WindowFromPoint", "Int", sX, "Int", sY, "Ptr")
         if (hCtrl) {
-            Loop 5 { 
+            Loop 5 {
                 ptClient := Buffer(8)
                 NumPut("Int", sX, "Int", sY, ptClient)
                 DllCall("ScreenToClient", "Ptr", hCtrl, "Ptr", ptClient)
@@ -1034,7 +1032,7 @@ class Logika extends Grafika {
         try {
             ctrl := IsInteger(obj) ? GuiCtrlFromHwnd(obj) : obj
             h := IsInteger(obj) ? obj : (ctrl ? ctrl.Hwnd : 0)
-            
+
             curr := ctrl
             while curr {
                 if (wymaganaWlasciwosc != "" && HasProp(curr, wymaganaWlasciwosc))
@@ -1043,10 +1041,10 @@ class Logika extends Grafika {
                     break
                 curr := curr.ParentCtrl
             }
-            
+
             if (wymaganaWlasciwosc != "")
                 return 0
-                
+
             if (limitSilnik) {
                 currG := curr ? curr.Gui : GuiFromHwnd(h)
                 while currG && HasProp(currG, "Silnik") {
@@ -1101,7 +1099,7 @@ class Logika extends Grafika {
                         } else
                             SetTimer(SilnikGUI.Statics.ZakonczMButtonScrollObj, -1) ; DEFER: Ochrona przed desynchronizacją DWM
                     }
-                } else if (st.TrybToggle && ( msg == 0x0207)) { ; 0x0201: WM_LBUTTONDOWN, 0x0204: WM_RBUTTONDOWN, 0x0207: WM_MBUTTONDOWN, 0x020B: WM_XBUTTONDOWN
+                } else if (st.TrybToggle && (msg == 0x0207)) { ; 0x0201: WM_LBUTTONDOWN, 0x0204: WM_RBUTTONDOWN, 0x0207: WM_MBUTTONDOWN, 0x020B: WM_XBUTTONDOWN
                     SetTimer(SilnikGUI.Statics.ZakonczMButtonScrollObj, -1) ; DEFER: Zakończenie Toggle poza wątkiem Hooka
                     return 1 ; POŁKNIJ: Ignoruj każde kliknięcie zakańczające w systemie
                 }
@@ -1142,33 +1140,33 @@ class Logika extends Grafika {
         st := SilnikGUI.Statics.StanMButtonScroll
         if !st.Aktywny
             return SetTimer(SilnikGUI.Statics.PetlaMButtonScrollObj, 0)
-           
-            
+
+
         DllCall("GetCursorPos", "Ptr", pt := Buffer(8))
         cx := NumGet(pt, 0, "Int"), cy := NumGet(pt, 4, "Int")
-        
+
         dx := cx - st.StartX, dy := cy - st.StartY
-        dist := Sqrt(dx**2 + dy**2)
-        
+        dist := Sqrt(dx ** 2 + dy ** 2)
+
         clipDir := ""
         if (st.CanX && !st.CanY) {
             curId := 32644 ; Wymuś poziom
-                if (dist > st.Opcje.MBuDeadZone)
+            if (dist > st.Opcje.MBuDeadZone)
                 clipDir := (dx > 0) ? 3 : ((dx < 0) ? 7 : "")
         } else if (st.CanY && !st.CanX) {
             curId := 32645 ; Wymuś pion
-                if (dist > st.Opcje.MBuDeadZone)
+            if (dist > st.Opcje.MBuDeadZone)
                 clipDir := (dy > 0) ? 5 : ((dy < 0) ? 1 : "")
         } else {
             curId := 32646, clipDir := 0 ; Środek
-                if (dist > st.Opcje.MBuDeadZone) {
+            if (dist > st.Opcje.MBuDeadZone) {
                 if (dx == 0) { ; Ochrona przed dzieleniem przez zero
                     angle := (dy > 0) ? 90 : 270
                 } else {
                     angle := ATan(dy / dx) * (180 / 3.141592653589793)
                     (dx < 0) ? angle += 180 : ((dy < 0) ? angle += 360 : 0)
                 }
-                    
+
                 if (angle >= 337.5 || angle < 22.5) {
                     curId := 32644, clipDir := 3 ; R
                 } else if (angle >= 22.5 && angle < 67.5) {
@@ -1188,12 +1186,12 @@ class Logika extends Grafika {
                 }
             }
         }
-        
+
         maxDist := Max(Abs(dx), Abs(dy))
-        maxDistSqrt  := Sqrt(dx*dx + dy*dy)
+        maxDistSqrt := Sqrt(dx * dx + dy * dy)
         maxDist := ((clipDir != "") && (clipDir & 1)) ? maxDist : maxDistSqrt ; argument nieparzystkości z modulo
-        targetScale := st.Opcje.MBCurScale ? Round((1.0 + Min(1.0, maxDist / (A_ScreenHeight / 2))) *3) / 3 : (clipDir>0 ? 1.5 : 1)
-        
+        targetScale := st.Opcje.MBCurScale ? Round((1.0 + Min(1.0, maxDist / (A_ScreenHeight / 2))) * 3) / 3 : (clipDir > 0 ? 1.5 : 1)
+
         if (st.LastCurId != curId || st.LastClipDir != clipDir || st.LastScale != targetScale) {
             if (st.Fake)
                 st.Fake.Destroy()
@@ -1203,23 +1201,23 @@ class Logika extends Grafika {
             st.LastClipDir := clipDir
             st.LastScale := targetScale
         }
-        
+
         st.Fake.Move(cx, cy)
         DllCall("SetCursor", "Ptr", 0)
-        
+
         if (dist <= st.Opcje.MBuDeadZone) {
             st.OstatnieVx := 0, st.OstatnieVy := 0
             return
         }
-        
+
         vx := dx * st.Opcje.MBuCz
         vy := dy * st.Opcje.MBuCz
-        
+
         ; Hamowanie predykcyjne
         Silnik := st.Instancja
         Silnik.Stan.ChildGui.GetPos(&cX, &cY)
         pFaktor := st.Opcje.MBuProgFakt
-        
+
         if (Silnik.Stan.VBar && vy != 0) {
             maxScroll := Max(0, Silnik.Stan.VBar.LastGeo.Content - Silnik.Stan.VBar.LastGeo.View)
             progH := st.Opcje.MBuProgHam
@@ -1231,7 +1229,7 @@ class Logika extends Grafika {
         } else {
             vy := 0
         }
-        
+
         if (Silnik.Stan.HBar && vx != 0) {
             maxScroll := Max(0, Silnik.Stan.HBar.LastGeo.Content - Silnik.Stan.HBar.LastGeo.View)
             progW := st.Opcje.MBuProgHam
@@ -1243,11 +1241,11 @@ class Logika extends Grafika {
         } else {
             vx := 0
         }
-        
+
         st.OstatnieVx := vx, st.OstatnieVy := vy
         st.AccumX += vx, st.AccumY += vy
         stepX := Round(st.AccumX), stepY := Round(st.AccumY)
-        
+
         if (stepX != 0 || stepY != 0) {
             st.AccumX -= stepX, st.AccumY -= stepY
             bar := Silnik.Stan.VBar ? Silnik.Stan.VBar : Silnik.Stan.HBar
@@ -1264,7 +1262,7 @@ class Logika extends Grafika {
         st := SilnikGUI.Statics.StanMButtonScroll
         if !st.Aktywny
             return
-            
+
         wasToggle := st.TrybToggle
         st.Aktywny := false
         DllCall("ReleaseCapture")
@@ -1274,18 +1272,18 @@ class Logika extends Grafika {
         ; Usunięto destruktywny CallbackFree - zabezpieczenie łańcucha systemowego
         if SilnikGUI.Statics.PetlaMButtonScrollObj
             SetTimer(SilnikGUI.Statics.PetlaMButtonScrollObj, 0)
-            
+
         if (st.Fake) {
             st.Fake.Destroy()
             st.Fake := 0
         }
-        
+
         ; Fuzja kinetyczna po zatrzymaniu (odwrócony znak wektora dla poprawnego kierunku wybiegu)
         if (Abs(st.OstatnieVx) > 2 || Abs(st.OstatnieVy) > 2) {
             (st.Instancja.Stan.VBar) && (st.Instancja.Stan.VBar.Kinetyka.TrybFocus := false, st.Instancja.Stan.VBar.DodajPed(-st.OstatnieVy * st.Opcje.MBuWyb, st.Opcje.MBuMaxSpeed))
             (st.Instancja.Stan.HBar) && (st.Instancja.Stan.HBar.Kinetyka.TrybFocus := false, st.Instancja.Stan.HBar.DodajPed(-st.OstatnieVx * st.Opcje.MBuWyb, st.Opcje.MBuMaxSpeed))
         }
-        
+
         DllCall("GetCursorPos", "Ptr", pt := Buffer(8))
         x := NumGet(pt, 0, "Int"), y := NumGet(pt, 4, "Int")
         DllCall("SetCursorPos", "Int", x, "Int", y + 1)
@@ -1302,7 +1300,7 @@ class Logika extends Grafika {
             targetGui := HasProp(obj, "Gui") ? obj.Gui : obj
             ; [FIX] Pobierz okno nadrzędne (Root), bo ChildGui nigdy nie jest "Active" w oczach systemu
             hRoot := DllCall("GetAncestor", "Ptr", targetGui.Hwnd, "UInt", 2, "Ptr") ; GA_ROOT = 2
-            
+
             if !WinActive(hRoot) || (WinGetStyle(targetGui.Hwnd) & 0x8000000) || (HasProp(targetGui, "PopupActive") && targetGui.PopupActive)
                 return false
             return true
@@ -1330,7 +1328,7 @@ class Logika extends Grafika {
             SendMessage(0xB1, newPos, newPos, DoKorekty)
             if (pokazBlad) {
                 SilnikGUI.PokazDymekBledu(DoKorekty, "W tym polu możesz wpisywać tylko cyfry`noraz jeden znak separatora (kropka/przecinek).", , Integer(czasSekundy * 1000))
-                DoKorekty.OnEvent("LoseFocus", (*) => ToolTip(,,,10))
+                DoKorekty.OnEvent("LoseFocus", (*) => ToolTip(, , , 10))
             }
         }
     }
@@ -1349,7 +1347,7 @@ class Logika extends Grafika {
             SendMessage(0xB1, newPos, newPos, DoKorekty)
             if (pokazBlad) {
                 SilnikGUI.PokazDymekBledu(DoKorekty, "W tym polu możesz wpisywać tylko cyfry.", , Integer(czasSekundy * 1000))
-                DoKorekty.OnEvent("LoseFocus", (*) => ToolTip(,,,10))
+                DoKorekty.OnEvent("LoseFocus", (*) => ToolTip(, , , 10))
             }
         }
     }
@@ -1367,7 +1365,7 @@ class Logika extends Grafika {
         val := raw
         (minV != "") && val := Max(val, minV)
         (maxV != "") && val := Min(val, maxV)
-        return {V: val, Flash: (val != raw)}
+        return { V: val, Flash: (val != raw) }
     }
 
     /**
@@ -1381,10 +1379,10 @@ class Logika extends Grafika {
      */
     static MonitorujWyjscie(OnExit, Dozwolone, Tryb := "Click", OnLoop := 0, DelayOFF := 0) {
         if (Tryb == "Click") {
-            wd := {OnExit: OnExit, Dozwolone: Dozwolone}
+            wd := { OnExit: OnExit, Dozwolone: Dozwolone }
             SilnikGUI.WatchdogiClick.Push(wd)
             SilnikGUI.AktualizujHooka()
-            
+
             UsunClick(*) {
                 for i, item in SilnikGUI.WatchdogiClick {
                     if (item == wd) {
@@ -1399,24 +1397,24 @@ class Logika extends Grafika {
 
         pendingKill := 0
         Check() {
-            MouseGetPos(,, &win)
+            MouseGetPos(, , &win)
             ctrl := SilnikGUI.GetRealHwndUnderMouse()
             lider := SilnikGUI.RozwiazKontrolke(ctrl)
             lHwnd := IsObject(lider) ? lider.Hwnd : lider
-            
+
             safe := false
             for h in Dozwolone
                 if (h && (h == win || h == ctrl || h == lHwnd)) {
                     safe := true
                     break
                 }
-                
+
             if (safe) {
                 if (pendingKill)
                     SetTimer(Wygas, 0), pendingKill := 0
                 return (OnLoop && OnLoop(0))
             }
-            
+
             if (DelayOFF > 0 && !pendingKill) {
                 pendingKill := 1
                 SetTimer(Wygas, -DelayOFF)
@@ -1424,7 +1422,7 @@ class Logika extends Grafika {
                 SetTimer(Check, 0), OnExit()
                 return
             }
-            
+
             if (pendingKill)
                 return (OnLoop && OnLoop(1))
         }
@@ -1442,7 +1440,7 @@ class Logika extends Grafika {
         pos := 1
         while RegExMatch(Align, "i)([+-m])?(Left|Right|Up|Down|CenterX|CenterY)(?:([+-]\d+))?", &m, pos) {
             pre := StrLower(m[1]), dir := StrLower(m[2]), suf := (m[3] != "") ? Integer(m[3]) : 0
-            instrukcje.Push({pre: pre, dir: dir, suf: suf})
+            instrukcje.Push({ pre: pre, dir: dir, suf: suf })
             pos := m.Pos + m.Len
         }
         return instrukcje
@@ -1486,14 +1484,14 @@ class Logika extends Grafika {
         }
         sufX := 0, sufY := 0
         defX := false, defY := false
-        
+
         for m in ParsedAlign {
             pre := m.pre, dir := m.dir, suf := m.suf
             isX := (dir == "left" || dir == "right" || dir == "centerx")
             isY := (dir == "up" || dir == "down" || dir == "centery")
             (isX) && defX := true
             (isY) && defY := true
-            
+
             switch trybStr {
                 case "Anchor":
                     if (isX) {
@@ -1551,19 +1549,19 @@ class Logika extends Grafika {
         }
 
         x += sufX + OffX, y += sufY + OffY
-        
+
         if (MonArea) {
             if (trybStr != "Screen") {
                 if (y + h > MonArea.B)
                     y := effKy - h - sufY - Integer(OffY / 2)
                 else if (y < MonArea.T)
                     y := effKy + effKh - sufY + Integer(OffY / 2)
-                
+
                 if !ParsedMove.NoClampX
                     x := Min(Max(x, MonArea.L), MonArea.R - w)
             }
         }
-        return {x: x, y: y}
+        return { x: x, y: y }
     }
 
     /**
@@ -1576,18 +1574,18 @@ class Logika extends Grafika {
      */
     static FakeCur(hOwner, hCursor := 0, clipDir := "", scale := 1.0) {
         VCursor := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x20 +E0x80000 -DPIScale +Owner" . hOwner) ;
-        
+
         if (!hCursor) {
             ci := Buffer(24, 0), NumPut("Int", 24, ci), DllCall("GetCursorInfo", "Ptr", ci)
             hCursor := NumGet(ci, 8, "Ptr")
         }
-        
+
         ii := Buffer(32, 0), DllCall("GetIconInfo", "Ptr", hCursor, "Ptr", ii)
         xHot := NumGet(ii, 4, "UInt"), yHot := NumGet(ii, 8, "UInt")
-        
-        hBmMask := NumGet(ii, 12 + (A_PtrSize=8?4:0), "Ptr")
-        hBmColor := NumGet(ii, 12 + (A_PtrSize=8?4:0) + A_PtrSize, "Ptr")
-        
+
+        hBmMask := NumGet(ii, 12 + (A_PtrSize = 8 ? 4 : 0), "Ptr")
+        hBmColor := NumGet(ii, 12 + (A_PtrSize = 8 ? 4 : 0) + A_PtrSize, "Ptr")
+
         w := 32, h := 32
         bm := Buffer(32, 0)
         if (hBmColor) {
@@ -1597,7 +1595,7 @@ class Logika extends Grafika {
             DllCall("GetObject", "Ptr", hBmMask, "Int", 32, "Ptr", bm)
             w := NumGet(bm, 4, "Int"), h := NumGet(bm, 8, "Int") // 2
         }
-        
+
         (hBmMask) && DllCall("DeleteObject", "Ptr", hBmMask)
         (hBmColor) && DllCall("DeleteObject", "Ptr", hBmColor)
 
@@ -1607,9 +1605,9 @@ class Logika extends Grafika {
 
         hDC := DllCall("GetDC", "Ptr", 0, "Ptr"), hMemDC := DllCall("CreateCompatibleDC", "Ptr", hDC, "Ptr")
         bi := Buffer(40, 0), NumPut("UInt", 40, bi, 0), NumPut("Int", sW, bi, 4), NumPut("Int", sH, bi, 8), NumPut("UShort", 1, bi, 12), NumPut("UShort", 32, bi, 14)
-        hDIB := DllCall("CreateDIBSection", "Ptr", hDC, "Ptr", bi, "UInt", 0, "Ptr*", &pBits:=0, "Ptr", 0, "UInt", 0, "Ptr")
+        hDIB := DllCall("CreateDIBSection", "Ptr", hDC, "Ptr", bi, "UInt", 0, "Ptr*", &pBits := 0, "Ptr", 0, "UInt", 0, "Ptr")
         hOld := DllCall("SelectObject", "Ptr", hMemDC, "Ptr", hDIB)
-        
+
         if (clipDir != "") {
             cX := 0, cY := 0, cW := sW, cH := sH
             if (clipDir == 1) ; N
@@ -1628,28 +1626,28 @@ class Logika extends Grafika {
                 cY := sYHot, cH := sH - sYHot, cW := sXHot
             else if (clipDir == 4) ; SE
                 cX := sXHot, cY := sYHot, cW := sW - sXHot, cH := sH - sYHot
-                
+
             DllCall("IntersectClipRect", "Ptr", hMemDC, "Int", cX, "Int", cY, "Int", cX + cW, "Int", cY + cH)
         }
-        
+
         DllCall("DrawIconEx", "Ptr", hMemDC, "Int", 0, "Int", 0, "Ptr", hCursor, "Int", sW, "Int", sH, "UInt", 0, "Ptr", 0, "UInt", 3)
-        
+
         pAlpha := WinGetTransparent(DllCall("GetAncestor", "Ptr", hOwner, "UInt", 2, "Ptr"))
         alphaVal := IsNumber(pAlpha) ? pAlpha : 255
 
         ptSrc := Buffer(8, 0), size := Buffer(8, 0), NumPut("Int", sW, size, 0), NumPut("Int", sH, size, 4)
         blend := Buffer(4, 0), NumPut("UChar", alphaVal, blend, 2), NumPut("UChar", 1, blend, 3)
         DllCall("UpdateLayeredWindow", "Ptr", VCursor.Hwnd, "Ptr", hDC, "Ptr", 0, "Ptr", size, "Ptr", hMemDC, "Ptr", ptSrc, "UInt", 0, "Ptr", blend, "UInt", 2)
-        
+
         DllCall("SelectObject", "Ptr", hMemDC, "Ptr", hOld), DllCall("DeleteObject", "Ptr", hDIB), DllCall("DeleteDC", "Ptr", hMemDC), DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
 
-        return {Move: (_, x, y) => VCursor.Show("NA x" . (x - sXHot) . " y" . (y - sYHot) . " w" . sW . " h" . sH), Hide: (*) => VCursor.Hide(), Destroy: (*) => VCursor.Destroy(), Hwnd: VCursor.Hwnd, SkipMonitor: true}
+        return { Move: (_, x, y) => VCursor.Show("NA x" . (x - sXHot) . " y" . (y - sYHot) . " w" . sW . " h" . sH), Hide: (*) => VCursor.Hide(), Destroy: (*) => VCursor.Destroy(), Hwnd: VCursor.Hwnd, SkipMonitor: true }
     }
 }
 
 Class ExWinAndPopups extends Logika {
     /**
-     
+     *      
      * Universal tooltip function integrated with SilnikGUI theme.
      * Combines static display, mouse tracking, and control watchdog.
      * @param {String} [tresc=""] - Text to display. Empty string kills tooltip. `n`n=empty line, `n..`n=1px gap, `n.[X].`n=X px gap.
@@ -1675,8 +1673,8 @@ Class ExWinAndPopups extends Logika {
      * @note Lambda `(*)` is required to absorb default arguments passed by the SilnikGUI engine.
      */
     static CustomTooltip(tresc := "", opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {Align: "+Down", Move: "", ON: 1, czas: 0, DelayON: this.TipDelayON, DelayOFF: this.TipDelayOFF, trybPozycji: "Mouse", kolorTla: "", kolorTekstu: "", kolorRamki: "", MargPion: 4, MargPoz: 8, rozmiarCzcionki: 10, czyPogrubione: 0, Transparent: "", TransClick: ""})
-        Align:= opcje.Align, Move:= opcje.Move, ON := opcje.ON, czas := opcje.czas, DelayON := opcje.DelayON, DelayOFF := opcje.DelayOFF, trybPozycji := opcje.trybPozycji, kolorTla := opcje.kolorTla, kolorTekstu := opcje.kolorTekstu, kolorRamki := opcje.kolorRamki, MargPion := opcje.MargPion, MargPoz := opcje.MargPoz, rozmiarCzcionki := opcje.rozmiarCzcionki, czyPogrubione := opcje.czyPogrubione, Transparent := opcje.Transparent, TransClick := opcje.TransClick
+        opcje := Utils.MergeOptions(opcje?, { Align: "+Down", Move: "", ON: 1, czas: 0, DelayON: this.TipDelayON, DelayOFF: this.TipDelayOFF, trybPozycji: "Mouse", kolorTla: "", kolorTekstu: "", kolorRamki: "", MargPion: 4, MargPoz: 8, FontSize: 10, FontOpt: "", rozmiarCzcionki: 10, czyPogrubione: 0, Transparent: "", TransClick: "" })
+        Align := opcje.Align, Move := opcje.Move, ON := opcje.ON, czas := opcje.czas, DelayON := opcje.DelayON, DelayOFF := opcje.DelayOFF, trybPozycji := opcje.trybPozycji, kolorTla := opcje.kolorTla, kolorTekstu := opcje.kolorTekstu, kolorRamki := opcje.kolorRamki, MargPion := opcje.MargPion, MargPoz := opcje.MargPoz, FontSize := opcje.FontSize, FontOpt := opcje.FontOpt, rozmiarCzcionki := opcje.rozmiarCzcionki, czyPogrubione := opcje.czyPogrubione, Transparent := opcje.Transparent, TransClick := opcje.TransClick
         ; [ADAPTER] Kompatybilność wsteczna + bezpieczne kierowanie typów (Mouse, Screen, Anchor)
         trybStr := (trybPozycji == 0 || trybPozycji == "0" || trybPozycji == "Mouse") ? "Mouse" : (IsObject(trybPozycji) ? "Anchor" : "Screen")
 
@@ -1686,7 +1684,7 @@ Class ExWinAndPopups extends Logika {
         } else if (trybStr == "Anchor") {
             (!RegExMatch(Move, "i)X[MA]Track|XStop")) && Move .= " XATrack"
             (!RegExMatch(Move, "i)Y[MA]Track|YStop")) && Move .= " YATrack"
-        }        
+        }
         ParsedMove := SilnikGUI.ParsujMove(Move)
         igX := (trybStr != "Screen") && ParsedMove.XMTrack
         igY := (trybStr != "Screen") && ParsedMove.YMTrack
@@ -1721,10 +1719,10 @@ Class ExWinAndPopups extends Logika {
                     return
             }
         }
-        
+
         ; Pobierz uchwyt okna nadrzędnego (GA_ROOT = 2) dla relacji +Owner
         hOwner := hCel ? DllCall("GetAncestor", "Ptr", hCel, "UInt", 2, "Ptr") : 0
-        
+
         ; [FIX] Dziedziczenie przezroczystości z okna rodzica
         if (Transparent == "") {
             pAlpha := hOwner ? WinGetTransparent(hOwner) : ""
@@ -1733,13 +1731,13 @@ Class ExWinAndPopups extends Logika {
         Transparent := 1.0 - Transparent
         ; Obiektowa kotwica (Fallback: 1. AnchorCtrl, 2. Ramka, 3. Sam obiekt)
         Anchor := (trybStr == "Anchor" && HasProp(trybPozycji, "AnchorCtrl")) ? trybPozycji.AnchorCtrl : ((trybStr == "Anchor" && HasProp(trybPozycji, "Ramka")) ? trybPozycji.Ramka : trybPozycji)
-        
+
         ; [BUILDER] Przygotowuje czyste dane (Granice Kotwicy i Monitora) dla funkcji matematycznej
         GetKObj() {
             MonitorGetWorkArea(MonitorGetPrimary(), &mL, &mT, &mR, &mB)
-            M := {L: mL, T: mT, R: mR, B: mB}
-            K := {x: 0, y: 0, w: 0, h: 0}
-            
+            M := { L: mL, T: mT, R: mR, B: mB }
+            K := { x: 0, y: 0, w: 0, h: 0 }
+
             if (trybStr == "Screen") {
                 K.x := mL, K.y := mT, K.w := mR - mL, K.h := mB - mT
             } else if (trybStr == "Anchor") {
@@ -1753,12 +1751,12 @@ Class ExWinAndPopups extends Logika {
                     K.x := cX, K.y := cY, K.w := cW, K.h := cH
                 }
             }
-            
+
             if (trybStr == "Mouse") {
                 pt := Buffer(8), DllCall("GetCursorPos", "Ptr", pt)
                 K.x := NumGet(pt, 0, "Int"), K.y := NumGet(pt, 4, "Int")
             }
-            return {K: K, M: M}
+            return { K: K, M: M }
         }
 
         if (tresc == "") {
@@ -1780,35 +1778,35 @@ Class ExWinAndPopups extends Logika {
 
         if (DelayON > 0) {
             SilnikGUI.CustomTooltip("") ; Zabij obecny i zresetuj timery
-            
+
             opcje.DelayON := 0 ; Zapobiegnij petli
             TimerOpoznienia := () => SilnikGUI.CustomTooltip(tresc, opcje)
             SetTimer(TimerOpoznienia, -DelayON)
-            
-                 if (trybStr == "Anchor" && hCel && !HasProp(trybPozycji, "SkipMonitor"))
-            TempMonitor := SilnikGUI.MonitorujWyjscie(() => SilnikGUI.CustomTooltip(""), [hCel], "Hover", 0, 0)
+
+            if (trybStr == "Anchor" && hCel && !HasProp(trybPozycji, "SkipMonitor"))
+                TempMonitor := SilnikGUI.MonitorujWyjscie(() => SilnikGUI.CustomTooltip(""), [hCel], "Hover", 0, 0)
 
             return
         }
 
         ; Integracja motywu
-        (kolorTla == "")    && kolorTla := SilnikGUI.Motyw.Tlo
+        (kolorTla == "") && kolorTla := SilnikGUI.Motyw.Tlo
         (kolorTekstu == "") && kolorTekstu := SilnikGUI.Motyw.Tekst
-        (kolorRamki == "")  && kolorRamki := SilnikGUI.Motyw.Ramka
+        (kolorRamki == "") && kolorRamki := SilnikGUI.Motyw.Ramka
 
         Rysuj() {
             CzyPrzebudowacStyl := !IsObject(GuiTip) || (trybStr != OstatniTryb) || (igX != OstatnieIgX) || (igY != OstatnieIgY) || (kolorTla != OstatniKolorTla) || (kolorTekstu != OstatniKolorTekstu) || (kolorRamki != OstatniKolorRamki) || (MargPion != OstatniMargPion) || (MargPoz != OstatniMargPoz) || (rozmiarCzcionki != OstatniRozmiar) || (czyPogrubione != OstatniePogrubienie) || (Transparent != OstatniTransparent) || (TransClick !== OstatniTransClick)
-            
+
             NoweSegmenty := []
             pos := 1, dlugosc := StrLen(tresc)
             while (pos <= dlugosc) {
                 if RegExMatch(tresc, "\n\.(?:\[(\d{1,3})\])?\.\n", &match, pos) {
                     txtSegment := SubStr(tresc, pos, match.Pos - pos)
                     sepH := (match[1] == "") ? 1 : Integer(match[1])
-                    NoweSegmenty.Push({txt: txtSegment, sepH: sepH})
+                    NoweSegmenty.Push({ txt: txtSegment, sepH: sepH })
                     pos := match.Pos + match.Len
                 } else {
-                    NoweSegmenty.Push({txt: SubStr(tresc, pos), sepH: 0})
+                    NoweSegmenty.Push({ txt: SubStr(tresc, pos), sepH: 0 })
                     break
                 }
             }
@@ -1816,9 +1814,10 @@ Class ExWinAndPopups extends Logika {
             MoznaWMiejscu := !CzyPrzebudowacStyl && HasProp(GuiTip, "Segmenty") && (NoweSegmenty.Length == GuiTip.Segmenty.Length)
 
             maxW := 0
-            fOpt := "s" . rozmiarCzcionki . (czyPogrubione ? " bold" : " norm")
+            FinalSize := Round(rozmiarCzcionki * SilnikGUI.Statics.FontMultiplier)
+            fOpt := "s" . FinalSize . (czyPogrubione ? " bold" : " norm")
             for seg in NoweSegmenty {
-                wym := SilnikGUI.ZmierzTekst(seg.txt, "Segoe UI", fOpt)
+                wym := SilnikGUI.ZmierzTekst(seg.txt, SilnikGUI.Statics.DomyslnaCzcionka.Name, fOpt)
                 seg.w := wym.w, seg.h := wym.h
                 maxW := Max(maxW, wym.w) + MargPoz * 2
             }
@@ -1830,7 +1829,7 @@ Class ExWinAndPopups extends Logika {
                     seg := NoweSegmenty[i]
                     if (item.main.Value != seg.txt)
                         item.main.Value := seg.txt
-                    
+
                     item.top.Move(gruboscRamki, aktualneY, maxW, MargPion)
                     aktualneY += MargPion
                     item.main.Move(gruboscRamki, aktualneY, maxW, seg.h)
@@ -1840,11 +1839,11 @@ Class ExWinAndPopups extends Logika {
                     if (seg.sepH > 0)
                         aktualneY += seg.sepH
                 }
-                GuiTip.Move(,, maxW + 2*gruboscRamki, aktualneY + gruboscRamki)
+                GuiTip.Move(, , maxW + 2 * gruboscRamki, aktualneY + gruboscRamki)
             } else {
                 czyPrzenika := (TransClick !== "") ? TransClick : (trybStr == "Mouse")
                 needsAlpha := (czyPrzenika || Transparent < 1.0)
-                NoweGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x08000000 " . (needsAlpha ? ((czyPrzenika ? "+E0x20 " : "")) : "+E0x02000000 ") . "-DPIScale" . (hOwner ? " +Owner" . hOwner : "")) 
+                NoweGui := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x08000000 " . (needsAlpha ? ((czyPrzenika ? "+E0x20 " : "")) : "+E0x02000000 ") . "-DPIScale" . (hOwner ? " +Owner" . hOwner : ""))
                 if (needsAlpha) {
                     alphaVal := Round(255 * Transparent)
                     (czyPrzenika && alphaVal == 255) && alphaVal := 254
@@ -1852,11 +1851,11 @@ Class ExWinAndPopups extends Logika {
                 }
                 NoweGui.BackColor := kolorRamki
                 NoweGui.MarginX := gruboscRamki, NoweGui.MarginY := gruboscRamki
-                NoweGui.SetFont("s" . rozmiarCzcionki . " " . kolorTekstu . (czyPogrubione ? " bold" : ""), "Segoe UI")
-                
+                NoweGui.SetFont("s" . Round((FontSize != 10 ? FontSize : rozmiarCzcionki) * SilnikGUI.Statics.FontMultiplier) . " " . FontOpt . " " . kolorTekstu . (czyPogrubione ? " bold" : ""), "Segoe UI")
+
                 NoweGui.Segmenty := []
                 aktualneY := gruboscRamki
-                
+
                 for seg in NoweSegmenty {
                     top := NoweGui.Add("Text", "x" . gruboscRamki . " y" . aktualneY . " w" . maxW . " h" . MargPion . " Background" . kolorTla, "")
                     aktualneY += MargPion
@@ -1866,29 +1865,29 @@ Class ExWinAndPopups extends Logika {
                     aktualneY += MargPion
                     if (seg.sepH > 0)
                         aktualneY += seg.sepH
-                        
-                    NoweGui.Segmenty.Push({top: top, main: main, bot: bot})
+
+                    NoweGui.Segmenty.Push({ top: top, main: main, bot: bot })
                 }
-                
-                NoweGui.Show("Hide w" . (maxW + 2*gruboscRamki) . " h" . (aktualneY + gruboscRamki))
-                
+
+                NoweGui.Show("Hide w" . (maxW + 2 * gruboscRamki) . " h" . (aktualneY + gruboscRamki))
+
                 StareGui := GuiTip
                 GuiTip := NoweGui
                 Utils.SetTag(GuiTip.Hwnd, "IsSilnikTooltip")
             }
-        OstatniaTresc := tresc, OstatniKolorTla := kolorTla, OstatniKolorTekstu := kolorTekstu, OstatniKolorRamki := kolorRamki, OstatniMargPion := MargPion, OstatniMargPoz := MargPoz, OstatniRozmiar := rozmiarCzcionki, OstatniePogrubienie := czyPogrubione, OstatniCel := hCel, OstatniTryb := trybStr, OstatnieIgX := igX, OstatnieIgY := igY, OstatniTransparent := Transparent, OstatniTransClick := TransClick
-        }    
+            OstatniaTresc := tresc, OstatniKolorTla := kolorTla, OstatniKolorTekstu := kolorTekstu, OstatniKolorRamki := kolorRamki, OstatniMargPion := MargPion, OstatniMargPoz := MargPoz, OstatniRozmiar := rozmiarCzcionki, OstatniePogrubienie := czyPogrubione, OstatniCel := hCel, OstatniTryb := trybStr, OstatnieIgX := igX, OstatnieIgY := igY, OstatniTransparent := Transparent, OstatniTransClick := TransClick
+        }
         Rysuj()
 
         ; [REFACTOR] Oblicz bazową pozycję TYLKO RAZ
-        GuiTip.GetPos(,, &tipW, &tipH)
-        
+        GuiTip.GetPos(, , &tipW, &tipH)
+
         isSkipMon := false
         Silnik := 0
         OffY := 24, OffX := 15
         km := GetKObj()
         mAlignX := 0, mAlignY := 0
-        
+
         switch trybStr {
             case "Screen", "Mouse":
                 (trybStr == "Screen") && (OffY := 0, OffX := 0)
@@ -1921,17 +1920,17 @@ Class ExWinAndPopups extends Logika {
         }
 
         if (Silnik)
-            Silnik.Stan.AktywnyTooltip := {Gui: GuiTip, WektorX: pos.x, WektorY: pos.y, IgnoreX: igX, IgnoreY: igY, StopX: ParsedMove.XStop, StopY: ParsedMove.YStop}
-        
+            Silnik.Stan.AktywnyTooltip := { Gui: GuiTip, WektorX: pos.x, WektorY: pos.y, IgnoreX: igX, IgnoreY: igY, StopX: ParsedMove.XStop, StopY: ParsedMove.YStop }
+
         GuiTip.Show("NA x" . pos.x . " y" . pos.y)
 
         UpdatePosition(TargetGui, isPendingKill := 0) {
             if !IsObject(TargetGui)
                 return
             TargetGui.IsPendingKill := isPendingKill
-            MouseGetPos(,, &win)
+            MouseGetPos(, , &win)
             freezeMTrack := (isPendingKill || (trybStr != "Mouse" && win == TargetGui.Hwnd))
-            
+
             try {
                 TargetGui.GetPos(&currX, &currY, &tw, &th)
                 nKm := GetKObj()
@@ -1954,7 +1953,7 @@ Class ExWinAndPopups extends Logika {
                         mX := NumGet(pt, 0, "Int"), mY := NumGet(pt, 4, "Int")
                         (igX) && pos.x := mX + TargetGui.DeltaX
                         (igY) && pos.y := mY + TargetGui.DeltaY
-                        
+
                         (igX && !ParsedMove.NoClampX) && pos.x := Min(Max(pos.x, nKm.M.L), nKm.M.R - tw)
                         if (igY && trybStr != "Screen") {
                             (pos.y + th > nKm.M.B || pos.y < nKm.M.T) && pos.y := mY - TargetGui.DeltaY - th ; Delta Flip
@@ -1971,7 +1970,7 @@ Class ExWinAndPopups extends Logika {
                         DllCall("SetWindowPos", "Ptr", TargetGui.Hwnd, "Ptr", 0, "Int", t.WektorX, "Int", t.WektorY, "Int", 0, "Int", 0, "UInt", 0x15)
                     }
                 } else {
-                TargetGui.Move(pos.x, pos.y)
+                    TargetGui.Move(pos.x, pos.y)
                 }
             }
         }
@@ -1986,15 +1985,15 @@ Class ExWinAndPopups extends Logika {
                     TimerSledzenia := () => SetTimer(cbSledzenia, 0)
                 }
             case "Anchor":
-            isStatic := ((ParsedMove.XStop || (ParsedMove.XATrack && mAlignX)) && (ParsedMove.YStop || (ParsedMove.YATrack && mAlignY))) ; Zero-Math Mode
+                isStatic := ((ParsedMove.XStop || (ParsedMove.XATrack && mAlignX)) && (ParsedMove.YStop || (ParsedMove.YATrack && mAlignY))) ; Zero-Math Mode
                 if (isSkipMon) {
-                if (!isStatic) {
-                    cbSledzenia := () => UpdatePosition(GuiTip)
-                    SetTimer(cbSledzenia, SilnikGUI.TickRate)
-                    TimerSledzenia := () => SetTimer(cbSledzenia, 0)
-                }
+                    if (!isStatic) {
+                        cbSledzenia := () => UpdatePosition(GuiTip)
+                        SetTimer(cbSledzenia, SilnikGUI.TickRate)
+                        TimerSledzenia := () => SetTimer(cbSledzenia, 0)
+                    }
                 } else {
-                TimerSledzenia := SilnikGUI.MonitorujWyjscie(() => SilnikGUI.CustomTooltip(""), [hCel, GuiTip.Hwnd], "Hover", isStatic ? 0 : UpdatePosition.Bind(GuiTip), DelayOFF)
+                    TimerSledzenia := SilnikGUI.MonitorujWyjscie(() => SilnikGUI.CustomTooltip(""), [hCel, GuiTip.Hwnd], "Hover", isStatic ? 0 : UpdatePosition.Bind(GuiTip), DelayOFF)
                 }
         }
 
@@ -2016,20 +2015,23 @@ Class ExWinAndPopups extends Logika {
      * @param {Integer} [ParentHwnd=0] - HWND okna rodzica (dla modalności/Owner).
      */
     static OknoBledu(Naglowek, Tresc, Podtytul := "", ParentHwnd := 0) {
+        FontMulti := SilnikGUI.Statics.FontMultiplier
+        pad := 10
         Opcje := "+AlwaysOnTop" . (ParentHwnd ? " +Owner" . ParentHwnd : "")
-        Ostrzezenie := SilnikGUI(Naglowek, Opcje, {pokazPasek: 0, createChild: true, zamknijNaEsc: 0, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, PadD: 10, PadR: 10}) ; 0=Off (Ręczna obsługa ESC)
+        Ostrzezenie := SilnikGUI(Naglowek, Opcje, { pokazPasek: 0, createChild: true, zamknijNaEsc: 0, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, PadD: pad, PadR: pad }) ; 0=Off (Ręczna obsługa ESC)
+        w := 320
 
-        Ostrzezenie.GuiObj.SetFont("s11 bold", "Segoe UI")
-        txtHead := Ostrzezenie.Add("Text", "Center w320 x10 y10 c" . SilnikGUI.Motyw.Ostrzezenie, Naglowek)
+        Ostrzezenie.GuiObj.SetFont("s" . Round(11 * FontMulti) . " bold", "Segoe UI")
+        txtHead := Ostrzezenie.Add("Text", "Center w" w . " x10 y10 c" . SilnikGUI.Motyw.Ostrzezenie, Naglowek)
         txtHead.KolorBazowy := SilnikGUI.Motyw.Ostrzezenie
-        
-        Ostrzezenie.GuiObj.SetFont("s10 norm", "Segoe UI")
-        Ostrzezenie.Add("Text", "Center w320 x10 y+5 c" . SilnikGUI.Motyw.Tekst, Tresc)
+
+        Ostrzezenie.GuiObj.SetFont("s" . Round(10 * FontMulti) . " norm", "Segoe UI")
+        Ostrzezenie.Add("Text", "Center w" w . " x10 y+5 c" . SilnikGUI.Motyw.Tekst, Tresc)
         if (Podtytul != "") {
-            txtSub := Ostrzezenie.Add("Text", "Center w320 x10 y+5 c" . SilnikGUI.Motyw.Nieaktywny, Podtytul)
+            txtSub := Ostrzezenie.Add("Text", "Center w" w . " x10 y+5 c" . SilnikGUI.Motyw.Nieaktywny, Podtytul)
             txtSub.KolorBazowy := SilnikGUI.Motyw.Nieaktywny
         }
-        
+
         ; Logika Auto-Kaskady i Sprzątania
         ZamknijISprzataj(*) {
             for i, okno in SilnikGUI.Statics.AktywneBledy
@@ -2038,20 +2040,20 @@ Class ExWinAndPopups extends Logika {
                     break
                 }
             Ostrzezenie.Zakoncz()
-            
+
             ; Utrzymaj fokus na stosie błędów (jeśli są inne)
             if (SilnikGUI.Statics.AktywneBledy.Length > 0)
                 try WinActivate(SilnikGUI.Statics.AktywneBledy[-1].GuiObj.Hwnd)
         }
-
-        Ostrzezenie.DodajPrzycisk("Rozumiem", ZamknijISprzataj, "x120 y+10 w100 h30")
+        w2 := ((320 - 50) + pad * 2) / 2
+        Ostrzezenie.DodajPrzycisk("OK", ZamknijISprzataj, "x" . w2 . " y+10 w50 h25")
         Ostrzezenie.Add("Button", "x0 y0 w0 h0 Hidden Default", "OK").OnEvent("Click", ZamknijISprzataj)
         Ostrzezenie.Stan.ChildGui.OnEvent("Close", ZamknijISprzataj) ; Nadpisz domyślny Close
         Ostrzezenie.Stan.ChildGui.OnEvent("Escape", ZamknijISprzataj) ; [FIX] ESC też musi sprzątać
         Ostrzezenie.Stan.ClipGui.OnEvent("Escape", ZamknijISprzataj)
         Ostrzezenie.GuiObj.OnEvent("Escape", ZamknijISprzataj)
         Ostrzezenie.Pokaz()
-        
+
         if (SilnikGUI.Statics.AktywneBledy.Length > 0) {
             Offset := SilnikGUI.Statics.AktywneBledy.Length * 25 ; Auto-Offset 25px
             Ostrzezenie.GuiObj.GetPos(&x, &y)
@@ -2060,7 +2062,7 @@ Class ExWinAndPopups extends Logika {
         SilnikGUI.Statics.AktywneBledy.Push(Ostrzezenie)
         return Ostrzezenie
     }
-    
+
     /**
      * Wyświetla szybki dymek błędu przy kontrolce (z dźwiękiem), zintegrowany z motywem SilnikGUI.
      * @param {GuiCtrl} ctrl - Kontrolka, przy której ma się pojawić dymek.
@@ -2076,13 +2078,13 @@ Class ExWinAndPopups extends Logika {
         ToolTip " ", cX, cY + 20, 10
         if (hwndTT := WinExist("ahk_class tooltips_class32 ahk_pid " ProcessExist())) {
             WinSetStyle "+0x40", hwndTT
-            SendMessage(0x421, ikona, StrPtr("Niedozwolony znak"), hwndTT) 
+            SendMessage(0x421, ikona, StrPtr("Niedozwolony znak"), hwndTT)
         }
         ToolTip tresc, cX, cY + 20, 10
-        SetTimer () => ToolTip(,,,10), -czas
+        SetTimer () => ToolTip(, , , 10), -czas
     }
 
-        /**
+    /**
      * @desc Propaguje wektor przesunięcia do aktywnych popupów i pod-paneli.
      */
     PrzesunPopupy(dx, dy) {
@@ -2132,20 +2134,28 @@ class CtlFactory extends ExWinAndPopups {
      * @param {String} [Options=""] - Opcje pozycyjne i stylowe.
      * @param {String} [Text=""] - Tekst kontrolki.
      * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
+     * @param {Integer} [FontSize=10] - Bazowy rozmiar czcionki przed przemnożeniem.
+     * @param {String} [FontOpt=""] - Opcje stylu czcionki (np. "bold cWhite").
      * @tag WinAPI: "IsSilnikControl"
      * @returns {GuiCtrl} - Utworzona kontrolka.
      */
-    Add(Type, Options := "", Text := "", ApplyScale := true) {
+    Add(Type, Options := "", Text := "", ApplyScale := true, FontSize := 10, FontOpt := "") {
         if (ApplyScale)
             Options := Utils.ScaleOptions(Options)
-        
+
+        FinalSize := Round(FontSize * SilnikGUI.Statics.FontMultiplier)
+        this.Stan.ChildGui.SetFont("s" . FinalSize . " " . FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+
         ctrl := this.Stan.ChildGui.Add(Type, Options, Text)
+
+        this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+
         this.Stan.Kontrolki.Push(ctrl)
         Utils.SetTag(ctrl.Hwnd, "IsSilnikControl")
         return SilnikGUI.GrupaKontrolek([ctrl], [ctrl])
     }
 
-    /** 
+    /**
      * Dodaje standardowy wiersz konfiguracyjny: Etykieta + Pole Edycji w Ramce.
      * @param {String} etykieta - Tekst opisujący pole.
      * @param {Number} wartoscDomyslna - Wartość startowa. mozna użyć: Format("{:.2f}",Value)
@@ -2165,7 +2175,8 @@ class CtlFactory extends ExWinAndPopups {
      * - [WysInput: 0] {Number} Wysokość pola edycji (w wierszach).
      * - [ResizeEdit: false] {Boolean} Dynamiczne dopasowanie szerokości pola do tekstu.
      * - [FontName: "SilnikGUI.Statics.DomyslnaCzcionka.Name"] {String} Nazwa czcionki.
-     * - [FontSize: "SilnikGUI.Statics.DomyslnaCzcionka.Size"] {Number} Rozmiar czcionki.
+     * - [FontSize: 10] {Number} Bazowy rozmiar czcionki przed przemnożeniem.
+     * - [FontOpt: ""] {String} Opcje stylu czcionki (np. "bold").
      * - [EditOpt: "Center"] {String} Opcje dla Edit.
      * - [BackCol: "SilnikGUI.Motyw.Wklesly"] {String} Kolor tła (nazwa lub hex).
      * - [TextCol: "SilnikGUI.Motyw.Tekst"] {String} Kolor tekstu (nazwa lub hex).
@@ -2176,60 +2187,61 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {Gui.Edit} - Zwraca obiekt kontrolki Edit, aby można było pobrać z niego wartość.
      */
     DodajWierszKonfiguracji(etykieta, wartoscDomyslna, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true})
-        trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, EditOpt := opcje.ApplyScale ? Utils.ScaleOptions(opcje.EditOpt) : opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
+        opcje := Utils.MergeOptions(opcje?, { trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: 10, FontOpt: "", EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true })
+        trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, FontOpt := opcje.FontOpt, EditOpt := opcje.ApplyScale ? Utils.ScaleOptions(opcje.EditOpt) : opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
         SzerPola := SzerPola - (2 * SzRamki)
         WysPola := WysPola - (2 * SzRamki)
 
-        wymWiersz := SilnikGUI.ZmierzTekst("Wg", FontName, "s" . FontSize)
+        FinalSize := Round(FontSize * SilnikGUI.Statics.FontMultiplier)
+        wymWiersz := SilnikGUI.ZmierzTekst("Wg", FontName, "s" . FinalSize . " " . FontOpt)
         hWiersza := wymWiersz.h
 
-        Skala := A_ScreenDPI / 96
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.FontMultiplier
 
         ; Flaga dynamicznego pola (dopasowanie do tekstu)
         CzyDynamicznePole := (ResizeEditW || ResizeEditH)
         SzerPola := opcje.ApplyScale ? Round(SzerPola * Skala) : SzerPola
-        WysPola  := opcje.ApplyScale ? Round(WysPola * Skala) : WysPola
+        WysPola := opcje.ApplyScale ? Round(WysPola * Skala) : WysPola
         WysWiersza := hWiersza + (opcje.ApplyScale ? Round(4 * Skala) : 4)
-        WysInput   := WysPola > 0 ? WysPola : (trybWalidacji!=3 ? hWiersza : (WysInput>0 ? (hWiersza * WysInput) : (hWiersza * (StrSplit(String(wartoscDomyslna), "`n", "`r").Length + 1))))
-        Grubosc    := opcje.ApplyScale ? Round(SzRamki * Skala) : SzRamki
+        WysInput := WysPola > 0 ? WysPola : (trybWalidacji != 3 ? hWiersza : (WysInput > 0 ? (hWiersza * WysInput) : (hWiersza * (StrSplit(String(wartoscDomyslna), "`n", "`r").Length + 1))))
+        Grubosc := opcje.ApplyScale ? Round(SzRamki * Skala) : SzRamki
 
         ; Stabilizacja pozycji Y przy użyciu elementu Dummy
         dummy := this.Stan.ChildGui.Add("Text", pozycja . " w0 h0 Hidden")
-        dummy.IsDummy := true 
+        dummy.IsDummy := true
         dummy.GetPos(&dX, &dY)
-        
+
         ; 1. Etykieta (Pozycjonowanie absolutne względem dummy)
         if (etykieta != "") {
-            wymEtyk := SilnikGUI.ZmierzTekst(etykieta, FontName, "s" . FontSize)
-            wRzeczywiste := wymEtyk.w + Round(FontSize * 0.5) + 5 ; Dynamiczny margines bezpieczeństwa
-            
+            wymEtyk := SilnikGUI.ZmierzTekst(etykieta, FontName, "s" . FinalSize)
+            wRzeczywiste := wymEtyk.w + Round(FinalSize * 0.5) + 5 ; Dynamiczny margines bezpieczeństwa
+
             SzerFinalnaEtykiety := (SzerText > 0) ? Round(SzerText * Skala) : wRzeczywiste
-            EtykX := InfoRight ? dX + SzerPola + (SzRamki > 0 ? 2*Grubosc : 0) + 10 : dX
-            
+            EtykX := InfoRight ? dX + SzerPola + (SzRamki > 0 ? 2 * Grubosc : 0) + 10 : dX
+
             OpcjeText := "x" . EtykX . " y" . dY . " w" . SzerFinalnaEtykiety . " h" . WysWiersza . " +0x200 +0x100"
             txtCtrl := this.Stan.ChildGui.Add("Text", OpcjeText, etykieta)
-            txtCtrl.SetFont("s" . FontSize, FontName)
+            txtCtrl.SetFont("s" . FinalSize . " " . FontOpt, FontName)
         } else {
             SzerFinalnaEtykiety := 0
         }
 
         ; 2. Ramka i Pole Edycji (Pozycjonowanie absolutne względem dummy)
         RamkaX := InfoRight ? dX : dX + SzerFinalnaEtykiety
-        
+
         poleEdit := this.Stan.ChildGui.Add("Edit", "x" . (RamkaX + Grubosc) . " y" . (dY + Grubosc) . " w" . SzerPola . " h" . WysInput . " " . EditOpt . " -E0x200 -VScroll Background" . BackCol, wartoscDomyslna)
-        poleEdit.SetFont("s" . FontSize . " " . TextCol, FontName)
+        poleEdit.SetFont("s" . FinalSize . " " . FontOpt . " " . TextCol, FontName)
         this.Stan.Kontrolki.Push(poleEdit)
         if SzRamki > 0
-            ramkaObj := this.Ramka(poleEdit, 0, 0, "", Grubosc,,0)
+            ramkaObj := this.Ramka(poleEdit, 0, 0, "", Grubosc, , 0)
         ; [FIX] Inteligentna karetka: Pamięć pozycji, brak to wieloliniowe do początku (0), jednoliniowe do końca
-        poleEdit.OnEvent("LoseFocus", (ctrl, *) => (SendMessage(0x00B0, wp:=Buffer(4), 0, ctrl), ctrl.LastCaretPos := NumGet(wp, "UInt")))
+        poleEdit.OnEvent("LoseFocus", (ctrl, *) => (SendMessage(0x00B0, wp := Buffer(4), 0, ctrl), ctrl.LastCaretPos := NumGet(wp, "UInt")))
         poleEdit.OnEvent("Focus", (ctrl, *) => SetTimer(() => (HasProp(ctrl, "LBtnDownTick") && A_TickCount - ctrl.LBtnDownTick < 50) ? "" : (pos := HasProp(ctrl, "LastCaretPos") ? ctrl.LastCaretPos : ((trybWalidacji == 3) ? 0 : StrLen(ctrl.Value)), PostMessage(0xB1, pos, pos, ctrl)), -10))
-        
+
         ; Znacznik interakcji dla centralnego routera fokusu
         poleEdit.MouseDownAction := (ctrl, *) => ctrl.LBtnDownTick := A_TickCount
-        
+
         ; Powiązanie kontrolek-dzieci z rodzicem (dla Hover/Focus)
         if (etykieta != "") {
             txtCtrl.ParentCtrl := poleEdit
@@ -2238,11 +2250,11 @@ class CtlFactory extends ExWinAndPopups {
         if SzRamki > 0 {
             ramkaObj.ParentCtrl := poleEdit
             poleEdit.Ramka := ramkaObj
-        } 
-        poleEdit.SzerEtykiety := SzerFinalnaEtykiety 
+        }
+        poleEdit.SzerEtykiety := SzerFinalnaEtykiety
         poleEdit.BazoweX := dX ; Bazowe X
         poleEdit.AutoCenter := AutoCenter ; Flaga centrowania
-        poleEdit.GruboscRamki := Grubosc 
+        poleEdit.GruboscRamki := Grubosc
         poleEdit.FontName := FontName
         poleEdit.FontSize := FontSize
         poleEdit.WysWiersza := hWiersza
@@ -2252,10 +2264,10 @@ class CtlFactory extends ExWinAndPopups {
         poleEdit.SzerPola := SzerPola ; Przechowuje szerokość pola (niezależnie od dynamicznego dopasowania)
         poleEdit.WysInput := WysInput ; Zapisz wynikową wyskość jako kaganiec
         if Backlight == 1
-        poleEdit.KolorBazowyTla := BackCol
+            poleEdit.KolorBazowyTla := BackCol
         poleEdit.KolorBazowy := TextCol
         poleEdit.InfoRight := InfoRight
-        
+
         ; 4. Walidacja i zdarzenia
         if (trybWalidacji == 1) ; Float
             poleEdit.OnEvent("Change", (ctrl, info) => SilnikGUI.WalidujFloat(ctrl, info, pokazBlad, czasSekundy))
@@ -2267,12 +2279,12 @@ class CtlFactory extends ExWinAndPopups {
         if (trybWalidacji < 2) {
             ScrollAction(ctrl, kierunek) {
                 val := Number(StrReplace(ctrl.Value, ",", "."))
-                
+
                 ; Detekcja trybu float (z konfiguracji, zawartości lub skoku)
                 isFloatMode := (trybWalidacji == 1) || InStr(ctrl.Value, ".") || InStr(ctrl.Value, ",") || (skok != "" && InStr(skok, "."))
-                
+
                 step := (skok != "") ? skok : (isFloatMode ? 0.1 : 1)
-                
+
                 res := SilnikGUI.ObliczLimit(val, kierunek * step, minVal, maxVal)
                 (res.Flash) && SilnikGUI.EfektFlash(ctrl)
 
@@ -2297,20 +2309,20 @@ class CtlFactory extends ExWinAndPopups {
                 ctrl.Value := (trybWalidacji == 1) ? Format("{:.2f}", val) : Integer(val)
             ))
         }
-        
+
         ; 7. Obsługa Enter (Nawigacja)
         if (obslugaEnter && trybWalidacji != 3)
             poleEdit.OnEnter := obslugaEnter
 
         if (CzyDynamicznePole) {
-            poleEdit.Value := wartoscDomyslna 
+            poleEdit.Value := wartoscDomyslna
             this.DostosujRozmiar(SzerFinalnaEtykiety, poleEdit, SzerPola, WysInput)
             PostMessage(0xB1, StrLen(poleEdit.Value), StrLen(poleEdit.Value), poleEdit)
             poleEdit.OnEvent("Change", (ctrl, *) => (
                 this.DostosujRozmiar(SzerFinalnaEtykiety, ctrl, SzerPola, WysInput)
             ))
         }
-            
+
         ; Bounding Box - pozycjonowanie dla kolejnych kontrolek (xp, xm, y+)
         SzerCalkowita := SzerFinalnaEtykiety + SzerPola + (2 * Grubosc) + ((InfoRight && SzerFinalnaEtykiety > 0) ? 10 : 0)
         WysCalkowita := Max(WysWiersza, WysInput + (2 * Grubosc))
@@ -2339,32 +2351,37 @@ class CtlFactory extends ExWinAndPopups {
      * @param {String} tekst - Etykieta kontrolki.
      * @param {Object} [opcje] - Opcje: {[czyZaznaczony: false], [pozycja: "xm"], [InfoRight: 1]pozycja: "xm", InfoRight: 1}.
      * - [ApplyScale: true] {Boolean} Applies DPI scaling to numeric and positional options.
+     * - [FontSize: 10] {Integer} Bazowy rozmiar czcionki przed przemnożeniem.
+     * - [FontOpt: ""] {String} Opcje stylu czcionki (np. "bold").
      * @tag WinAPI: "IsSilnikInput" (dla znaczników, tekstu i ramki).
      * @returns {Gui.Checkbox} - Zwraca obiekt kontrolki Checkbox z dodaną właściwością `LabelX` (współrzędna X etykiety).
      */
     DodajCheckbox(tekst, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {czyZaznaczony: false, pozycja: "", InfoRight: 1, ApplyScale: true})
+        opcje := Utils.MergeOptions(opcje?, { czyZaznaczony: false, pozycja: "", InfoRight: 1, ApplyScale: true, FontSize: 10, FontOpt: "" })
         czyZaznaczony := opcje.czyZaznaczony, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, InfoRight := opcje.InfoRight
-        Skala := A_ScreenDPI / 96
-        WymiarBox := opcje.ApplyScale ? Round(14 * Skala) : 14
-        Grubosc   := opcje.ApplyScale ? Round(2 * Skala) : 2
+        FinalSize := opcje.FontSize * SilnikGUI.Statics.FontMultiplier
+        Skala := (A_ScreenDPI / 96) ; * SilnikGUI.Statics.FontMultiplier
+        WymiarBox := opcje.ApplyScale ? Round(1.4 * FinalSize * Skala) : Round(1.4 * FinalSize)
+        Grubosc := opcje.ApplyScale ? Round(2 * Skala) : 2
 
         dummy := this.Stan.ChildGui.Add("Text", pozycja . " w0 h0 Hidden"), dummy.GetPos(&dX, &dY)
         dummy.IsDummy := true
 
         if (InfoRight) {
-            CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX+Grubosc) . " y" . (dY+Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
-            CheckMark.SetFont("s12 bold")
+            CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX + Grubosc) . " y" . (dY + Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
+            CheckMark.SetFont("s" . Round(opcje.FontSize * 1.2 * SilnikGUI.Statics.FontMultiplier) . " bold " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
             this.Stan.Kontrolki.Push(CheckMark)
-            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc,,0)
+            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc, , 0)
             txt := this.Stan.ChildGui.Add("Text", "x+10 yp +0x100", tekst)
+            txt.SetFont("s" . Round(opcje.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
         } else {
-            txt := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " h" . (WymiarBox + 2*Grubosc) . " +0x200 +0x100", tekst)
-            txt.GetPos(,, &wEtyk)
-            CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX + wEtyk + 10 + Grubosc) . " y" . (dY+Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
-            CheckMark.SetFont("s12 bold")
+            txt := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " h" . (WymiarBox + 2 * Grubosc) . " +0x200 +0x100", tekst)
+            txt.SetFont("s" . Round(opcje.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            txt.GetPos(, , &wEtyk)
+            CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX + wEtyk + 10 + Grubosc) . " y" . (dY + Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
+            CheckMark.SetFont("s" . Round(opcje.FontSize * 1.2 * SilnikGUI.Statics.FontMultiplier) . " bold " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
             this.Stan.Kontrolki.Push(CheckMark)
-            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc,,0)
+            ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc, , 0)
         }
 
         txt.GetPos(&labelX, , &tW, &tH)
@@ -2383,7 +2400,7 @@ class CtlFactory extends ExWinAndPopups {
         CheckMark.GruboscRamki := Grubosc
         CheckMark.UserCallbacks := []
         CheckMark.InfoRight := InfoRight
-        
+
         ; Powiązania dla NadajStyl
         CheckMark.Ramka := ramkaObj
         CheckMark.EtykietaCtrl := txt ; Przypisanie PO Ramka()
@@ -2394,10 +2411,10 @@ class CtlFactory extends ExWinAndPopups {
 
         ; Nadpisanie właściwości Value (Logika 0/1 -> Tekst)
         CheckMark.DefineProp("Value", {
-            Get: (*) => CheckMark.InternalValue, 
+            Get: (*) => CheckMark.InternalValue,
             Set: (self, val) => (self.InternalValue := !!val, self.Text := self.InternalValue ? "✓" : "")
         })
-        
+
         ; Wyzwalacz zmian (musi być zdefiniowany przed użyciem w OnEvent)
         WyzwalaczZmiany(c, *) {
             c.Value := !c.Value
@@ -2407,11 +2424,11 @@ class CtlFactory extends ExWinAndPopups {
 
         ; [MOD] Bezpośrednia akcja na wciśnięcie (Instant)
         CheckMark.MouseDownAction := WyzwalaczZmiany
-        
+
         ; Nadpisanie OnEvent (Przechwytywanie zewnętrznych subskrypcji)
         CheckMark.DefineProp("OnEvent", {
-            Call: (self, event, callback, add:=1) => (
-                event="Click" && add ? self.UserCallbacks.Push(callback) : 0
+            Call: (self, event, callback, add := 1) => (
+                event = "Click" && add ? self.UserCallbacks.Push(callback) : 0
             )
         })
 
@@ -2427,7 +2444,7 @@ class CtlFactory extends ExWinAndPopups {
             if (ctrl.Value != nowyStan) {
                 WyzwalaczZmiany(ctrl)
             } else
-                SilnikGUI.EfektFlash(ctrl) ; Kolizja z limitem 
+                SilnikGUI.EfektFlash(ctrl) ; Kolizja z limitem
         }
         CheckMark.VScrollAction := ScrollAction
 
@@ -2442,7 +2459,7 @@ class CtlFactory extends ExWinAndPopups {
 
         return SilnikGUI.GrupaKontrolek([CheckMark], [CheckMark, ramkaObj, txt, BoundingBox])
     }
-    
+
     /**
      * Dodaje Custom DropDownList (DDList) - Faza 1: Kotwica.
      * @param {Array} opcje - Tablica opcji (Strings).
@@ -2454,31 +2471,35 @@ class CtlFactory extends ExWinAndPopups {
      * @param {Integer} [Ramkapopupu=1] - Grubość ramki okna popup (domyślnie 1px).
      * @param {Integer} [SeparatorW=1] - Grubość separatora pionowego (domyślnie 1px).
      * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to numeric and positional options.
+     * @param {Object} [fontOptions] - Opcje czcionki: {FontSize: 10, FontOpt: ""}.
      * @tag WinAPI: "IsSilnikInput" (dla tekstu, strzałki i ramki).
      */
-    DodajDDList(opcje, callback := 0, wybranyIndex := 1, szerokosc := 200, pozycja := "xm", Padding := 0, Ramkapopupu := 1, SeparatorW := 1, ApplyScale := true) {
+    DodajDDList(opcje, callback := 0, wybranyIndex := 1, szerokosc := 200, pozycja := "xm", Padding := 0, Ramkapopupu := 1, SeparatorW := 1, ApplyScale := true, fontOptions?) {
+        fontOptions := Utils.MergeOptions(fontOptions?, { FontSize: 10, FontOpt: "" })
+        FinalSize := fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier
         if (ApplyScale) {
             pozycja := Utils.ScaleOptions(pozycja)
-            szerokosc := Round(szerokosc * (A_ScreenDPI / 96))
+            szerokosc := Round(szerokosc * SilnikGUI.Statics.FontMultiplier * (A_ScreenDPI / 96))
             Ramkapopupu := Round(Ramkapopupu * (A_ScreenDPI / 96))
         }
         Skala := A_ScreenDPI / 96
-        WysWiersza := ApplyScale ? Round(22 * Skala) : 22
+        WysWiersza := ApplyScale ? Round(2.2 * FinalSize * Skala) : Round(2.2 * FinalSize)
         Grubosc := ApplyScale ? Round(2 * Skala) : 2
-        ArrowW := ApplyScale ? Round(20 * Skala) : 20
+        ArrowW := ApplyScale ? Round(2.0 * FinalSize * Skala) : Round(2.0 * FinalSize)
         SepW := ApplyScale ? Round(SeparatorW * Skala) : SeparatorW
         Prefix := Format("{:" . (Padding) . "}", "")
         ParsedAlign := SilnikGUI.ParsujAlign("+Down +Left")
-        
+
         dummy := this.Stan.ChildGui.Add("Text", pozycja . " w0 h0 Hidden"), dummy.GetPos(&dX, &dY)
         dummy.IsDummy := true
         ; 2. Kontrolka Wartości (Text z Tabstop dla Focusu)
         SzerText := szerokosc - (2 * Grubosc) - ArrowW - SepW
-        AlignOpt := Padding==0 ? "Center" : ""
+        AlignOpt := Padding == 0 ? "Center" : ""
         ValueCtrl := this.Stan.ChildGui.Add("Text", "x" . (dX + Grubosc) . " y" . (dY + Grubosc) . " w" . SzerText . " h" . WysWiersza . " +0x200 +0x100 +Tabstop " . AlignOpt . " Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, Prefix . opcje[wybranyIndex])
-        
+
+        ValueCtrl.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . fontOptions.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
         ArrowCtrl := this.Stan.ChildGui.Add("Text", "x+" . SepW . " yp w" . ArrowW . " h" . WysWiersza . " +0x200 +0x100 Center Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, "▼")
-        ArrowCtrl.SetFont("s8", "Segoe UI")
+        ArrowCtrl.SetFont("s" . Round(fontOptions.FontSize * 0.8 * SilnikGUI.Statics.FontMultiplier) . " " . fontOptions.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
 
         ; 4. Konfiguracja Obiektu
         ValueCtrl.Opcje := opcje
@@ -2486,39 +2507,39 @@ class CtlFactory extends ExWinAndPopups {
         ValueCtrl.Callback := callback
         ValueCtrl.Rola := "DDList" ; Dla MonitorujStan
         ValueCtrl.GruboscRamki := Grubosc
-        ValueCtrl.PopupGui := 0 
-        
+        ValueCtrl.PopupGui := 0
+
         ; Powiązania (Hover/Focus)
         ArrowCtrl.ParentCtrl := ValueCtrl
         ValueCtrl.ArrowCtrl := ArrowCtrl ; Przypisanie PRZED Ramka(), aby objęła strzałkę
         this.Stan.Kontrolki.Push(ValueCtrl)
-        ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc,,0)
+        ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc, , 0)
         ramkaObj.ParentCtrl := ValueCtrl
         ValueCtrl.Ramka := ramkaObj
 
         ; 5. Logika Scrolla (Zmiana wartości w miejscu LUB nawigacja w liście)
         _ScrollAction(ctrl, k) {
-             if (ValueCtrl.PopupGui) {
-                 ; Tryb otwarty: Tylko wizualnie
-                 res := SilnikGUI.ObliczLimit(ctrl.SelectedIndex, -k, 1, ctrl.Opcje.Length)
-                 (res.Flash) && SilnikGUI.EfektFlash(ValueCtrl)
-                 ctrl.SelectedIndex := res.V
-                 SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)
-             } else {
-                 ; Tryb zamknięty: Zmiana wartości
-                 res := SilnikGUI.ObliczLimit(ctrl.SelectedIndex, -k, 1, ctrl.Opcje.Length)
-                 (res.Flash) && SilnikGUI.EfektFlash(ctrl)
-                 ctrl.SelectedIndex := res.V
-                 ctrl.Value := Prefix . ctrl.Opcje[ctrl.SelectedIndex]
-                 if (ctrl.Callback)
-                     ctrl.Callback.Call(ctrl, ctrl.SelectedIndex)
-             }
+            if (ValueCtrl.PopupGui) {
+                ; Tryb otwarty: Tylko wizualnie
+                res := SilnikGUI.ObliczLimit(ctrl.SelectedIndex, -k, 1, ctrl.Opcje.Length)
+                (res.Flash) && SilnikGUI.EfektFlash(ValueCtrl)
+                ctrl.SelectedIndex := res.V
+                SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)
+            } else {
+                ; Tryb zamknięty: Zmiana wartości
+                res := SilnikGUI.ObliczLimit(ctrl.SelectedIndex, -k, 1, ctrl.Opcje.Length)
+                (res.Flash) && SilnikGUI.EfektFlash(ctrl)
+                ctrl.SelectedIndex := res.V
+                ctrl.Value := Prefix . ctrl.Opcje[ctrl.SelectedIndex]
+                if (ctrl.Callback)
+                    ctrl.Callback.Call(ctrl, ctrl.SelectedIndex)
+            }
         }
-        ValueCtrl.DefineProp("VScrollAction", {Call: _ScrollAction})
+        ValueCtrl.DefineProp("VScrollAction", { Call: _ScrollAction })
 
         ; InputHook (Tylko Escape - resztę obsługuje InicjalizujSkroty)
-        ih := InputHook("V") 
-        ih.KeyOpt("{Escape}", "NS") 
+        ih := InputHook("V")
+        ih.KeyOpt("{Escape}", "NS")
         ih.OnKeyDown := (hook, vk, sc) => Zamknij()
 
         ; Inteligentny Enter (Otwórz / Zatwierdź)
@@ -2532,16 +2553,16 @@ class CtlFactory extends ExWinAndPopups {
                 Otworz()
             }
         }
-        ValueCtrl.DefineProp("OnEnter", {Call: _OnEnter})
+        ValueCtrl.DefineProp("OnEnter", { Call: _OnEnter })
 
         ; Logika Popup
         Zamknij(*) {
             if (this.GuiObj) {
-                this.Stan.PopupActive := false 
+                this.Stan.PopupActive := false
                 try this.GuiObj.DeleteProp("PopupActive")
-            try (this.Stan.UseChild) && this.Stan.ChildGui.DeleteProp("PopupActive")
+                try (this.Stan.UseChild) && this.Stan.ChildGui.DeleteProp("PopupActive")
             }
-            ih.Stop() 
+            ih.Stop()
             if (HasProp(ValueCtrl, "Watchdog") && ValueCtrl.Watchdog) {
                 ValueCtrl.Watchdog()
                 ValueCtrl.Watchdog := 0
@@ -2551,16 +2572,16 @@ class CtlFactory extends ExWinAndPopups {
                 ValueCtrl.PopupGui := 0
             }
             this.Stan.PopupHwnd := 0
-                this.Stan.PopupGuiObj := 0
+            this.Stan.PopupGuiObj := 0
         }
 
         Otworz(*) {
             if (ValueCtrl.PopupGui)
                 return
 
-            this.Stan.PopupActive := true 
+            this.Stan.PopupActive := true
             this.GuiObj.PopupActive := true
-        (this.Stan.UseChild) && this.Stan.ChildGui.PopupActive := true
+            (this.Stan.UseChild) && this.Stan.ChildGui.PopupActive := true
 
             ; 1. Pozycja (Smart Positioning względem ramki)
             wysokoscListy := (ValueCtrl.Opcje.Length * WysWiersza)
@@ -2568,7 +2589,7 @@ class CtlFactory extends ExWinAndPopups {
             catch
                 rX := 0, rY := 0, rW := 0, rH := 0
             MonitorGetWorkArea(MonitorGetPrimary(), &mL, &mT, &mR, &mB)
-            pos := SilnikGUI.DopasujDoKotwicy("Anchor", {x: rX, y: rY, w: rW, h: rH}, szerokosc, wysokoscListy + (2 * Ramkapopupu), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, {L: mL, T: mT, R: mR, B: mB})
+            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, szerokosc, wysokoscListy + (2 * Ramkapopupu), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
 
             ; 2. GUI Popup
             pGui := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x08000000 +Owner" . this.GuiObj.Hwnd . " -DPIScale")
@@ -2578,24 +2599,23 @@ class CtlFactory extends ExWinAndPopups {
             }
             pGui.BackColor := SilnikGUI.Motyw.Ramka
             pGui.MarginX := Ramkapopupu, pGui.MarginY := Ramkapopupu ; Ramka dynamiczna
-            pGui.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
-            pGui.ListCtrls := [] 
+            pGui.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            pGui.ListCtrls := []
             pGui.Silnik := this ; [FIX] Przypisanie instancji silnika dla logiki MonitorujStan
             this.Stan.PopupHwnd := pGui.Hwnd
             pGui.WektorX := pos.x, pGui.WektorY := pos.y
-                pGui.Zamknij := Zamknij ; [FIX] Interfejs zamykania
+            pGui.Zamknij := Zamknij ; [FIX] Interfejs zamykania
             this.Stan.PopupGuiObj := pGui
 
-            
 
             ; 3. Elementy
             for i, opcja in ValueCtrl.Opcje {
                 bg := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Motyw.Focus : SilnikGUI.Motyw.Przycisk
-                ram := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka,SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
-                
+                ram := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka, SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
+
                 yPos := (i == 1) ? "y" . Ramkapopupu : "y+0"
-                
-                if (Padding==0) {
+
+                if (Padding == 0) {
                     ; [TRYB CENTER] Dzielimy wiersz na 3 części: Left (wyrównanie), Main (tekst), Right (reszta)
                     ; Zapewnia to idealne pokrycie pozycji X tekstu w popupie i kotwicy.
                     LeftW := (Grubosc) - Ramkapopupu
@@ -2603,13 +2623,13 @@ class CtlFactory extends ExWinAndPopups {
                     t := pGui.Add("Text", "x+0 yp w" . SzerText . " h" . WysWiersza . " +0x200 Center Background" . bg, opcja)
                     r1 := pGui.Add("Text", "x+0 yp w" . SepW . " h" . WysWiersza . " +0x200 Background" . ram)
                     r2 := pGui.Add("Text", "x+0 yp w" . (szerokosc - (Ramkapopupu + LeftW + SzerText) - Ramkapopupu - SepW) . " h" . WysWiersza . " +0x200 Background" . bg)
-                    
-                    itemObj := {Main: t, Left: l, Right1: r1, Right2: r2}
+
+                    itemObj := { Main: t, Left: l, Right1: r1, Right2: r2 }
                     pGui.ListCtrls.Push(itemObj)
-                    
+
                     bindClick := ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback.Call(ValueCtrl, idx), Zamknij())).Bind(i, opcja)
                     bindHover := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
-                    
+
                     t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r1.OnEvent("Click", bindClick)
                     t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r2.OnEvent("Click", bindClick)
                     t.HoverAction := bindHover, l.HoverAction := bindHover, r1.HoverAction := bindHover
@@ -2621,17 +2641,17 @@ class CtlFactory extends ExWinAndPopups {
                     t.HoverAction := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
                 }
             }
-            
+
             pGui.Show("x" . pos.x . " y" . pos.y . " w" . szerokosc . " NA")
             ValueCtrl.PopupGui := pGui
-            ih.Start() 
+            ih.Start()
 
             ; 4. Watchdog (Zamykanie po kliknięciu poza) - Użycie uniwersalnego strażnika
             ValueCtrl.Watchdog := SilnikGUI.MonitorujWyjscie(Zamknij, [pGui.Hwnd, ValueCtrl.Hwnd, ArrowCtrl.Hwnd, ramkaObj.Top.Hwnd, ramkaObj.Bot.Hwnd, ramkaObj.Left.Hwnd, ramkaObj.Right.Hwnd], "Click")
         }
 
         Toggle := (c, *) => (ValueCtrl.PopupGui ? Zamknij() : (SilnikGUI.CzyMoznaInterakcja(ValueCtrl) && Otworz()))
-        
+
         ; [MOD] Bezpośrednia akcja na wciśnięcie
         ValueCtrl.MouseDownAction := Toggle
         ; ArrowCtrl i Ramka obsłużą to przez ParentCtrl w ObslugaInterakcji
@@ -2644,16 +2664,19 @@ class CtlFactory extends ExWinAndPopups {
 
         return SilnikGUI.GrupaKontrolek([ValueCtrl, ArrowCtrl], [ValueCtrl, ArrowCtrl, ramkaObj])
     }
-    
+
     /**
      * Dodaje przycisk o niestandardowym wyglądzie (Text jako przycisk).
      * @param {String} tekst - Napis na przycisku.
      * @param {Func} funkcjaKlikniecia - Funkcja wywoływana po kliknięciu (callback).
      * @param {String} [opcje="xm w80 h30"] - Ciąg opcji AHK określający pozycję i wymiary (np. "x10 y10 w100 h40").
      * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
+     * @param {Object} [fontOptions] - Opcje czcionki: {FontSize: 10, FontOpt: ""}.
      * @tag WinAPI: "IsSilnikInput" (dla przycisku i ramki).
      */
-    DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "xm w80 h30", ApplyScale := true) {
+    DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "xm w80 h30", ApplyScale := true, fontOptions?) {
+        fontOptions := Utils.MergeOptions(fontOptions?, { FontSize: 10, FontOpt: "" })
+
         if (ApplyScale)
             opcje := Utils.ScaleOptions(opcje)
         Skala := A_ScreenDPI / 96
@@ -2662,7 +2685,7 @@ class CtlFactory extends ExWinAndPopups {
         ; 1. DUMMY: Rezerwacja przestrzeni w layoucie (Bounding Box)
         ; Tworzymy ukryty element, aby AHK przeliczył pozycje (xm, yp itp.) i wymiary
         dummy := this.Stan.ChildGui.Add("Text", opcje . " Hidden", tekst)
-        dummy.IsDummy := true 
+        dummy.IsDummy := true
         dummy.GetPos(&dX, &dY, &dW, &dH)
 
         ; 2. INSET: Obliczenie wymiarów wewnętrznych (Kompensacja ramki)
@@ -2674,23 +2697,24 @@ class CtlFactory extends ExWinAndPopups {
 
         ; 3. WŁAŚCIWY PRZYCISK (Pozycjonowanie absolutne wewnątrz Dummy)
         btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . " " . SilnikGUI.Motyw.Tekst . " +0x0200 +0x100 +Tabstop", tekst)
+        btn.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . fontOptions.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
         this.Stan.Kontrolki.Push(btn) ; [FIX] Rejestracja w systemie (dla Ramka i stylów)
-        
+
         ; [MOD] Wrapper Multiklik: Flash + Callback
         ActionWrapper := (ctrl, *) => (SilnikGUI.CzyMoznaInterakcja(ctrl) && (SilnikGUI.EfektFlash(ctrl, 150), funkcjaKlikniecia(ctrl, 0)))
         ; [MOD] Bezpośrednia akcja na wciśnięcie
         btn.MouseDownAction := ActionWrapper
 
         ; Oznacz jako CustomButton (dla fokusu)
-        btn.Rola := "CustomButton" 
+        btn.Rola := "CustomButton"
         btn.GruboscRamki := Grubosc ; Cache dla logiki
-        
+
         ; Obsługa Enter
         btn.OnEnter := (ctrl) => ctrl.MouseDownAction()
 
         ; 4. RAMKA (Rysowana na zewnątrz przycisku -> Pokrywa się z krawędziami Dummy)
         ; Margin=0, ponieważ kompensację zrobiliśmy ręcznie w kroku 2
-        ramkaObj := this.Ramka(btn, 0, 0, "", Grubosc,,0)
+        ramkaObj := this.Ramka(btn, 0, 0, "", Grubosc, , 0)
 
         ; Powiązania dla MonitorujStan (Podświetlanie całej grupy)
         ramkaObj.ParentCtrl := btn
@@ -2715,37 +2739,38 @@ class CtlFactory extends ExWinAndPopups {
     DostosujRozmiar(SzerEtykiety, ctrl, MinW := 50, MinH := 18, *) {
         fName := HasProp(ctrl, "FontName") ? ctrl.FontName : SilnikGUI.Statics.DomyslnaCzcionka.Name
         fSize := HasProp(ctrl, "FontSize") ? ctrl.FontSize : SilnikGUI.Statics.DomyslnaCzcionka.Size
+        FinalSize := Round(fSize * SilnikGUI.Statics.FontMultiplier)
         hWiersza := HasProp(ctrl, "WysWiersza") ? ctrl.WysWiersza : 18
-        
+
         ; 2. Grubość z cache
         Grubosc := HasProp(ctrl, "GruboscRamki") ? ctrl.GruboscRamki : Round(2 * (A_ScreenDPI / 96))
-        
+
         ; BazoweX (domyślnie 10)
         MargL := HasProp(ctrl, "BazoweX") ? ctrl.BazoweX : 10
         MargP := this.Stan.PadR
         RamkaOkna := this.Stan.GruboscRamki
 
-        this.GuiObj.GetClientPos(,, &cw, &ch) 
-        
+        this.GuiObj.GetClientPos(, , &cw, &ch)
+
         phW_main := 0
         if HasProp(ctrl, "PlaceholderCtrl")
-            ctrl.PlaceholderCtrl.GetPos(,, &phW_main)
-        
+            ctrl.PlaceholderCtrl.GetPos(, , &phW_main)
+
         ; 1. [Matematyczny Kaganiec] Obliczenie twardego limitu dla kontrolki
         LimitOkna := (this.Stan.AutoFitW > 0) ? ((this.Stan.AutoFitW > 1) ? this.Stan.AutoFitW : Round(A_ScreenWidth * this.Stan.AutoFitW)) : (cw > 0 ? cw : A_ScreenWidth)
         Overhead := MargL + MargP + (2 * RamkaOkna) + SzerEtykiety + (2 * Grubosc) + phW_main
         MaxMiejsceDlaEdita := LimitOkna - Overhead
-        
-        wymCtrl := SilnikGUI.ZmierzTekst(ctrl.Value, fName, "s" . fSize)
-        wAktualne := wymCtrl.w + Round(fSize) + 12 ; Zapas na marginesy wewnętrzne Edit i karetkę
-        
+
+        wymCtrl := SilnikGUI.ZmierzTekst(ctrl.Value, fName, "s" . FinalSize)
+        wAktualne := wymCtrl.w + Round(FinalSize) + 12 ; Zapas na marginesy wewnętrzne Edit i karetkę
+
         if !(HasProp(ctrl, "ResizeEditW") && ctrl.ResizeEditW)
             wAktualne := MinW
         wAktualne := Min(wAktualne, MaxMiejsceDlaEdita)
         wAktualne := Max(wAktualne, MinW) ; Bezpiecznik minimalny
-        
+
         ; [FIX] Drugi pomiar wysokości z narzuconą szerokością (Edit dla word-wrap bez spacji)
-        lines := SilnikGUI.ZmierzWysokoscEdita(ctrl.Value, wAktualne, fName, "s" . fSize)
+        lines := SilnikGUI.ZmierzWysokoscEdita(ctrl.Value, wAktualne, fName, "s" . FinalSize)
         WysokoscLayout := lines * hWiersza
 
         if !(HasProp(ctrl, "ResizeEditH") && ctrl.ResizeEditH)
@@ -2754,16 +2779,16 @@ class CtlFactory extends ExWinAndPopups {
 
         ; 3. Nowa szerokość (Etykieta+Input+Ramka)
         SzerKontr := SzerEtykiety + wAktualne + (2 * Grubosc) + phW_main
-        
+
         ; Min zawartość (Marginesy+Kontrolka+Ramki)
         NowaSzer := MargL + SzerKontr + MargP + (2 * RamkaOkna)
 
-                ; 4. Resize okna/kontrolki
-        this.GuiObj.GetPos(&x, &y, &w, &h) 
-        
+        ; 4. Resize okna/kontrolki
+        this.GuiObj.GetPos(&x, &y, &w, &h)
+
         if (HasProp(this.Stan, "MinW") && this.Stan.MinW > NowaSzer)
             NowaSzer := this.Stan.MinW
-        
+
         if (this.CallbackLayout)
             this.CallbackLayout.Call(NowaSzer - (2 * RamkaOkna), (this.Stan.CzyPokazano && !this.Stan.UseChild) ? RamkaOkna : 0, WysokoscLayout, hWiersza)
 
@@ -2777,53 +2802,55 @@ class CtlFactory extends ExWinAndPopups {
 
         DiffW := w - cw
         DiffH := h - ch
-        
+
         TargetW := Round(NowaSzer + DiffW)
-        
+
         if (TargetW & 1)
             TargetW++ ; [FIX] Wymuś parzystość szerokości (eliminuje drift środka przy nieparzystych przyrostach)
-        
-        
+
+
         ; [FIX] Masowe pozycjonowanie wszystkich dynamicznych kontrolek.
         ; Zapewnia, że inne wiersze AutoCenter dostosują się do nowej szerokości okna.
         for c in this.Stan.Kontrolki {
             if !(c.Type = "Edit" && HasProp(c, "CzyDynamiczne") && c.CzyDynamiczne)
                 continue
-                
+
             cfName := HasProp(c, "FontName") ? c.FontName : SilnikGUI.Statics.DomyslnaCzcionka.Name
             cfSize := HasProp(c, "FontSize") ? c.FontSize : SilnikGUI.Statics.DomyslnaCzcionka.Size
-            
+
+            cFinalSize := Round(cfSize * SilnikGUI.Statics.FontMultiplier)
+
             cGrubosc := HasProp(c, "GruboscRamki") ? c.GruboscRamki : Round(2 * (A_ScreenDPI / 96))
             cMargL := HasProp(c, "BazoweX") ? c.BazoweX : 10
             cSzerEtykiety := HasProp(c, "SzerEtykiety") ? c.SzerEtykiety : 0
             cSzerPola := HasProp(c, "SzerPola") ? c.SzerPola : MinW
             cWysInput := HasProp(c, "WysInput") ? c.WysInput : MinH
-            
+
             cPhW := 0
             if HasProp(c, "PlaceholderCtrl")
-                c.PlaceholderCtrl.GetPos(,, &cPhW)
+                c.PlaceholderCtrl.GetPos(, , &cPhW)
 
             cOverhead := cMargL + MargP + (2 * RamkaOkna) + cSzerEtykiety + (2 * cGrubosc) + cPhW
-            
-            wymC := SilnikGUI.ZmierzTekst(c.Value, cfName, "s" . cfSize)
-            cwAktualne := wymC.w + Round(cfSize) ; Zapas na marginesy wewnętrzne Edit i karetkę
-            
+
+            wymC := SilnikGUI.ZmierzTekst(c.Value, cfName, "s" . cFinalSize)
+            cwAktualne := wymC.w + Round(cFinalSize) ; Zapas na marginesy wewnętrzne Edit i karetkę
+
             if !(HasProp(c, "ResizeEditW") && c.ResizeEditW)
                 cwAktualne := cSzerPola
             cwAktualne := Min(cwAktualne, LimitOkna - cOverhead)
             cwAktualne := Max(cwAktualne, cSzerPola)
-            
+
             chWiersza := HasProp(c, "WysWiersza") ? c.WysWiersza : 18
             ; [FIX] Drugi pomiar wysokości dla pozostałych kontrolek w trybie word-wrap Edit
-            linesC := SilnikGUI.ZmierzWysokoscEdita(c.Value, cwAktualne, cfName, "s" . cfSize)
+            linesC := SilnikGUI.ZmierzWysokoscEdita(c.Value, cwAktualne, cfName, "s" . cFinalSize)
             cWysokoscLayout := linesC * chWiersza
 
             if !(HasProp(c, "ResizeEditH") && c.ResizeEditH)
                 cWysokoscLayout := cWysInput
             cWysokoscLayout := Max(cWysokoscLayout, cWysInput)
-            
+
             cSzerKontr := cSzerEtykiety + cwAktualne + (2 * cGrubosc) + cPhW
-            
+
             cDynX := cMargL
             if (HasProp(c, "AutoCenter") && c.AutoCenter) {
                 cOffsetCentrowania := ((NowaSzer - (RamkaOkna * 2) - cMargL - MargP) - cSzerKontr) / 2
@@ -2841,19 +2868,19 @@ class CtlFactory extends ExWinAndPopups {
                 if HasProp(c, "EtykietaCtrl")
                     c.EtykietaCtrl.Move(cFinalneX)
             }
-            
+
             if HasProp(c, "Ramka") {
-                c.GetPos(,&cyCtrl)
+                c.GetPos(, &cyCtrl)
                 cyRamki := cyCtrl - cGrubosc
-                
+
                 c.Move(cX_Grupy + cGrubosc, cyCtrl, cwAktualne, cWysokoscLayout)
                 c.Ramka.Move(cX_Grupy, cyRamki, cwAktualne + (2 * cGrubosc), cWysokoscLayout + (2 * cGrubosc))
                 c.Ramka.Redraw()
                 if HasProp(c, "PlaceholderCtrl")
                     c.PlaceholderCtrl.Move(cX_Grupy + cwAktualne + (2 * cGrubosc), cyRamki, cPhW, cWysokoscLayout + (2 * cGrubosc))
             } else {
-                c.GetPos(,&cyCtrl)
-                c.Move(cX_Grupy,, cwAktualne, cWysokoscLayout)
+                c.GetPos(, &cyCtrl)
+                c.Move(cX_Grupy, , cwAktualne, cWysokoscLayout)
                 if HasProp(c, "PlaceholderCtrl")
                     c.PlaceholderCtrl.Move(cX_Grupy + cwAktualne, cyCtrl, cPhW, cWysokoscLayout)
             }
@@ -2865,7 +2892,7 @@ class CtlFactory extends ExWinAndPopups {
             OffsetLayout := (this.Stan.CzyPokazano && !this.Stan.UseChild) ? RamkaOkna : 0
             if (!this.Stan.LastLayoutState || this.Stan.LastLayoutState.W != SzerokoscLayout || this.Stan.LastLayoutState.Off != OffsetLayout || this.Stan.LastLayoutState.H != WysokoscLayout) {
                 this.CallbackLayout.Call(SzerokoscLayout, OffsetLayout, WysokoscLayout, hWiersza)
-                this.Stan.LastLayoutState := {W: SzerokoscLayout, Off: OffsetLayout, H: WysokoscLayout}
+                this.Stan.LastLayoutState := { W: SzerokoscLayout, Off: OffsetLayout, H: WysokoscLayout }
             }
         }
 
@@ -2904,9 +2931,9 @@ class CtlFactory extends ExWinAndPopups {
     }
 
     ; Zaślepki dla analizatora statycznego VSC (implementacja w klasie dziedziczącej SilnikGUI)
-    AktualizujLayout(w, h, start:= 0) {
+    AktualizujLayout(w, h, start := 0) {
     }
-    WymusPelnyRedraw() {        
+    WymusPelnyRedraw() {
     }
 }
 
@@ -2925,16 +2952,16 @@ class SubWindows extends CtlFactory {
      * @returns {SilnikGUI}
      */
     DodajPanel(GruboscRamki := 2, CSBarV := 1, CSBarH := 1, opcjePanela := "") {
-        opcje := Utils.MergeOptions(opcjePanela, {pokazPasek: 0, createChild: true, zamknijNaEsc: 0, CSBarV: CSBarV, CSBarH: CSBarH, ResizeMarg: 0, GruboscRamki: 0, dragBezPaska: 0, RamkaPanelu: GruboscRamki})
+        opcje := Utils.MergeOptions(opcjePanela, { pokazPasek: 0, createChild: true, zamknijNaEsc: 0, CSBarV: CSBarV, CSBarH: CSBarH, ResizeMarg: 0, GruboscRamki: 0, dragBezPaska: 0, RamkaPanelu: GruboscRamki })
         ChildPanel := SilnikGUI("PANEL_" . this.GuiObj.Hwnd, "-Border +Parent" . this.Stan.ChildGui.Hwnd . " +AlwaysOnTop +E0x10000", opcje)
-        
+
         this.Stan.Dzieci.Push(ChildPanel)
         EscAction := (*) => this.Zakoncz()
         ChildPanel.GuiObj.OnEvent("Escape", EscAction)
         ChildPanel.Stan.ChildGui.OnEvent("Escape", EscAction)
         ChildPanel.Stan.ClipGui.OnEvent("Escape", EscAction)
         ChildPanel.IsPanel := true
-        
+
         ; [TAGOWANIE WinAPI]
         Utils.SetTag(ChildPanel.GuiObj.Hwnd, "IsSilnikPanel")
         if (ChildPanel.Stan.UseChild) {
@@ -2954,37 +2981,37 @@ class SubWindows extends CtlFactory {
      */
     PokazPanel(RodzicPanelu, pozycja := "xm", opcje := "", ApplyScale := true) {
         this.Pokaz(opcje)
-        this.GuiObj.GetClientPos(,, &wPanel, &hPanel)
-        
+        this.GuiObj.GetClientPos(, , &wPanel, &hPanel)
+
         if !HasProp(this, "DummyCtrl") {
             gRamki := this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki
             myScaledPos := ApplyScale ? Utils.ScaleOptions(pozycja) : pozycja
             this.DummyCtrl := RodzicPanelu.Add("Text", myScaledPos . " w" . wPanel . " h" . hPanel . " BackgroundTrans", "", false)
             this.DummyCtrl.GetPos(&cX, &cY)
             this.DummyCtrl.Move(cX + gRamki, cY + gRamki) ; Korekta o grubość ramki
-            
+
             this.DummyCtrl.PanelObj := this
             this.DummyCtrl.Rola := "Panel"
 
-            this.DummyCtrl.DefineProp("Move", {Call: (ctrl, p*) => (
+            this.DummyCtrl.DefineProp("Move", { Call: (ctrl, p*) => (
                 ctrl.GetPos(&oldX, &oldY),
                 Gui.Control.Prototype.Move.Call(ctrl, p*),
                 ctrl.GetPos(&cX, &cY),
                 ctrl.PanelObj.GuiObj.Move(cX, cY),
                 ctrl.PanelObj.PrzesunPopupy(cX - oldX, cY - oldY)
-            )})
-            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki,,0)
+            ) })
+            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki, , 0)
             this.DummyCtrl.Ramka.ParentCtrl := this.DummyCtrl
             this.DummyCtrl.MouseDownAction := (ctrl, *) => DllCall("SetFocus", "Ptr", ctrl.PanelObj.Stan.FocusSink.Hwnd)
-            
+
             ; [TAGOWANIE WinAPI]
             Utils.SetTag(this.DummyCtrl.Hwnd, "IsSilnikPanel")
             for c in this.DummyCtrl.Ramka.Ctrls
                 Utils.SetTag(c.Hwnd, "IsSilnikPanel")
         } else {
-            this.DummyCtrl.Move(,,, wPanel, hPanel)
+            this.DummyCtrl.Move(, , , wPanel, hPanel)
         }
-        
+
         this.DummyCtrl.GetPos(&dX, &dY)
         this.GuiObj.Move(dX, dY)
     }
@@ -3008,26 +3035,26 @@ class SubWindows extends CtlFactory {
      * @return {SilnikGUI} - Instancja utworzonego sub-panelu.
      */
     DodajPanelTxt(tekst, w, h, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, Backlight: 0, ApplyScale: true})
+        opcje := Utils.MergeOptions(opcje?, { pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, Backlight: 0, ApplyScale: true })
         pozycja := opcje.pozycja, gruboscRamki := opcje.gruboscRamki, infLine := opcje.InfiniteLine, FontName := opcje.FontName, FontSize := opcje.FontSize, Backlight := opcje.Backlight, ApplyScale := opcje.ApplyScale
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
 
-        p := this.DodajPanel(gruboscRamki, 1, infLine ? 1 : 0, {PadR: 0, PadD: 0, AutoFitW: infLine ? 999999 : 0, AutoFitH: 999999})
+        p := this.DodajPanel(gruboscRamki, 1, infLine ? 1 : 0, { PadR: 0, PadD: 0, AutoFitW: infLine ? 999999 : 0, AutoFitH: 999999 })
         bs := p.Stan.VBar.BarSize
-        
-        opcjeWiersza := {trybWalidacji: 3, pozycja: "x0 y0", ResizeEditW: infLine, ResizeEditH: true, SzRamki: 0, AutoCenter: false, EditOpt: "Left", FontName: FontName, FontSize: FontSize, BackCol: BackCol, TextCol: TextCol, Backlight: Backlight}
+
+        opcjeWiersza := { trybWalidacji: 3, pozycja: "x0 y0", ResizeEditW: infLine, ResizeEditH: true, SzRamki: 0, AutoCenter: false, EditOpt: "Left", FontName: FontName, FontSize: FontSize, BackCol: BackCol, TextCol: TextCol, Backlight: Backlight }
 
         Skala := A_ScreenDPI / 96
         wFizyczne := ApplyScale ? Round(w * Skala) : w
         hFizyczne := ApplyScale ? Round(h * Skala) : h
-        
+
         opcjeWiersza.SzerPola := Max(10, wFizyczne - (infLine ? 0 : (bs + p.Stan.RamkaPanelu)))
         opcjeWiersza.WysPola := Max(10, hFizyczne)
         opcjeWiersza.ApplyScale := false
-            
+
         editGrp := p.DodajWierszKonfiguracji("", tekst, opcjeWiersza)
         editGrp.MainCtrl.FlexH := infLine
-        
+
         if !infLine {
             ph := p.Add("Text", "x0 y0 w" (bs + gruboscRamki) " +0x100 Background" BackCol)
             ph.Rola := "Placeholder"
@@ -3036,10 +3063,10 @@ class SubWindows extends CtlFactory {
             ph.ParentCtrl := editGrp.MainCtrl
             editGrp.MainCtrl.PlaceholderCtrl := ph
         }
-        
+
         editGrp.MainCtrl.SledzKaretke := true
         editGrp.MainCtrl.OnEvent("Change", (c, *) => SetTimer(ObjBindMethod(p, "SledzKaretke", c), -10))
-        
+
         ; [FIX] Ręczne przypisanie właściwości zapobiega awarii RegExMatch w metodzie Pokaz()
         p.PokazPanel(this, pozycja, "w" w " h" h, ApplyScale)
         return p
@@ -3053,8 +3080,6 @@ class SubWindows extends CtlFactory {
     }
 
 
-
-
 }
 
 /**
@@ -3066,13 +3091,13 @@ class SilnikGUI extends SubWindows {
 
 
     /**
-     * @desc Globalne sterowanie domyślną czcionką w silniku.
+     * @desc Globalne sterowanie mnożnikiem domyślnej czcionki w silniku.
      * @param {String} nazwa - Rodzaj czcionki.
-     * @param {Integer} rozmiar - Rozmiar w pkt.
+     * @param {Number} mnoznik - Mnożnik bazowego rozmiaru czcionki (domyślnie 1.0).
      */
-    static FontManagment(nazwa := "Segoe UI", rozmiar := 10) {
+    static FontManagment(nazwa := "Segoe UI", mnoznik := 1.0) {
         SilnikGUI.Statics.DomyslnaCzcionka.Name := nazwa
-        SilnikGUI.Statics.DomyslnaCzcionka.Size := rozmiar
+        SilnikGUI.Statics.FontMultiplier := mnoznik
     }
     /**
      * Tworzy nowe okno GUI z zadanym tytułem i stylem.
@@ -3128,11 +3153,11 @@ class SilnikGUI extends SubWindows {
         OnMessage(0x0203, Callback)
         ; [FIX] WM_MOUSEACTIVATE: Zwróć MA_NOACTIVATE (3) dla okien z flagą WS_EX_NOACTIVATE
         OnMessage(0x0021, (w, l, m, h) => (WinExist("ahk_id " h) && (WinGetExStyle("ahk_id " h) & 0x08000000)) ? 3 : "")
-        
+
         ; [STRATEGIA 1] Pre-Kalkulacja layoutu
         OnMessage(0x0046, (w, l, m, h) => this.ObslugaZmianyRozmiaruSystem(w, l, m, h)) ; WM_WINDOWPOSCHANGING
         OnMessage(0x0047, (w, l, m, h) => this.ObslugaZmianyRozmiaruSystem(w, l, m, h)) ; WM_WINDOWPOSCHANGED
-        
+
         SetTimer(ObjBindMethod(this, "GłównaPętlaStanu"), SilnikGUI.TickRate)
     }
 
@@ -3147,10 +3172,10 @@ class SilnikGUI extends SubWindows {
         catch
             foc := 0
         IsLBtn := GetKeyState("LButton", "P")
-        
+
         isScrolling := (A_TickCount - SilnikGUI.Statics.OstatniScrollTick < 150)
         hitHwnd := hitHwndRaw
-        
+
         if (!isScrolling) {
             Detekcja := SilnikGUI.ObslugaInterakcji(0, 0, 0, hitHwndRaw, true)
             if (GetKeyState("Shift", "P") && Detekcja && !HasProp(Detekcja, "IsScrollbar") && HasProp(Detekcja, "ScrollAction"))
@@ -3161,52 +3186,52 @@ class SilnikGUI extends SubWindows {
         } else {
             hitHwnd := LastRoutedHwnd ; Zamraża hover podczas scrolla
         }
-        
+
         for inst in SilnikGUI.Statics.AktywneInstancje {
             if (inst.GuiObj)
                 inst.MonitorujStan(mx, my, win, hitHwnd, foc, IsLBtn)
         }
     }
-        /**
-         * @desc Pobiera wymiary tekstu korzystając z jednego globalnego obiektu w pamięci.
-         */
-        static ZmierzTekst(tresc, fontName := "", fontOptions := "") {
-            if !this.Statics.HasProp("GlobalDummyGui") {
-                this.Statics.GlobalDummyGui := Gui("-DPIScale")
-                this.Statics.GlobalDummyTxt := this.Statics.GlobalDummyGui.Add("Text", "")
-                this.Statics.GlobalDummyEdit := this.Statics.GlobalDummyGui.Add("Edit", "+Multi -VScroll")
-            }
-            fName := fontName != "" ? fontName : this.Statics.DomyslnaCzcionka.Name
-            this.Statics.GlobalDummyTxt.SetFont(fontOptions, fName)
-            hDC := DllCall("GetDC", "Ptr", this.Statics.GlobalDummyTxt.Hwnd, "Ptr")
-            hOldFont := DllCall("SelectObject", "Ptr", hDC, "Ptr", SendMessage(0x0031, 0, 0, this.Statics.GlobalDummyTxt.Hwnd), "Ptr")
-            rect := Buffer(16, 0)
-            DllCall("DrawText", "Ptr", hDC, "Str", tresc, "Int", -1, "Ptr", rect, "UInt", 0xC40) ; DT_CALCRECT | DT_EXPANDTABS | DT_NOPREFIX
-            DllCall("SelectObject", "Ptr", hDC, "Ptr", hOldFont)
-            DllCall("ReleaseDC", "Ptr", this.Statics.GlobalDummyTxt.Hwnd, "Ptr", hDC)
-            return {w: NumGet(rect, 8, "Int"), h: NumGet(rect, 12, "Int")}
+    /**
+     * @desc Pobiera wymiary tekstu korzystając z jednego globalnego obiektu w pamięci.
+     */
+    static ZmierzTekst(tresc, fontName := "", fontOptions := "") {
+        if !this.Statics.HasProp("GlobalDummyGui") {
+            this.Statics.GlobalDummyGui := Gui("-DPIScale")
+            this.Statics.GlobalDummyTxt := this.Statics.GlobalDummyGui.Add("Text", "")
+            this.Statics.GlobalDummyEdit := this.Statics.GlobalDummyGui.Add("Edit", "+Multi -VScroll")
         }
+        fName := fontName != "" ? fontName : this.Statics.DomyslnaCzcionka.Name
+        this.Statics.GlobalDummyTxt.SetFont(fontOptions, fName)
+        hDC := DllCall("GetDC", "Ptr", this.Statics.GlobalDummyTxt.Hwnd, "Ptr")
+        hOldFont := DllCall("SelectObject", "Ptr", hDC, "Ptr", SendMessage(0x0031, 0, 0, this.Statics.GlobalDummyTxt.Hwnd), "Ptr")
+        rect := Buffer(16, 0)
+        DllCall("DrawText", "Ptr", hDC, "Str", tresc, "Int", -1, "Ptr", rect, "UInt", 0xC40) ; DT_CALCRECT | DT_EXPANDTABS | DT_NOPREFIX
+        DllCall("SelectObject", "Ptr", hDC, "Ptr", hOldFont)
+        DllCall("ReleaseDC", "Ptr", this.Statics.GlobalDummyTxt.Hwnd, "Ptr", hDC)
+        return { w: NumGet(rect, 8, "Int"), h: NumGet(rect, 12, "Int") }
+    }
 
-        /**
-         * @desc Zwraca ilość wierszy przy word-wrapowaniu na zadanej szerokości.
-         */
-        static ZmierzWysokoscEdita(tresc, w, fontName := "", fontOptions := "") {
-            if !this.Statics.HasProp("GlobalDummyGui")
-                this.ZmierzTekst("")
-            fName := fontName != "" ? fontName : this.Statics.DomyslnaCzcionka.Name
-            this.Statics.GlobalDummyEdit.SetFont(fontOptions, fName)
-            this.Statics.GlobalDummyEdit.Move(,,, 10)
-            this.Statics.GlobalDummyEdit.Move(,, w)
-            this.Statics.GlobalDummyEdit.Value := tresc
-            return SendMessage(0x00BA, 0, 0, this.Statics.GlobalDummyEdit.Hwnd)
-        }
+    /**
+     * @desc Zwraca ilość wierszy przy word-wrapowaniu na zadanej szerokości.
+     */
+    static ZmierzWysokoscEdita(tresc, w, fontName := "", fontOptions := "") {
+        if !this.Statics.HasProp("GlobalDummyGui")
+            this.ZmierzTekst("")
+        fName := fontName != "" ? fontName : this.Statics.DomyslnaCzcionka.Name
+        this.Statics.GlobalDummyEdit.SetFont(fontOptions, fName)
+        this.Statics.GlobalDummyEdit.Move(, , , 10)
+        this.Statics.GlobalDummyEdit.Move(, , w)
+        this.Statics.GlobalDummyEdit.Value := tresc
+        return SendMessage(0x00BA, 0, 0, this.Statics.GlobalDummyEdit.Hwnd)
+    }
 
-        /**
+    /**
      * @desc Jawna inicjalizacja silnika (IoC) i rozgrzewka czcionek.
      * @param {String} [dodatkowySlownik=""] - Dodatkowe znaki klienta.
      * @param {Array} [opcjeCzcionek=[]] - Opcjonalne formaty (np. ["s12 bold"]).
      * @param {Array|String} [nazwyCzcionek=["Segoe UI"]] - Kroje czcionek do rozgrzania.
-         */
+     */
     static InicjalizujSilnik(dodatkowySlownik := "", opcjeCzcionek := [], nazwyCzcionek := ["Segoe UI"]) {
         slownik := "💻✂🔍📄🡰🡲🡱🡳◑🔊🔉ψᛒ⊙🎧📞—✓▲▼◄►🞀❘❙❚🞂✲➠🡷🡵✍📸⚠️" . dodatkowySlownik
         wspolneOpcje := ["s9 norm", "s10 norm", "s13 w100", "s15 bold", "s20 norm"]
@@ -3234,7 +3259,7 @@ class SilnikGUI extends SubWindows {
             try ctrl := GuiCtrlFromHwnd(hCtrl)
         }
 
-        ; Omijamy router dla dwukliku w Edit (system zaznaczy słowo). 
+        ; Omijamy router dla dwukliku w Edit (system zaznaczy słowo).
         ; Używamy try/hwnd bo MouseGetPos bywa ślepe na podwójne kliknięcia w zagnieżdżonych maskach.
         if (msg == 0x0203) {
             if (ctrl && ctrl.Type == "Edit")
@@ -3265,10 +3290,10 @@ class SilnikGUI extends SubWindows {
         if (Target && !HasProp(Target, "IsScrollbar")) {
             focHwnd := 0
             try focHwnd := ControlGetHwnd(ControlGetFocus("A"), "A")
-            
+
             if (focHwnd != Target.Hwnd)
                 try Target.Focus()
-                
+
             ; Prewencja Select-All i kierowanie karetką wg źródła kliknięcia
             if (Target.Type == "Edit" && ctrl != Target && (focHwnd != Target.Hwnd)) { ;
                 pos := HasProp(Target, "LastCaretPos") ? Target.LastCaretPos : (((HasProp(Target, "PlaceholderCtrl") && ctrl == Target.PlaceholderCtrl) || HasProp(Target, "NativeEnter")) ? 0 : StrLen(Target.Value))
@@ -3290,7 +3315,7 @@ class SilnikGUI extends SubWindows {
 
         if (Target)
             Target.MouseDownAction()
-            
+
         return
     }
 
@@ -3305,16 +3330,16 @@ class SilnikGUI extends SubWindows {
     static ObslugaZmianyRozmiaruSystem(wParam, lParam, msg, hwnd) {
         if !(g := GuiFromHwnd(hwnd)) || !HasProp(g, "Silnik")
             return
-            
+
         Silnik := g.Silnik
-        
+
         ; [FIX] Blokada rekurencji: aktualizuj layout tylko dla głównego okna, ignoruj ClipGui/ChildGui
         if (!IsObject(Silnik.GuiObj) || hwnd != Silnik.GuiObj.Hwnd)
             return
-            
+
         ; Zabezpieczenie przed x86 / x64 (Wskaźniki 4-bit vs 8-bit)
         flags := NumGet(lParam, (2 * A_PtrSize) + 16, "UInt")
-        
+
         ; Ignoruj jeśli rozmiar się nie zmienia (SWP_NOSIZE)
         if (flags & 0x0001)
             return
@@ -3324,11 +3349,11 @@ class SilnikGUI extends SubWindows {
 
         w := NumGet(lParam, (2 * A_PtrSize) + 8, "Int")
         h := NumGet(lParam, (2 * A_PtrSize) + 12, "Int")
-        
+
         if (msg == 0x0046) { ; WM_WINDOWPOSCHANGING (Pre-Factum)
             try {
-                WinGetPos(,, &winW, &winH, hwnd)
-                g.GetClientPos(,, &cliW, &cliH)
+                WinGetPos(, , &winW, &winH, hwnd)
+                g.GetClientPos(, , &cliW, &cliH)
                 clientW := w - (winW - cliW)
                 clientH := h - (winH - cliH)
                 if (Silnik.Stan.UseChild && clientW > 0 && clientH > 0)
@@ -3337,7 +3362,7 @@ class SilnikGUI extends SubWindows {
         } else if (msg == 0x0047) { ; WM_WINDOWPOSCHANGED (Post-Factum)
             if !(WinGetStyle(hwnd) & 0xC00000)
                 DllCall("RedrawWindow", "Ptr", hwnd, "Ptr", 0, "Ptr", 0, "UInt", 0x0180)
-                
+
             if (Silnik.Stan.DebounceRedraw)
                 SetTimer(Silnik.Stan.DebounceRedraw, -50)
         }
@@ -3345,9 +3370,9 @@ class SilnikGUI extends SubWindows {
 
     ; główny konstruktor, dokumentacja w static Call
     __New(tytul, opcje := "", parametry?) {
-        parametry := Utils.MergeOptions(parametry?, {pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: SilnikGUI.ResizeMarg, GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent:0.0})
+        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: SilnikGUI.ResizeMarg, GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0 })
         pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadL := parametry.PadL, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent
-        
+
         if !InStr(opcje, "-DPIScale")
             opcje .= " -DPIScale "
         if !InStr(opcje, "+0x02000000") {
@@ -3355,7 +3380,7 @@ class SilnikGUI extends SubWindows {
         }
         if (pokazPasek == 0 && !InStr(opcje, "-Caption"))
             opcje .= " -Caption "
-        
+
         Skala := A_ScreenDPI / 96
 
         this.Stan.UseChild := createChild
@@ -3373,23 +3398,23 @@ class SilnikGUI extends SubWindows {
         this.Stan.PadD := Round(PadD * Skala)
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
-        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala) : 0
+        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala * SilnikGUI.Statics.FontMultiplier) : 0
 
 
         this.GuiObj := Gui(opcje, tytul)
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
-        this.GuiObj.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
+        this.GuiObj.SetFont("s" . Round(10 * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
         this.GuiObj.MarginX := this.Stan.PadL
         this.GuiObj.MarginY := 0
-        
-        if (Transparent != 0.0){
+
+        if (Transparent != 0.0) {
             Transparent := Round(255 * (1.0 - Transparent))
             WinSetTransparent(Transparent, this.GuiObj.Hwnd)
         }
         ; Pochłaniacz fokusu (-Tabstop blokuje dotarcie klawiszem TAB)
         this.Stan.FocusSink := this.GuiObj.Add("Button", "x-10 y-10 w1 h1 -Tabstop")
-        
+
         ; CHILD GUI (Kontener treści)
         if (this.Stan.UseChild) {
             ; [FIX] Viewport (Maska przycinająca) - Pośrednik między Parentem a Canvasem
@@ -3397,28 +3422,28 @@ class SilnikGUI extends SubWindows {
             this.Stan.ClipGui.BackColor := SilnikGUI.Motyw.Tlo
             this.Stan.ClipGui.MarginX := 0, this.Stan.ClipGui.MarginY := 0
             this.Stan.ClipGui.Silnik := this ; Przepięcie dla Raycastingu
-            
+
             ; [FIX] +E0x10000 (WS_EX_CONTROLPARENT) - Umożliwia rekurencyjne tabowanie (wejście do kontenera)
             ; Parentem Childa jest teraz ClipGui, a nie GuiObj
             this.Stan.ChildGui := Gui("-Caption -Border +Parent" . this.Stan.ClipGui.Hwnd . " +E0x10000 +0x02000000 -DPIScale")
             this.Stan.ChildGui.BackColor := SilnikGUI.Motyw.Tlo
-            this.Stan.ChildGui.SetFont("s10 " . SilnikGUI.Motyw.Tekst, "Segoe UI")
+            this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
             this.Stan.ChildGui.MarginX := this.Stan.PadL
             this.Stan.ChildGui.MarginY := 0
             this.Stan.ChildGui.Silnik := this
-            
+
             ; [ETAP 2] Inicjalizacja Pasków (Ukryte na start)
-            this.Stan.VBar := this.Stan.CSBarV ? SilnikGUI.PasekPrzewijania(this, "V") : 0 
-            this.Stan.HBar := this.Stan.CSBarH ? SilnikGUI.PasekPrzewijania(this, "H") : 0 
+            this.Stan.VBar := this.Stan.CSBarV ? SilnikGUI.PasekPrzewijania(this, "V") : 0
+            this.Stan.HBar := this.Stan.CSBarH ? SilnikGUI.PasekPrzewijania(this, "H") : 0
             this.Stan.Corner := this.GuiObj.Add("Text", "x0 y0 w0 h0 Hidden Background" . SilnikGUI.Motyw.Tlo)
         }
 
         ; Motyw DWM (Pasek tytułu)
         SilnikGUI.UstawCiemnyMotywDWM(this.GuiObj.Hwnd, SilnikGUI.Motyw.Tryb)
-        
+
         ; Zamknięcie (czyszczenie timerów)
         this.GuiObj.OnEvent("Close", (*) => this.Zakoncz())
-        
+
         ; Obsługa ESC (0=Off, 1=Hide, 2=Destroy)
         if (zamknijNaEsc > 0) {
             EscAction := (zamknijNaEsc == 2 || MainGUI) ? (*) => this.Zakoncz() : (*) => this.GuiObj.Hide()
@@ -3428,9 +3453,9 @@ class SilnikGUI extends SubWindows {
                 this.Stan.ChildGui.OnEvent("Escape", EscAction)
             }
         }
-        
+
         ; Monitor fokusu - obsługiwany statycznie przez GłównaPętlaStanu
-        
+
         ; [FIX] Debounce Redraw (Naprawa artefaktów po resize)
         this.Stan.DebounceRedraw := ObjBindMethod(this, "WymusPelnyRedraw")
 
@@ -3440,7 +3465,7 @@ class SilnikGUI extends SubWindows {
             OnMessage(0x0083, (wp, lp, msg, hw) => (hw == hwnd) ? 0 : "")
             OnMessage(0x0084, ObjBindMethod(SilnikGUI, "ObslugaHitTest", hwnd, ResizeMarg))
             OnMessage(0x0086, (wp, lp, msg, hw) => (hw == hwnd) ? 1 : "") ;(Blokada paska)
-            
+
             ; Przeciąganie dla okien bez paska
             if (this.Stan.dragBezPaska) {
                 if !this.Stan.HandlerDrag {
@@ -3464,7 +3489,7 @@ class SilnikGUI extends SubWindows {
      * Wyświetla okno, umozliwia uzycie zmiennych PadD, PadR, (marinesy) AutoFitW, AutoFitH (procentowe lub pikselowe ograniczniki rozmiaru)
      * @param [Opt= ""] {String} Dodatkowe opcje dla metody Show (np. "w500 h300 NA").
      */
-    Pokaz(Opt:= "") {
+    Pokaz(Opt := "") {
         myDpiScale := A_ScreenDPI / 96
 
         ; Statyczna weryfikacja zdolności przyjmowania focusu (WS_TABSTOP = 0x10000)
@@ -3486,7 +3511,7 @@ class SilnikGUI extends SubWindows {
 
         ; [FIX] Odśwież dynamiczne (DostosujRozmiar + CallbackLayout) PRZED pomiarem AutoSize
         ; Dzięki temu kontrolki trafią na swoje miejsca (np. z x0 na x500), a AutoSize zmierzy faktyczny układ.
-        this.Stan.CzyPokazano := false 
+        this.Stan.CzyPokazano := false
         for ctrl in this.Stan.Kontrolki {
             if (ctrl.Type = "Edit" && HasProp(ctrl, "SzerEtykiety") && HasProp(ctrl, "CzyDynamiczne") && ctrl.CzyDynamiczne)
                 this.DostosujRozmiar(ctrl.SzerEtykiety, ctrl, ctrl.SzerPola, ctrl.WysInput)
@@ -3515,6 +3540,12 @@ class SilnikGUI extends SubWindows {
             finalH := Round(Min(finalH, LimitH))
         }
 
+        ; [FIX] Narzucenie fizycznych kagańców okna przed generacją fazy GDI (Anti-Async Lag)
+        if (this.Stan.HasProp("MinW") && this.Stan.MinW > 0)
+            finalW := Max(finalW, this.Stan.MinW)
+        if (this.Stan.HasProp("MinH") && this.Stan.MinH > 0)
+            finalH := Max(finalH, this.Stan.MinH)
+
         ; Czyszczenie Opt z wymiarów, aby nie dublować parametrów
         Opt := Trim(RegExReplace(Opt, "i)(?:^|\s)[wh]\d+", ""))
 
@@ -3525,24 +3556,24 @@ class SilnikGUI extends SubWindows {
 
         ; [STRATEGIA 3] Pre-kalkulacja (Zasada: Wpierw buduj w ukryciu, potem pokazuj)
         this.GuiObj.Show("Hide w" . finalW . " h" . finalH . (Opt ? " " . Opt : ""))
-        
+
 
         if (this.Stan.UseChild) {
             ; [FIX] Pochłonięcie AutoSize. Show musi być PRZED layoutem.
             this.Stan.ClipGui.Show("NA")
             this.Stan.ChildGui.Show("NA")
-            
-            this.GuiObj.GetClientPos(,, &realW, &realH)
-            this.AktualizujLayout(realW, realH,1) ; Twardy, synchroniczny układ GDI przed renderem
+
+            this.GuiObj.GetClientPos(, , &realW, &realH)
+            this.AktualizujLayout(realW, realH, 1) ; Twardy, synchroniczny układ GDI przed renderem
         }
-        
+
         ; Finalny zrzut na ekran (zero mrugania i glitchy startowych)
         if !InStr(Opt, "Hide")
             this.GuiObj.Show(Opt ? Opt : "")
-            
+
         this.WymusPelnyRedraw()
 
-        if (this.Stan.UseChild && this.Stan.ChildGui) 
+        if (this.Stan.UseChild && this.Stan.ChildGui)
             try DllCall("SetFocus", "Ptr", this.Stan.ChildGui.Hwnd)
         if (hasResize)
             this.GuiObj.Opt("+Resize")
@@ -3579,22 +3610,22 @@ class SilnikGUI extends SubWindows {
                 return
         } catch
             return
-            
+
         pt := Buffer(8, 0)
         if !DllCall("GetCaretPos", "Ptr", pt)
             return
-            
+
         caretX := NumGet(pt, 0, "Int")
         caretY := NumGet(pt, 4, "Int")
-            
-        ctrl.GetPos(&cX, &cY), this.Stan.ChildGui.GetPos(&childX, &childY), this.Stan.ClipGui.GetPos(,, &clipW, &clipH)
+
+        ctrl.GetPos(&cX, &cY), this.Stan.ChildGui.GetPos(&childX, &childY), this.Stan.ClipGui.GetPos(, , &clipW, &clipH)
         absX := cX + caretX + childX
         absY := cY + caretY + childY
-        
+
         hWiersza := HasProp(ctrl, "WysWiersza") ? ctrl.WysWiersza : 18
         deltaX := (absX < 0) ? (absX - 10) : ((absX + 15 > clipW) ? (absX + 15 - clipW + 10) : 0)
         deltaY := (absY < 0) ? (absY - 4) : ((absY + hWiersza > clipH) ? (absY + hWiersza - clipH + 4) : 0)
-            
+
         if (deltaX != 0 || deltaY != 0) {
             bar := this.Stan.VBar ? this.Stan.VBar : this.Stan.HBar
             (bar) && bar.PrzewinObszar((this.Stan.HBar ? -deltaX : 0), (this.Stan.VBar ? -deltaY : 0))
@@ -3623,14 +3654,14 @@ class SilnikGUI extends SubWindows {
 
         if (SilnikGUI.Statics.StanMButtonScroll.Instancja == this && SilnikGUI.Statics.StanMButtonScroll.Aktywny)
             SilnikGUI.ZakonczMButtonScroll()
-            
+
         if (HasProp(this.Stan, "DebounceRedraw"))
             SetTimer(this.Stan.DebounceRedraw, 0)
-            
+
         for dziecko in this.Stan.Dzieci
             try dziecko.Zakoncz()
         this.Stan.Dzieci := []
-        
+
         ; Sprzątanie handlera przeciągania
         if (this.Stan.HandlerDrag) {
             OnMessage(0x0201, this.Stan.HandlerDrag, 0)
@@ -3640,7 +3671,7 @@ class SilnikGUI extends SubWindows {
         if (this.GuiObj) {
             try this.GuiObj.DeleteProp("Silnik") ; Rozbicie cyklicznych referencji (Memory Leak fix)
             this.GuiObj.Destroy()
-            this.GuiObj := 0 
+            this.GuiObj := 0
             if (this.Stan.UseChild) {
                 try this.Stan.ClipGui.DeleteProp("Silnik")
                 try this.Stan.ChildGui.DeleteProp("Silnik")
@@ -3680,16 +3711,16 @@ class SilnikGUI extends SubWindows {
         if (!this.Stan.RootHwnd)
             this.Stan.RootHwnd := DllCall("GetAncestor", "Ptr", this.GuiObj.Hwnd, "UInt", 2, "Ptr")
         st := this.Stan.MonState
-        
+
         if !this.GuiObj
             return
         IsActive := WinActive(this.Stan.RootHwnd)
 
         ; 2. Check Flash (Animacja trwa?)
-        CheckFlash(h) => (h && (c:=GuiCtrlFromHwnd(h)) && HasProp(c, "FlashEndTime") && A_TickCount < c.FlashEndTime)
+        CheckFlash(h) => (h && (c := GuiCtrlFromHwnd(h)) && HasProp(c, "FlashEndTime") && A_TickCount < c.FlashEndTime)
         CurrentlyFlashing := (CheckFlash(st.LastFocus) || CheckFlash(st.LastHover))
         IsFlashing := (st.WasFlashing || CurrentlyFlashing) ; [FIX] Przetwarzaj jeśli trwa LUB właśnie się skończyło
-        
+
         ; 3. IDLE CHECK (Najważniejsza optymalizacja)
         ; Jeśli nic się nie zmieniło i nie ma animacji -> RETURN
         if (!IsFlashing && mx == st.LastInput.x && my == st.LastInput.y && win == st.LastInput.win && hitHwnd == st.LastInput.ctl && foc == st.LastInput.foc && IsActive == st.LastInput.act && IsLBtn == st.LastInput.lbtn)
@@ -3703,16 +3734,16 @@ class SilnikGUI extends SubWindows {
         if (this.Stan.LastActiveState != IsActive) {
             this.Stan.LastActiveState := IsActive
             col := SilnikGUI.Odcien(SilnikGUI.Motyw.Tlo, SilnikGUI.Motyw.FactorRamki * (IsActive ? 1 : -1))
-            this.Stan.AktualnyKolorRamki := col 
-            
+            this.Stan.AktualnyKolorRamki := col
+
             colBtn := IsActive ? SilnikGUI.Motyw.Przycisk : SilnikGUI.Motyw.Wklesly
             this.Stan.AktualnyKolorPrzycisku := colBtn
 
             ; Logika koloru tekstu (Globalny vs Custom)
             DajKolorTxt := (ctrl) => (HasProp(ctrl, "KolorBazowy") ? "c" . (IsActive ? ctrl.KolorBazowy : SilnikGUI.Odcien(ctrl.KolorBazowy, -SilnikGUI.Motyw.FactorNieaktywny)) : (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny)))
-            
+
             colTxt := (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny))
-            this.Stan.AktualnyKolorTekstu := colTxt 
+            this.Stan.AktualnyKolorTekstu := colTxt
 
             this.GuiObj.BackColor := col ; [FIX] Aktualizacja tła (Ramki w trybie GDI)
             if (!this.Stan.UseChild)
@@ -3720,20 +3751,20 @@ class SilnikGUI extends SubWindows {
 
             ; [FIX] Iteracja po kontrolkach (Child lub Parent w trybie płaskim)
             TargetObj := this.Stan.UseChild ? this.Stan.ChildGui : this.GuiObj
-            
+
             if (IsObject(TargetObj)) {
                 for c in TargetObj {
                     ; Ignoruj elementy techniczne (Dummy)
                     if HasProp(c, "IsDummy")
                         continue
-    
+
                     if HasProp(c, "IsFrame") {
                         if (!HasProp(c, "FixedColor") || !c.FixedColor)
                             c.Opt("Background" . col . " Redraw")
                         else
                             c.Opt("Redraw")
-                        
-                        DllCall("SetWindowPos", "Ptr", c.Hwnd, "Ptr", 1, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x13) 
+
+                        DllCall("SetWindowPos", "Ptr", c.Hwnd, "Ptr", 1, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x13)
                     } else if (HasProp(c, "Rola") && c.Rola == "CustomButton") {
                         c.Opt("Background" . colBtn . " " . colTxt . " Redraw")
                     } else if (c.Type = "Text" || c.Type = "Edit") {
@@ -3772,7 +3803,7 @@ class SilnikGUI extends SubWindows {
 
         ; [STRATEGIA 1] Pre-Kwarantanna (Szybki filtr instancji)
         ValidWin := isPopup || (win == this.Stan.RootHwnd)
-        
+
         ; Jeśli kursor na tle Childa (brak kontrolki) lub interakcja zablokowana -> Hover = 0
         if (!AktualnyHoverHwnd || !ValidWin || (!isPopup && !SilnikGUI.CzyMoznaInterakcja(this.GuiObj))) {
             AktualnyHoverHwnd := 0
@@ -3807,8 +3838,8 @@ class SilnikGUI extends SubWindows {
         SetHwnd := Map()
         (MainOldFocusHwnd) && SetHwnd[MainOldFocusHwnd] := 1
         (MainOldHoverHwnd) && SetHwnd[MainOldHoverHwnd] := 1
-        (MainFocusHwnd)    && SetHwnd[MainFocusHwnd]    := 1
-        (MainHoverHwnd)    && SetHwnd[MainHoverHwnd]    := 1
+        (MainFocusHwnd) && SetHwnd[MainFocusHwnd] := 1
+        (MainHoverHwnd) && SetHwnd[MainHoverHwnd] := 1
 
         for hwnd, _ in SetHwnd {
             try {
@@ -3825,7 +3856,7 @@ class SilnikGUI extends SubWindows {
                     stan := (hwnd == MainHoverHwnd) ? 3 : 2 ; Focus+Hover lub Focus
                 else if (hwnd == MainHoverHwnd)
                     stan := 1 ; Hover
-                
+
                 ; Override: Jeśli trwa Flash, wymuś stan 0 (brak podświetlenia)
                 if (HasProp(ctrl, "FlashEndTime") && A_TickCount < ctrl.FlashEndTime)
                     stan := 0
@@ -3833,7 +3864,7 @@ class SilnikGUI extends SubWindows {
                 SilnikGUI.NadajStyl(ctrl, stan, this.Stan.AktualnyKolorRamki, this.Stan.AktualnyKolorPrzycisku, this.Stan.AktualnyKolorTekstu)
             }
         }
-        
+
         st.LastFocus := AktualnyFocusHwnd
         st.LastHover := AktualnyHoverHwnd
         st.LastRealFocus := RealFocusHwnd
@@ -3867,7 +3898,7 @@ class SilnikGUI extends SubWindows {
             return
 
         hCtrl := SilnikGUI.GetRealHwndUnderMouse()
-        
+
         ; Check interaktywnych
         if (hCtrl && hCtrl != hwnd) {
             try {
@@ -3892,11 +3923,11 @@ class SilnikGUI extends SubWindows {
      */
     class GrupaKontrolek {
         __New(CoreControls, ElementyTablica := []) {
-            this.DefineProp("CoreControls", {Value: CoreControls})
-            this.DefineProp("MainCtrl", {Value: CoreControls[1]}) ; Lider grupy (do Proxy)
-            this.DefineProp("Elementy", {Value: ElementyTablica})
+            this.DefineProp("CoreControls", { Value: CoreControls })
+            this.DefineProp("MainCtrl", { Value: CoreControls[1] }) ; Lider grupy (do Proxy)
+            this.DefineProp("Elementy", { Value: ElementyTablica })
         }
-        
+
         ; Jawne gettery dla kompatybilności z HasProp()
         Hwnd => this.MainCtrl.Hwnd
         Gui => this.MainCtrl.Gui
@@ -3906,26 +3937,26 @@ class SilnikGUI extends SubWindows {
          * Moves the control group.
          * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
          */
-        Move(x:="", y:="", w:="", h:="", ApplyScale := true) {
+        Move(x := "", y := "", w := "", h := "", ApplyScale := true) {
             Skala := A_ScreenDPI / 96
             x := (ApplyScale && x !== "") ? Round(x * Skala) : x
             y := (ApplyScale && y !== "") ? Round(y * Skala) : y
             w := (ApplyScale && w !== "") ? Round(w * Skala) : w
             h := (ApplyScale && h !== "") ? Round(h * Skala) : h
-            
+
             ; 1. Przygotowanie (Offset ramki)
             off := (HasProp(this.MainCtrl, "GruboscRamki") ? this.MainCtrl.GruboscRamki : 0)
-            
-            nx := (x!="") ? (x + off) : unset
-            ny := (y!="") ? (y + off) : unset
+
+            nx := (x != "") ? (x + off) : unset
+            ny := (y != "") ? (y + off) : unset
 
             ; 2. Przesuń Lidera (MainCtrl) - to wyznacza Deltę dla reszty
             this.MainCtrl.GetPos(&oldX, &oldY, &oldW, &oldH)
-            this.MainCtrl.Move(nx?, ny?, w==""?unset:w, h==""?unset:h)
+            this.MainCtrl.Move(nx?, ny?, w == "" ? unset : w, h == "" ? unset : h)
             this.MainCtrl.GetPos(&newX, &newY, &newW, &newH)
-            
+
             dX := newX - oldX, dY := newY - oldY
-            
+
             if (dX = 0 && dY = 0)
                 return
 
@@ -3934,12 +3965,12 @@ class SilnikGUI extends SubWindows {
                 ; Pomiń Lidera i Ramkę (Ramka jest liczona osobno)
                 if (item.Hwnd == this.MainCtrl.Hwnd || (HasProp(this.MainCtrl, "Ramka") && item == this.MainCtrl.Ramka))
                     continue
-                
+
                 ix := 0, iy := 0
                 item.GetPos(&ix, &iy)
                 item.Move(ix + dX, iy + dY)
             }
-            
+
             ; 4. Oblicz Union Rect (CoreControls) i dopasuj Ramkę (Snap)
             if (HasProp(this.MainCtrl, "Ramka")) {
                 minX := 99999, minY := 99999, maxX := -99999, maxY := -99999
@@ -3951,11 +3982,11 @@ class SilnikGUI extends SubWindows {
                     maxY := Max(maxY, cY + cH)
                 }
                 if (minX != 99999) {
-                    this.MainCtrl.Ramka.Move(minX - off, minY - off, (maxX - minX) + 2*off, (maxY - minY) + 2*off)
+                    this.MainCtrl.Ramka.Move(minX - off, minY - off, (maxX - minX) + 2 * off, (maxY - minY) + 2 * off)
                 }
             }
         }
-        
+
         Redraw() {
             try DllCall("InvalidateRect", "Ptr", this.MainCtrl.Gui.Hwnd, "Ptr", 0, "Int", 1)
             this.MainCtrl.Opt("+Redraw")
@@ -4000,7 +4031,7 @@ class SilnikGUI extends SubWindows {
         attr := 20 ; DWMWA_USE_IMMERSIVE_DARK_MODE
         if (VerCompare(A_OSVersion, "10.0.18985") < 0) ; starsze buildy Win10 (1903/1909)
             attr := 19
-        
+
         DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "Int", attr, "Int*", wlaczycCiemny, "Int", 4)
     }
 
@@ -4013,7 +4044,7 @@ class SilnikGUI extends SubWindows {
     static PelnyEkran(guiObj, callback := 0) {
         static StanOkien := Map() ; Cache stylów
         hwnd := guiObj.Hwnd
-        
+
         ; sprawadzamy stan okna (1=Max)
         stan := WinGetMinMax(hwnd)
         styl := WinGetStyle(hwnd)
@@ -4021,24 +4052,24 @@ class SilnikGUI extends SubWindows {
         ; 1. Maskownica (Zrzut: Wymiary pulpitu)
         vX := SysGet(76), vY := SysGet(77)
         vW := SysGet(78), vH := SysGet(79)
-        
+
         ; Wymuszenie pikseli fizycznych (-DPIScale)
         MaskGui := Gui("-Caption +AlwaysOnTop +ToolWindow +E0x20 -DPIScale") ; E0x20 = Przenikanie kliknięć
         MaskGui.BackColor := "000000"
-        
+
         try {
             ; Zrzut ekranu (GetDC(0))
             hDC := DllCall("GetDC", "Ptr", 0, "Ptr")
             hMemDC := DllCall("CreateCompatibleDC", "Ptr", hDC, "Ptr")
             hBM := DllCall("CreateCompatibleBitmap", "Ptr", hDC, "Int", vW, "Int", vH, "Ptr")
             hOld := DllCall("SelectObject", "Ptr", hMemDC, "Ptr", hBM)
-            
+
             DllCall("BitBlt", "Ptr", hMemDC, "Int", 0, "Int", 0, "Int", vW, "Int", vH, "Ptr", hDC, "Int", vX, "Int", vY, "UInt", 0x40CC0020) ; Kopiowanie
-            
+
             DllCall("SelectObject", "Ptr", hMemDC, "Ptr", hOld)
             DllCall("DeleteDC", "Ptr", hMemDC)
             DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
-            
+
             MaskGui.Add("Picture", "x0 y0 w" . vW . " h" . vH, "HBITMAP:" . hBM)
             DllCall("DeleteObject", "Ptr", hBM) ; Zwolnij oryginał
         }
@@ -4056,7 +4087,7 @@ class SilnikGUI extends SubWindows {
             else
                 WinSetStyle("-0xC00000", guiObj) ; Brak paska (Tryb Zen)
         } else { ; Normal -> Pełny ekran
-            StanOkien[hwnd] := {HadCaption: (styl & 0xC00000)}
+            StanOkien[hwnd] := { HadCaption: (styl & 0xC00000) }
             WinSetStyle("-0xC00000", guiObj) ; -WS_CAPTION
             WinSetStyle("-0x40000", guiObj)  ; Ukryj ramkę
             guiObj.Maximize()
@@ -4082,36 +4113,36 @@ class SilnikGUI extends SubWindows {
     static ObslugaHitTest(targetHwnd, margines, wParam, lParam, msg, hwnd) {
         if (hwnd != targetHwnd)
             return
-        
+
         if WinGetMinMax("ahk_id " hwnd)
             return 1 ; HTCLIENT
-            
+
         x := lParam & 0xFFFF
         y := (lParam >> 16) & 0xFFFF
-        
+
         WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " hwnd)
-        
-        top    := (y >= wY && y < wY + margines)
+
+        top := (y >= wY && y < wY + margines)
         bottom := (y >= wY + wH - margines && y < wY + wH)
-        left   := (x >= wX && x < wX + margines)
-        right  := (x >= wX + wW - margines && x < wX + wW)
-        
-        if (top && left)     
-        return 13 ; HTTOPLEFT
-        if (top && right)   
-        return 14 ; HTTOPRIGHT
-        if (bottom && left)  
-        return 16 ; HTBOTTOMLEFT
-        if (bottom && right) 
-        return 17 ; HTBOTTOMRIGHT
-        if (top)             
-        return 12 ; HTTOP
-        if (bottom)          
-        return 15 ; HTBOTTOM
-        if (left)            
-        return 10 ; HTLEFT
-        if (right)           
-        return 11 ; HTRIGHT
+        left := (x >= wX && x < wX + margines)
+        right := (x >= wX + wW - margines && x < wX + wW)
+
+        if (top && left)
+            return 13 ; HTTOPLEFT
+        if (top && right)
+            return 14 ; HTTOPRIGHT
+        if (bottom && left)
+            return 16 ; HTBOTTOMLEFT
+        if (bottom && right)
+            return 17 ; HTBOTTOMRIGHT
+        if (top)
+            return 12 ; HTTOP
+        if (bottom)
+            return 15 ; HTBOTTOM
+        if (left)
+            return 10 ; HTLEFT
+        if (right)
+            return 11 ; HTRIGHT
         return 1 ; HTCLIENT
     }
 
@@ -4122,13 +4153,13 @@ class SilnikGUI extends SubWindows {
      * @param {Integer} h - Wysokość okna.
      * @param {Integer} [start=0] - Flaga wskazująca, czy jest to początkowa konfiguracja (true) czy aktualizacja po zmianie rozmiaru (false). Jeśli true, pozycja scrolla zostanie zresetowana do 0.
      */
-    AktualizujLayout(w, h, start:= 0) {
+    AktualizujLayout(w, h, start := 0) {
         g := this.Stan.GruboscRamki
         gap := this.HasProp("IsPanel") ? this.Stan.RamkaPanelu : g
-        
+
         ; 1. Przestrzeń startowa
-        AvailW := w - (2*g)
-        AvailH := h - (2*g)
+        AvailW := w - (2 * g)
+        AvailH := h - (2 * g)
 
         padX := this.Stan.PadR
         padY := this.Stan.PadD
@@ -4137,33 +4168,33 @@ class SilnikGUI extends SubWindows {
         Content := this.ObliczObszarRoboczy()
         ContentW := Content.W ;+ padX
         ContentH := Content.H ;+ padY
-        
+
         ; 3. Decyzja (Iteracyjna)
         ShowV := false, ShowH := false
         BarSize := this.Stan.VBar ? this.Stan.VBar.BarSize : (this.Stan.HBar ? this.Stan.HBar.BarSize : 20)
-        
+
         ; A: Pion
         if this.Stan.CSBarV && (ContentH > AvailH) {
             ShowV := true
             AvailW -= (BarSize + gap)
         }
-        
+
         ; B: Poziom
         if this.Stan.CSBarH && (ContentW > AvailW) {
             ShowH := true
             AvailH -= (BarSize + gap)
-            
+
             ; [STRATEGIA 2] Adaptacyjny Shrink: Kompresja elastycznych kontrolek przed VBar
             if (ContentH > AvailH) {
                 for c in this.Stan.Kontrolki {
                     if (HasProp(c, "FlexH") && c.FlexH) {
                         c.GetPos(&cX, &cY, &cW, &cH)
                         realH := SendMessage(0x00BA, 0, 0, c.Hwnd) * (HasProp(c, "WysWiersza") ? c.WysWiersza : 18)
-                        
+
                         if (cY + cH + padY > AvailH) {
                             noweH := AvailH - cY - padY
                             if (noweH >= realH) {
-                                c.Move(,,, noweH)
+                                c.Move(, , , noweH)
                                 this.Stan.LastObszarTick := 0
                                 ContentH := this.ObliczObszarRoboczy().H
                             }
@@ -4172,7 +4203,7 @@ class SilnikGUI extends SubWindows {
                 }
             }
         }
-        
+
         ; C: Korekta zwrotna
         if this.Stan.CSBarV && (!ShowV && ContentH > AvailH) {
             ShowV := true
@@ -4194,31 +4225,31 @@ class SilnikGUI extends SubWindows {
         }
 
         ; 4. Aplikacja Wymiarów (Atomowe GDI - DeferWindowPos)
-        DWP := {Ptr: DllCall("BeginDeferWindowPos", "Int", 12, "Ptr")}
+        DWP := { Ptr: DllCall("BeginDeferWindowPos", "Int", 12, "Ptr") }
         DeferMove := (ctrl, dx, dy, dw, dh) => (DWP.Ptr ? (DWP.Ptr := DllCall("DeferWindowPos", "Ptr", DWP.Ptr, "Ptr", ctrl.Hwnd, "Ptr", 0, "Int", dx, "Int", dy, "Int", dw, "Int", dh, "UInt", 0x0014, "Ptr")) : ctrl.Move(dx, dy, dw, dh))
 
         DeferMove(this.Stan.ClipGui, g, g, AvailW, AvailH)
-        
+
         ; [FIX] Zachowaj pozycję scrolla przy zmianie rozmiaru (Clamp do nowych wymiarów)
         this.Stan.ChildGui.GetPos(&cX, &cY)
-        
+
         ; Oblicz nową pozycję: Nie pozwól wyjechać poza zakres (0 .. -MaxScroll)
         nX := (start || !ShowH) ? 0 : Min(0, Max(-(ContentW - AvailW), cX))
         nY := (start || !ShowV) ? 0 : Min(0, Max(-(ContentH - AvailH), cY))
-        
+
         ; 5. Rysowanie Pasków (Faza Atomowa DWP)
         if (ShowV && this.Stan.VBar) {
             this.Stan.VBar.Dopasuj(g + AvailW + gap, g, BarSize, AvailH, ContentH, AvailH, nY, DWP)
         } else if (this.Stan.VBar) {
             this.Stan.VBar.Ukryj()
         }
-        
+
         if (ShowH && this.Stan.HBar) {
             this.Stan.HBar.Dopasuj(g, g + AvailH + gap, AvailW, BarSize, ContentW, AvailW, nX, DWP)
         } else if (this.Stan.HBar) {
             this.Stan.HBar.Ukryj()
         }
-        
+
         ; 6. Zaślepka
         if (ShowV && ShowH) {
             DeferMove(this.Stan.Corner, g + AvailW + gap, g + AvailH + gap, BarSize, BarSize)
@@ -4228,13 +4259,13 @@ class SilnikGUI extends SubWindows {
             if this.Stan.Corner.Visible
                 this.Stan.Corner.Visible := false
         }
-        
+
         ; [TAGOWANIE WinAPI] Oznacz ClipGui dla bezkontaktowego #HotIf (Zero AHK Objects)
         if (ShowV || ShowH)
             Utils.SetTag(this.Stan.ClipGui.Hwnd, "SilnikScrollablePtr", ObjPtr(this))
         else
             Utils.RemoveTag(this.Stan.ClipGui.Hwnd, "SilnikScrollablePtr")
-        
+
         ; Zrzut ekranowy (Koniec transakcji atomowej DWP)
         if (DWP.Ptr)
             DllCall("EndDeferWindowPos", "Ptr", DWP.Ptr)
@@ -4242,7 +4273,7 @@ class SilnikGUI extends SubWindows {
         ; --- FAZA SYNCHRONICZNA (Po zrzucie na ekran) ---
         ; Przesunięcia dzieci i ciężkich kontenerów bez niszczenia optymalizacji GPU
         this.Stan.ChildGui.Move(nX, nY, Max(AvailW, ContentW), Max(AvailH, ContentH))
-        
+
         if (ShowV && this.Stan.VBar)
             this.Stan.VBar.RenderujWnetrze(nY)
         if (ShowH && this.Stan.HBar)
@@ -4257,7 +4288,7 @@ class SilnikGUI extends SubWindows {
      * [ETAP 2] Klasa Paska Przewijania (Kompozyt 4 kontrolek).
      */
     class PasekPrzewijania {
-        static StanMod := {PokazanyTip: 0, timeAlt: 0, timeCtrl: 0, lastAlt: 0, lastCtrl: 0, czasScrolla: 0, TimerObj: 0, lastAlpha: 0.0}
+        static StanMod := { PokazanyTip: 0, timeAlt: 0, timeCtrl: 0, lastAlt: 0, lastCtrl: 0, czasScrolla: 0, TimerObj: 0, lastAlpha: 0.0 }
 
         ; Obserwator klawiszy Alt/Ctrl bez alokacji domknięć (Closure).
         static MonitorujModyfikatory() {
@@ -4270,143 +4301,143 @@ class SilnikGUI extends SubWindows {
             s.lastAlt := GetAlt, s.lastCtrl := GetCtrl
             if (!GetAlt && !GetCtrl) {
                 if (s.PokazanyTip && (A_TickCount - s.czasScrolla < 1000))
-                    SilnikGUI.CustomTooltip("Speed x 1", {opoznienie: 0, czas: 1000, Transparent: s.lastAlpha})
+                    SilnikGUI.CustomTooltip("Speed x 1", { opoznienie: 0, czas: 1000, Transparent: s.lastAlpha })
                 s.PokazanyTip := 0, SetTimer(s.TimerObj, 0)
             }
         }
 
         /**
-     * Pomocnik wykonujący akcję scrolla na konkretnym silniku.
-     * Rozwiązuje konflikt scrolla głównego z natywnymi paskami przewijania kontrolek.
-     * @param {SilnikGUI} Silnik - Referencja do instancji silnika.
-     * @param {Integer} kierunek - Kierunek scrollowania (1 lub -1).
-     * @param {Boolean} isHoriz - Flaga osi poziomej.
-     * @param {Object} [opcje] - Opcjonalny obiekt konfiguracyjny z parametrami:
-     * - [trybMyszy: Boolean] {Boolean} Ograniczenie scrolla do aktualnej pozycji kursora (domyślnie false).
-     * - [cX: 0] {Integer} Względna pozycja X kursora na Canvasie.
-     * - [cY: 0] {Integer} Względna pozycja Y kursora na Canvasie.
-     * - [chronKontrolki: false] {Boolean} Ignorowanie kontrolek pod kursorem na poczet scrollowania głównego.
-     * - [ctrlPobrano: false] {Boolean} Bufor detekcji - czy kursor był już sprawdzany w tej klatce.
-     * - [ctrlUnderMouse: null] {GuiCtrl} Znaleziona kontrolka pod kursorem do scrollowania punktowego.
-     * - [Vstep: 50] {Integer} Krok pionowy (domyślnie 50).
-     * - [Hstep: 50] {Integer} Krok poziomy (domyślnie 50).
-     * @returns {Boolean} - Zwraca True jeśli scroll został wykonany.
-     */
-    static _WykonajScrollNaSilniku(Silnik, kierunek, isHoriz, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, {trybMyszy: false, cX: 0, cY: 0, chronKontrolki: false, Vstep: 50, Hstep: 50})
-        trybMyszy := opcje.trybMyszy, cX := opcje.cX, cY := opcje.cY, chronKontrolki := opcje.chronKontrolki, Vstep := opcje.Vstep, Hstep := opcje.Hstep
+         * Pomocnik wykonujący akcję scrolla na konkretnym silniku.
+         * Rozwiązuje konflikt scrolla głównego z natywnymi paskami przewijania kontrolek.
+         * @param {SilnikGUI} Silnik - Referencja do instancji silnika.
+         * @param {Integer} kierunek - Kierunek scrollowania (1 lub -1).
+         * @param {Boolean} isHoriz - Flaga osi poziomej.
+         * @param {Object} [opcje] - Opcjonalny obiekt konfiguracyjny z parametrami:
+         * - [trybMyszy: Boolean] {Boolean} Ograniczenie scrolla do aktualnej pozycji kursora (domyślnie false).
+         * - [cX: 0] {Integer} Względna pozycja X kursora na Canvasie.
+         * - [cY: 0] {Integer} Względna pozycja Y kursora na Canvasie.
+         * - [chronKontrolki: false] {Boolean} Ignorowanie kontrolek pod kursorem na poczet scrollowania głównego.
+         * - [ctrlPobrano: false] {Boolean} Bufor detekcji - czy kursor był już sprawdzany w tej klatce.
+         * - [ctrlUnderMouse: null] {GuiCtrl} Znaleziona kontrolka pod kursorem do scrollowania punktowego.
+         * - [Vstep: 50] {Integer} Krok pionowy (domyślnie 50).
+         * - [Hstep: 50] {Integer} Krok poziomy (domyślnie 50).
+         * @returns {Boolean} - Zwraca True jeśli scroll został wykonany.
+         */
+        static _WykonajScrollNaSilniku(Silnik, kierunek, isHoriz, opcje?) {
+            opcje := Utils.MergeOptions(opcje?, { trybMyszy: false, cX: 0, cY: 0, chronKontrolki: false, Vstep: 50, Hstep: 50 })
+            trybMyszy := opcje.trybMyszy, cX := opcje.cX, cY := opcje.cY, chronKontrolki := opcje.chronKontrolki, Vstep := opcje.Vstep, Hstep := opcje.Hstep
 
-        if (!Silnik.Stan.UseChild)
-            return false
-
-        docelowyPasek := isHoriz ? Silnik.Stan.HBar : Silnik.Stan.VBar
-
-        if (trybMyszy) {
-            inVBar := (bar := Silnik.Stan.VBar) && bar.IsVisible && cX >= bar.LastGeo.x && cX <= bar.LastGeo.x + bar.LastGeo.w && cY >= bar.LastGeo.y && cY <= bar.LastGeo.y + bar.LastGeo.h
-            inHBar := (bar := Silnik.Stan.HBar) && bar.IsVisible && cX >= bar.LastGeo.x && cX <= bar.LastGeo.x + bar.LastGeo.w && cY >= bar.LastGeo.y && cY <= bar.LastGeo.y + bar.LastGeo.h
-            Silnik.Stan.ClipGui.GetPos(&vX, &vY, &vW, &vH)
-            inClip := (cX >= vX && cX <= vX + vW && cY >= vY && cY <= vY + vH)
-
-            if (!inVBar && !inHBar && !inClip)
+            if (!Silnik.Stan.UseChild)
                 return false
 
-            if (inVBar)
-                return (Silnik.Stan.VBar.AkcjaRolki(kierunek, Vstep), true)
-            if (inHBar)
-                return (Silnik.Stan.HBar.AkcjaRolki(kierunek, Hstep), true)
+            docelowyPasek := isHoriz ? Silnik.Stan.HBar : Silnik.Stan.VBar
 
-            if (!chronKontrolki) {
-                if (!opcje.HasProp("ctrlPobrano") || !opcje.ctrlPobrano) {
-                    opcje.ctrlUnderMouse := SilnikGUI.ObslugaInterakcji(0, 0, 0, 0, true)
-                    opcje.ctrlPobrano := true
+            if (trybMyszy) {
+                inVBar := (bar := Silnik.Stan.VBar) && bar.IsVisible && cX >= bar.LastGeo.x && cX <= bar.LastGeo.x + bar.LastGeo.w && cY >= bar.LastGeo.y && cY <= bar.LastGeo.y + bar.LastGeo.h
+                inHBar := (bar := Silnik.Stan.HBar) && bar.IsVisible && cX >= bar.LastGeo.x && cX <= bar.LastGeo.x + bar.LastGeo.w && cY >= bar.LastGeo.y && cY <= bar.LastGeo.y + bar.LastGeo.h
+                Silnik.Stan.ClipGui.GetPos(&vX, &vY, &vW, &vH)
+                inClip := (cX >= vX && cX <= vX + vW && cY >= vY && cY <= vY + vH)
+
+                if (!inVBar && !inHBar && !inClip)
+                    return false
+
+                if (inVBar)
+                    return (Silnik.Stan.VBar.AkcjaRolki(kierunek, Vstep), true)
+                if (inHBar)
+                    return (Silnik.Stan.HBar.AkcjaRolki(kierunek, Hstep), true)
+
+                if (!chronKontrolki) {
+                    if (!opcje.HasProp("ctrlPobrano") || !opcje.ctrlPobrano) {
+                        opcje.ctrlUnderMouse := SilnikGUI.ObslugaInterakcji(0, 0, 0, 0, true)
+                        opcje.ctrlPobrano := true
+                    }
+                    if (opcje.HasProp("ctrlUnderMouse") && opcje.ctrlUnderMouse && SilnikGUI._WykonajScrollNaKontrolce(opcje.ctrlUnderMouse, kierunek, isHoriz))
+                        return true
                 }
-                if (opcje.HasProp("ctrlUnderMouse") && opcje.ctrlUnderMouse && SilnikGUI._WykonajScrollNaKontrolce(opcje.ctrlUnderMouse, kierunek, isHoriz))
-                    return true
             }
+
+            if (docelowyPasek && docelowyPasek.IsVisible) {
+                SilnikGUI.Statics.OstatniScrollTick := A_TickCount
+                return (docelowyPasek.AkcjaRolki(kierunek, isHoriz ? Hstep : Vstep), true)
+            }
+            return false
         }
 
-        if (docelowyPasek && docelowyPasek.IsVisible) {
-            SilnikGUI.Statics.OstatniScrollTick := A_TickCount
-            return (docelowyPasek.AkcjaRolki(kierunek, isHoriz ? Hstep : Vstep), true)
-        }
-        return false
-    }
 
-
-    /**
-     * Sprawdza, czy kursor myszy znajduje się nad silnikiem posiadającym aktywne paski przewijania.
-     * Weryfikuje warunki brzegowe pozwalające na uruchomienie autoscrolla.
-     * @param {Boolean} [ZwracajInstancje=false] - Czy funkcja ma zwrócić znalezioną instancję silnika przez referencję.
-     * @param {VarRef} [Instancja] - Referencja wyjściowa do obiektu SilnikGUI (jeśli ZwracajInstancje to true).
-     * @returns {Boolean} - True, jeśli autoscroll może zostać uruchomiony.
-     */
-    static CzyGotowyNaMButtonScroll(ZwracajInstancje := false, &Instancja?) {
-        if SilnikGUI.Statics.StanMButtonScroll.Aktywny
-            return true
-            
-        ; [CZYSTE WinAPI] Szukanie tagu "SilnikScrollablePtr" (Override 16-bit)
-        hCtrl := SilnikGUI.GetRealHwndUnderMouse()
-
-        curr := hCtrl
-        while (curr) {
-            if (ptr := Utils.GetTag(curr, "SilnikScrollablePtr")) {
-                if (ZwracajInstancje)
-                    Instancja := ObjFromPtrAddRef(ptr)
+        /**
+         * Sprawdza, czy kursor myszy znajduje się nad silnikiem posiadającym aktywne paski przewijania.
+         * Weryfikuje warunki brzegowe pozwalające na uruchomienie autoscrolla.
+         * @param {Boolean} [ZwracajInstancje=false] - Czy funkcja ma zwrócić znalezioną instancję silnika przez referencję.
+         * @param {VarRef} [Instancja] - Referencja wyjściowa do obiektu SilnikGUI (jeśli ZwracajInstancje to true).
+         * @returns {Boolean} - True, jeśli autoscroll może zostać uruchomiony.
+         */
+        static CzyGotowyNaMButtonScroll(ZwracajInstancje := false, &Instancja?) {
+            if SilnikGUI.Statics.StanMButtonScroll.Aktywny
                 return true
-            }
-            curr := DllCall("GetAncestor", "Ptr", curr, "UInt", 1, "Ptr") ; GA_PARENT
-        }
-        return false
-    }
 
-    /**
-     * Inicjuje system globalnego autoscrollowania (MButtonScroll) dla danego silnika.
-     * Aktywuje tarczę systemową, podmienia kursor graficzny i uruchamia asynchroniczną pętlę przesunięć.
-     * @param {SilnikGUI} Silnik - Referencja do docelowego silnika GUI.
-     * @param {Object} [Opcje] - Opcjonalny obiekt konfiguracyjny z parametrami:
-     * - [czulosc = 0.05] {Float} - Mnożnik czułości wektora prędkości.
-     * - [deadzone = 15] {Integer} - Promień (px) strefy martwej wokół punktu startu, w której scroll pauzuje.
-     * - [progHamowania = 200] {Integer} - Baza dystansu (px) od ściany, od którego zaczyna się predykcyjne tłumienie.
-     * - [czasToggle = 200] {Integer} - Max czas (ms) od kliknięcia do puszczenia, aby przejść w tryb bez trzymania.
-     * - [wybieg = 1] {Float} - Współczynnik pędu resztkowego oddawanego do silnika kinetycznego po zakończeniu.
-     * - [progFaktor = 8] {Integer} - Mnożnik skalowania strefy hamowania dla krótkich list (Dynamic Damping).
-     */
-    static UruchomMButtonScroll(Silnik, Opcje?) {
-        Opcje := Utils.MergeOptions(Opcje?, {MBCurScale: SilnikGUI.ConfigScroll.MBCurScale, MBuCz: SilnikGUI.ConfigScroll.MBuCz, MBuDeadZone: SilnikGUI.ConfigScroll.MBuDeadZone, MBuProgHam: SilnikGUI.ConfigScroll.MBuProgHam, MBuProgFakt: SilnikGUI.ConfigScroll.MBuProgFakt, MBuWyb: SilnikGUI.ConfigScroll.MBuWyb, MBuToggleT: SilnikGUI.ConfigScroll.MBuToggleT, MBuMaxSpeed: SilnikGUI.ConfigScroll.MBuMaxSpeed})
-                
-        DllCall("GetCursorPos", "Ptr", pt := Buffer(8))
-        sx := NumGet(pt, 0, "Int"), sy := NumGet(pt, 4, "Int")
-        
-        st := SilnikGUI.Statics.StanMButtonScroll
-        st.Aktywny := true, st.TrybToggle := false, st.Instancja := Silnik
-        st.StartX := sx, st.StartY := sy, st.TickStart := A_TickCount
-        st.OstatnieVx := 0, st.OstatnieVy := 0
-        st.AccumX := 0.0, st.AccumY := 0.0
-        st.CanX := (Silnik.Stan.HBar && Silnik.Stan.HBar.IsVisible)
-        st.CanY := (Silnik.Stan.VBar && Silnik.Stan.VBar.IsVisible)
-        st.Opcje := Opcje
-        
-        st.LastCurId := (st.CanX && !st.CanY) ? 32644 : ((st.CanY && !st.CanX) ? 32645 : 32646)
-        st.LastClipDir := ""
-        st.LastScale := 1.0
-        hCursor := DllCall("LoadCursor", "Ptr", 0, "UInt", st.LastCurId, "Ptr")
-        if (st.Fake)
-            st.Fake.Destroy()
-        st.Fake := SilnikGUI.FakeCur(Silnik.GuiObj.Hwnd, hCursor, "", 1.0)
-        st.Fake.Move(sx, sy)
-        
-        DllCall("SetCursor", "Ptr", 0)
-        DllCall("SetCapture", "Ptr", Silnik.GuiObj.Hwnd)
-        
-        SilnikGUI.AktualizujHooka()
-          
-        if !SilnikGUI.Statics.ZakonczMButtonScrollObj
-            SilnikGUI.Statics.ZakonczMButtonScrollObj := ObjBindMethod(SilnikGUI, "ZakonczMButtonScroll")
-        if !SilnikGUI.Statics.PetlaMButtonScrollObj
-            SilnikGUI.Statics.PetlaMButtonScrollObj := ObjBindMethod(SilnikGUI, "PetlaMButtonScroll")
-            
-        SetTimer(SilnikGUI.Statics.PetlaMButtonScrollObj, SilnikGUI.TickRate)
-    }
+            ; [CZYSTE WinAPI] Szukanie tagu "SilnikScrollablePtr" (Override 16-bit)
+            hCtrl := SilnikGUI.GetRealHwndUnderMouse()
+
+            curr := hCtrl
+            while (curr) {
+                if (ptr := Utils.GetTag(curr, "SilnikScrollablePtr")) {
+                    if (ZwracajInstancje)
+                        Instancja := ObjFromPtrAddRef(ptr)
+                    return true
+                }
+                curr := DllCall("GetAncestor", "Ptr", curr, "UInt", 1, "Ptr") ; GA_PARENT
+            }
+            return false
+        }
+
+        /**
+         * Inicjuje system globalnego autoscrollowania (MButtonScroll) dla danego silnika.
+         * Aktywuje tarczę systemową, podmienia kursor graficzny i uruchamia asynchroniczną pętlę przesunięć.
+         * @param {SilnikGUI} Silnik - Referencja do docelowego silnika GUI.
+         * @param {Object} [Opcje] - Opcjonalny obiekt konfiguracyjny z parametrami:
+         * - [czulosc = 0.05] {Float} - Mnożnik czułości wektora prędkości.
+         * - [deadzone = 15] {Integer} - Promień (px) strefy martwej wokół punktu startu, w której scroll pauzuje.
+         * - [progHamowania = 200] {Integer} - Baza dystansu (px) od ściany, od którego zaczyna się predykcyjne tłumienie.
+         * - [czasToggle = 200] {Integer} - Max czas (ms) od kliknięcia do puszczenia, aby przejść w tryb bez trzymania.
+         * - [wybieg = 1] {Float} - Współczynnik pędu resztkowego oddawanego do silnika kinetycznego po zakończeniu.
+         * - [progFaktor = 8] {Integer} - Mnożnik skalowania strefy hamowania dla krótkich list (Dynamic Damping).
+         */
+        static UruchomMButtonScroll(Silnik, Opcje?) {
+            Opcje := Utils.MergeOptions(Opcje?, { MBCurScale: SilnikGUI.ConfigScroll.MBCurScale, MBuCz: SilnikGUI.ConfigScroll.MBuCz, MBuDeadZone: SilnikGUI.ConfigScroll.MBuDeadZone, MBuProgHam: SilnikGUI.ConfigScroll.MBuProgHam, MBuProgFakt: SilnikGUI.ConfigScroll.MBuProgFakt, MBuWyb: SilnikGUI.ConfigScroll.MBuWyb, MBuToggleT: SilnikGUI.ConfigScroll.MBuToggleT, MBuMaxSpeed: SilnikGUI.ConfigScroll.MBuMaxSpeed })
+
+            DllCall("GetCursorPos", "Ptr", pt := Buffer(8))
+            sx := NumGet(pt, 0, "Int"), sy := NumGet(pt, 4, "Int")
+
+            st := SilnikGUI.Statics.StanMButtonScroll
+            st.Aktywny := true, st.TrybToggle := false, st.Instancja := Silnik
+            st.StartX := sx, st.StartY := sy, st.TickStart := A_TickCount
+            st.OstatnieVx := 0, st.OstatnieVy := 0
+            st.AccumX := 0.0, st.AccumY := 0.0
+            st.CanX := (Silnik.Stan.HBar && Silnik.Stan.HBar.IsVisible)
+            st.CanY := (Silnik.Stan.VBar && Silnik.Stan.VBar.IsVisible)
+            st.Opcje := Opcje
+
+            st.LastCurId := (st.CanX && !st.CanY) ? 32644 : ((st.CanY && !st.CanX) ? 32645 : 32646)
+            st.LastClipDir := ""
+            st.LastScale := 1.0
+            hCursor := DllCall("LoadCursor", "Ptr", 0, "UInt", st.LastCurId, "Ptr")
+            if (st.Fake)
+                st.Fake.Destroy()
+            st.Fake := SilnikGUI.FakeCur(Silnik.GuiObj.Hwnd, hCursor, "", 1.0)
+            st.Fake.Move(sx, sy)
+
+            DllCall("SetCursor", "Ptr", 0)
+            DllCall("SetCapture", "Ptr", Silnik.GuiObj.Hwnd)
+
+            SilnikGUI.AktualizujHooka()
+
+            if !SilnikGUI.Statics.ZakonczMButtonScrollObj
+                SilnikGUI.Statics.ZakonczMButtonScrollObj := ObjBindMethod(SilnikGUI, "ZakonczMButtonScroll")
+            if !SilnikGUI.Statics.PetlaMButtonScrollObj
+                SilnikGUI.Statics.PetlaMButtonScrollObj := ObjBindMethod(SilnikGUI, "PetlaMButtonScroll")
+
+            SetTimer(SilnikGUI.Statics.PetlaMButtonScrollObj, SilnikGUI.TickRate)
+        }
         /**
          * Inicjuje nową instancję paska przewijania.
          * @param {SilnikGUI} Silnik - Referencja do docelowego silnika GUI.
@@ -4417,34 +4448,34 @@ class SilnikGUI extends SubWindows {
             this.Silnik := Silnik
             this.Typ := Typ ; "V" lub "H"
             this.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * (A_ScreenDPI / 96)) ; Skalowana szerokość
-            this.LastGeo := {x:0, y:0, w:0, h:0, Content:0, View:0, TrackLen:0, BS:0} ; Cache geometrii
+            this.LastGeo := { x: 0, y: 0, w: 0, h: 0, Content: 0, View: 0, TrackLen: 0, BS: 0 } ; Cache geometrii
             this.IsVisible := false ; Flaga widoczności kontenera
-            
+
             ; [ASYNC SCROLL] Ujednolicony silnik kinetyczny
-            this.Kinetyka := {Cel: 0.0, Curr: 0.0, Vis: 0, Timer: ObjBindMethod(this, "SilnikKinetyczny"), Aktywny: false, TrybFocus: false}
-            
+            this.Kinetyka := { Cel: 0.0, Curr: 0.0, Vis: 0, Timer: ObjBindMethod(this, "SilnikKinetyczny"), Aktywny: false, TrybFocus: false }
+
             ; [STATE MACHINE] Globalny stan interakcji (Zastępuje dziesiątki pętli)
             this.BoundPetla := ObjBindMethod(this, "GlownaPetlaPaska")
-            this.StanInt := {Tryb: "Brak"}
-            
+            this.StanInt := { Tryb: "Brak" }
+
             ; [STRATEGIA 3] Tworzenie niezależnego pod-okna dla paska (Sub-Container)
             this.BarGui := Gui("-Caption -Border +Parent" . Silnik.GuiObj.Hwnd . " +0x02000000 -DPIScale")
             this.BarGui.BackColor := SilnikGUI.Motyw.Tlo
             this.BarGui.Silnik := Silnik ; Przekazanie referencji (pozwala podświetlać ramkę przy Hover)
             GuiObj := this.BarGui
-            
+
             ; Symbole strzałek (Segoe UI Symbol dla symetrii)
-            Sym1 := (Typ="V") ? "▲" : "◄"
-            Sym2 := (Typ="V") ? "▼" : "►"
-            
+            Sym1 := (Typ = "V") ? "▲" : "◄"
+            Sym2 := (Typ = "V") ? "▼" : "►"
+
             ; Styl przycisków (CustomButton)
             OptBtn := "+0x200 Center Background" . SilnikGUI.Motyw.Tlo . " " . SilnikGUI.Motyw.Tekst . " +0x100"
-            
+
             this.Btn1 := GuiObj.Add("Text", OptBtn, Sym1)
             this.Btn2 := GuiObj.Add("Text", OptBtn, Sym2)
             this.Btn1.SetFont("s9", "arial")
             this.Btn2.SetFont("s9", "arial")
-            
+
             this.Thumb := GuiObj.Add("Text", "+0x100 Background" . SilnikGUI.Motyw.Przycisk)
 
             ; [MOD] Rejestracja w systemie stylów (Hover) i bariery geometrycznej
@@ -4465,14 +4496,14 @@ class SilnikGUI extends SubWindows {
             this.Btn2.MouseDownAction := ObjBindMethod(this, "ObslugaPrzycisku", -1)
             this.Thumb.MouseDownAction := ObjBindMethod(this, "ObslugaSuwaka")
             this.MouseDownAction := ObjBindMethod(this, "ObslugaTla")
-            
+
             ; [NOWOSC] Obsługa Scrolla (Wheel) dla wszystkich elementów paska
             BoundScroll := ObjBindMethod(this, "AkcjaRolki")
 
             this.Btn1.ScrollAction := BoundScroll
             this.Btn2.ScrollAction := BoundScroll
             this.Thumb.ScrollAction := BoundScroll
-            
+
         }
         /**
          * Główna metoda dopasowująca pasek do nowych wymiarów i pozycji.
@@ -4489,10 +4520,10 @@ class SilnikGUI extends SubWindows {
         Dopasuj(x, y, w, h, ContentSize, ViewSize, ScrollPos, DWP := 0) {
             bs := this.BarSize
             IsV := (this.Typ = "V")
-                        
+
             ; Cache geometrii dla interakcji
             TrackLen := (IsV ? h : w) - (2 * bs)
-            this.LastGeo := {x:x, y:y, w:w, h:h, Content:ContentSize, View:ViewSize, TrackLen:TrackLen, BS:bs}
+            this.LastGeo := { x: x, y: y, w: w, h: h, Content: ContentSize, View: ViewSize, TrackLen: TrackLen, BS: bs }
 
             if (TrackLen <= 0) { ; Za mało miejsca na pasek
                 this.Ukryj()
@@ -4522,15 +4553,15 @@ class SilnikGUI extends SubWindows {
         RenderujWnetrze(ScrollPos) {
             if (!this.IsVisible)
                 return
-                
+
             geo := this.LastGeo
             IsV := (this.Typ = "V")
             cW := geo.BS, cH := geo.BS
-            
+
             ; 1. Wnętrze (Lokalne relatywne wsp.)
             this.Btn1.Move(0, 0, cW, cH)
             this.Btn2.Move(IsV ? 0 : (geo.w - geo.BS), IsV ? (geo.h - geo.BS) : 0, cW, cH)
-            
+
             this.ZaktualizujSuwak(ScrollPos)
         }
         /**
@@ -4544,15 +4575,15 @@ class SilnikGUI extends SubWindows {
 
             geo := this.LastGeo
             IsV := (this.Typ = "V")
-            
+
             Ratio := geo.View / geo.Content
             ThumbLen := Max(SilnikGUI.ConfigScroll.MinThumbSize, Round(geo.TrackLen * Ratio))
             MaxTrack := geo.TrackLen - ThumbLen
             MaxScroll := geo.Content - geo.View
-            
+
             ThumbPos := (MaxScroll > 0) ? Round((Abs(ScrollPos) / MaxScroll) * MaxTrack) : 0
             ThumbPos := Min(Max(0, ThumbPos), MaxTrack)
-            
+
             ; Współrzędne Tracka (Lokalne dla BarGui)
             tX := IsV ? 0 : geo.BS
             tY := IsV ? geo.BS : 0
@@ -4589,8 +4620,8 @@ class SilnikGUI extends SubWindows {
                 }
                 this.Kinetyka.Vis += MoveStep
             }
-            
-            if (Abs(Dest - this.Kinetyka.Curr) <0) { ;WARUNEK  ZAKOŃCZENIA FIZYKI [1] TO ZA DURZO, CZY [0] SPOWODUJE BŁĘDY?
+
+            if (Abs(Dest - this.Kinetyka.Curr) < 0) { ;WARUNEK  ZAKOŃCZENIA FIZYKI [1] TO ZA DURZO, CZY [0] SPOWODUJE BŁĘDY?
                 this.ZatrzymajKinetyke()
             }
         }
@@ -4602,22 +4633,22 @@ class SilnikGUI extends SubWindows {
          */
         DodajPed(Delta, Limit := 0) {
             IsV := (this.Typ = "V")
-        this.Silnik.Stan.ChildGui.GetPos(&cX, &cY, &cW, &cH)
-        this.Silnik.Stan.ClipGui.GetPos(,, &vW, &vH)
-            
+            this.Silnik.Stan.ChildGui.GetPos(&cX, &cY, &cW, &cH)
+            this.Silnik.Stan.ClipGui.GetPos(, , &vW, &vH)
+
             Dist := IsV ? ((Delta > 0) ? (-cY) : (Max(0, cH - vH) + cY)) : ((Delta > 0) ? (-cX) : (Max(0, cW - vW) + cX))
             Pending := (this.Kinetyka.Cel - this.Kinetyka.Vis) + Delta
-            if (Limit>0)
+            if (Limit > 0)
                 Pending := Min(Max(Pending, -Limit), Limit) ; Limit "rozciągnięcia" przed over-coastingiem
-            
+
             SkokAktualny := ((Delta > 0) ? Min(Pending, Dist) : Max(Pending, -Dist)) - (this.Kinetyka.Cel - this.Kinetyka.Vis)
             this.Kinetyka.Cel += SkokAktualny
-            
+
             if (!this.Kinetyka.Aktywny) {
                 this.Kinetyka.Aktywny := true
                 SetTimer(this.Kinetyka.Timer, SilnikGUI.TickRate)
             }
-            
+
             return SkokAktualny
         }
 
@@ -4647,19 +4678,19 @@ class SilnikGUI extends SubWindows {
             if (!box.w && !box.h)
                 return
             x := box.x, y := box.y, w := box.w, h := box.h
-            
+
             this.Silnik.Stan.ChildGui.GetPos(&childX, &childY)
-            this.Silnik.Stan.ClipGui.GetPos(,, &clipW, &clipH)
-            
+            this.Silnik.Stan.ClipGui.GetPos(, , &clipW, &clipH)
+
             IsV := (this.Typ == "V")
             pos := IsV ? (y + childY) : (x + childX)
             size := IsV ? h : w
             clip := IsV ? clipH : clipW
             pad := IsV ? this.Silnik.Stan.PadD : this.Silnik.Stan.PadR
-            
+
             if (pos >= pad && (pos + size) <= (clip - pad))
                 return
-                
+
             Delta := 0
             if (size > clip) {
                 if (!IsV && HasProp(ctrl, "InfoRight") && ctrl.InfoRight == 0)
@@ -4667,13 +4698,13 @@ class SilnikGUI extends SubWindows {
                 else
                     Delta := pad - pos
             } else {
-                TempPad := ((size + 2*pad) > clip) ? (clip - size)/2 : pad
+                TempPad := ((size + 2 * pad) > clip) ? (clip - size) / 2 : pad
                 if (pos < TempPad)
                     Delta := TempPad - pos
                 else if ((pos + size) > (clip - TempPad))
                     Delta := (clip - TempPad) - (pos + size)
             }
-            
+
             if (Delta != 0) {
                 this.Kinetyka.TrybFocus := true
                 this.DodajPed(Delta)
@@ -4686,18 +4717,18 @@ class SilnikGUI extends SubWindows {
          * @param {Integer} [Step=50] - Wartość kroku scrollowania.
          * @param {Array} params - Tablica parametrów. Jeśli Mode jest obiektem zdarzenia, params[1] powinno zawierać kierunek scrollowania. Jeśli Mode jest bezpośrednim kierunkiem, params może być pusta.
          */
-        AkcjaRolki(Mode?,Step := 50, params*) {
+        AkcjaRolki(Mode?, Step := 50, params*) {
             kierunek := (IsObject(Mode) && params.Length > 0) ? params[1] : Mode
-            
+
             s := SilnikGUI.PasekPrzewijania.StanMod
             s.czasScrolla := A_TickCount
-            
+
             if (!s.TimerObj)
                 s.TimerObj := ObjBindMethod(SilnikGUI.PasekPrzewijania, "MonitorujModyfikatory")
             SilnikGUI.PasekPrzewijania.MonitorujModyfikatory()
-            
+
             ActiveMod := (s.lastAlt && s.lastCtrl) ? ((s.timeAlt > s.timeCtrl) ? "Alt" : "Ctrl") : (s.lastAlt ? "Alt" : (s.lastCtrl ? "Ctrl" : ""))
-            
+
             pAlpha := WinGetTransparent(this.Silnik.GuiObj.Hwnd)
             s.lastAlpha := IsNumber(pAlpha) ? (1.0 - (pAlpha / 255)) : 0.0
 
@@ -4705,12 +4736,12 @@ class SilnikGUI extends SubWindows {
                 n := SilnikGUI.ConfigScroll.AltFact
                 Send("{Blind}{vkE8}"), Step *= n
                 if (s.PokazanyTip != 1)
-                    SilnikGUI.CustomTooltip("Speed x " SilnikGUI.FormatNum(n, 2), {opoznienie: 0, czas: 1000, Transparent: s.lastAlpha}), s.PokazanyTip := 1, SetTimer(s.TimerObj, SilnikGUI.TickRate)
+                    SilnikGUI.CustomTooltip("Speed x " SilnikGUI.FormatNum(n, 2), { opoznienie: 0, czas: 1000, Transparent: s.lastAlpha }), s.PokazanyTip := 1, SetTimer(s.TimerObj, SilnikGUI.TickRate)
             } else if (ActiveMod == "Ctrl") {
                 n := SilnikGUI.ConfigScroll.CtrlFact
                 Step *= n
                 if (s.PokazanyTip != 2)
-                    SilnikGUI.CustomTooltip("Speed x " SilnikGUI.FormatNum(n, 2), {opoznienie: 0, czas: 1000, Transparent: s.lastAlpha}), s.PokazanyTip := 2, SetTimer(s.TimerObj, SilnikGUI.TickRate)
+                    SilnikGUI.CustomTooltip("Speed x " SilnikGUI.FormatNum(n, 2), { opoznienie: 0, czas: 1000, Transparent: s.lastAlpha }), s.PokazanyTip := 2, SetTimer(s.TimerObj, SilnikGUI.TickRate)
             }
             this.Kinetyka.TrybFocus := false
             this.DodajPed(kierunek * Step)
@@ -4729,7 +4760,7 @@ class SilnikGUI extends SubWindows {
                     SilnikGUI.CustomTooltip()
                 }
             }
-            
+
             ; Odcięcie fizyki w trybach sztywnych i spoczynku
             if (nowyStan == "Suwak")
                 this.ZatrzymajKinetyke()
@@ -4755,7 +4786,7 @@ class SilnikGUI extends SubWindows {
             this.StanInt.Speed := 0.1
             this.Kinetyka.TrybFocus := false
             this.DodajPed(kierunek * (isV ? SilnikGUI.ConfigScroll.stepYBu : SilnikGUI.ConfigScroll.stepXBu))
-            
+
             this.ZmienStan("Przycisk")
             this.GlownaPetlaPaska()
         }
@@ -4769,19 +4800,19 @@ class SilnikGUI extends SubWindows {
         CzyKursorNaSuwaku(ctrl := 0, &cX := 0, &cY := 0) {
             IsV := (this.Typ = "V")
             Utils.ScreenToClient(0, this.BarGui.Hwnd, &cX, &cY) ; [FIX] Mysz względem kontenera paska
-            
+
             (ctrl ? ctrl : this.Thumb).GetPos(&tX, &tY, &tW, &tH)
-            return (IsV ? cY >= tY && cY <= tY + tH : cX >= tX && cX <= tX + tW) 
+            return (IsV ? cY >= tY && cY <= tY + tH : cX >= tX && cX <= tX + tW)
         }
         /**
          * Metoda sprawdzająca, czy kursor myszy znajduje się nad tłem paska (nie nad suwakami ani przyciskami). Używana do warunkowania interakcji i wyświetlania podpowiedzi tylko wtedy, gdy kursor jest nad tłem paska.
-        * @param {VarRef} cX - Referencja wyjściowa do współrzędnej X kursora względem kontenera paska.
+         * @param {VarRef} cX - Referencja wyjściowa do współrzędnej X kursora względem kontenera paska.
          * @param {VarRef} cY - Referencja wyjściowa do współrzędnej Y kursora względem kontenera paska.
          * @return {Boolean} - True, jeśli kursor znajduje się nad tłem paska, false w przeciwnym razie.
          */
         CzyKursorNaTle(&cX := 0, &cY := 0) {
             Utils.ScreenToClient(0, this.BarGui.Hwnd, &cX, &cY)
-            this.BarGui.GetClientPos(,, &bW, &bH)
+            this.BarGui.GetClientPos(, , &bW, &bH)
             if (cX >= 0 && cX <= bW && cY >= 0 && cY <= bH) {
                 if !this.CzyKursorNaSuwaku(this.Thumb) && !this.CzyKursorNaSuwaku(this.Btn1) && !this.CzyKursorNaSuwaku(this.Btn2)
                     return true
@@ -4794,18 +4825,18 @@ class SilnikGUI extends SubWindows {
             this.Silnik.Stan.ActiveScrollLoopCtrl := this.Thumb
             SilnikGUI.Statics.AktywnaInstancjaSuwaka := this.Silnik
             IsV := (this.Typ = "V")
-            
+
             geo := this.LastGeo
             Ratio := geo.View / geo.Content
             ThumbLen := Max(SilnikGUI.ConfigScroll.MinThumbSize, Round(geo.TrackLen * Ratio))
             TrackRange := geo.TrackLen - ThumbLen
             ScrollRange := geo.Content - geo.View
-            
+
             if (TrackRange <= 0) {
                 this.ZmienStan("Brak")
                 return
             }
-            
+
             Utils.ClientToScreen(0, 0, &sX, &sY)
             ptBG := Buffer(8, 0), DllCall("ClientToScreen", "Ptr", this.BarGui.Hwnd, "Ptr", ptBG) ; Czysty origin (0,0) kontenera
             bgX := NumGet(ptBG, 0, "Int"), bgY := NumGet(ptBG, 4, "Int")
@@ -4814,16 +4845,16 @@ class SilnikGUI extends SubWindows {
             trrW := IsV ? geo.w : geo.TrackLen
             trrH := IsV ? geo.TrackLen : geo.h
             Utils.ClientToScreen(this.Thumb, this.BarGui.Hwnd, &thScreenX, &thScreenY)
-            
+
             this.StanInt.OffsetThumbX := sX - thScreenX
             this.StanInt.OffsetThumbY := sY - thScreenY
             this.StanInt.Factor := ScrollRange / TrackRange
             this.StanInt.Factor1f1 := TrackRange / geo.Content
-            
+
             Fake := SilnikGUI.FakeCur(this.Silnik.GuiObj.Hwnd)
             Fake.Move(sX, sY)
             DllCall("ShowCursor", "Int", 0)
-            
+
             this.StanInt.Fake := Fake
             this.StanInt.VisualFakeX := sX
             this.StanInt.VisualFakeY := sY
@@ -4833,7 +4864,7 @@ class SilnikGUI extends SubWindows {
             this.StanInt.NormMod := 1.0
             this.StanInt.MaxScrollX := IsV ? 0 : Max(0, geo.Content - geo.View)
             this.StanInt.MaxScrollY := IsV ? Max(0, geo.Content - geo.View) : 0
-            
+
             this.StanInt.LastInfo := 1
             this.StanInt.LastPrecKeys := false
             this.StanInt.sX := sX
@@ -4844,7 +4875,7 @@ class SilnikGUI extends SubWindows {
             this.StanInt.trrH := trrH
             this.StanInt.ScrollRange := ScrollRange
             this.StanInt.TrackRange := TrackRange
-            
+
             this.ZmienStan("Suwak")
             this.GlownaPetlaPaska()
         }
@@ -4852,15 +4883,15 @@ class SilnikGUI extends SubWindows {
         ObslugaTla(*) {
             this.Silnik.Stan.ActiveScrollLoopCtrl := this
             SilnikGUI.Statics.AktywnaInstancjaSuwaka := this.Silnik
-            
+
             this.StanInt.PierwszyKlik := true
             this.StanInt.Speed := 1.0
             this.Kinetyka.TrybFocus := false
-            
+
             Utils.ScreenToClient(0, this.BarGui.Hwnd, &cXLast, &cYLast) ; [FIX] Względem okna BarGui
             this.StanInt.cXLast := cXLast
             this.StanInt.cYLast := cYLast
-            
+
             this.ZmienStan("Tlo")
             this.GlownaPetlaPaska()
         }
@@ -4871,50 +4902,50 @@ class SilnikGUI extends SubWindows {
                 this.ZmienStan("Brak")
                 return
             }
-            
+
             if GetKeyState("Alt", "P")
                 Send("{Blind}{vkE8}")
-            
+
             IsV := (this.Typ = "V")
-            
+
             switch this.StanInt.Tryb {
                 case "Przycisk":
                     if this.CzyKursorNaTle()
                         return this.ObslugaTla()
                     if this.CzyKursorNaSuwaku(this.Thumb)
                         return this.ObslugaSuwaka()
-                    
-                this.DodajPed(this.StanInt.Kierunek * ((isV ? SilnikGUI.ConfigScroll.stepYBu : SilnikGUI.ConfigScroll.stepXBu) * this.StanInt.Speed), SilnikGUI.ConfigScroll.ArMaxSpeed)
-                this.StanInt.Speed *= SilnikGUI.ConfigScroll.AccBu
-                    
+
+                    this.DodajPed(this.StanInt.Kierunek * ((isV ? SilnikGUI.ConfigScroll.stepYBu : SilnikGUI.ConfigScroll.stepXBu) * this.StanInt.Speed), SilnikGUI.ConfigScroll.ArMaxSpeed)
+                    this.StanInt.Speed *= SilnikGUI.ConfigScroll.AccBu
+
                 case "Tlo":
                     if this.CzyKursorNaSuwaku(this.Btn1)
                         return this.ObslugaPrzycisku(1, this.Btn1)
                     if this.CzyKursorNaSuwaku(this.Btn2)
                         return this.ObslugaPrzycisku(-1, this.Btn2)
-                    
+
                     this.Thumb.GetPos(&thX, &thY, &thW, &thH)
                     Utils.ScreenToClient(0, this.BarGui.Hwnd, &cX, &cY) ; [FIX] Mysz względem kontenera
-                    
+
                     MousePos := IsV ? cY : cX
                     MousePosLast := IsV ? this.StanInt.cYLast : this.StanInt.cXLast
                     ThumbPos := IsV ? thY : thX
                     ThumbSize := IsV ? thH : thW
-                    
+
                     kierunek := (MousePos < ThumbPos) ? 1 : ((MousePos > ThumbPos + ThumbSize) ? -1 : 0)
-                    
+
                     if this.CzyKursorNaSuwaku(this.Thumb) && !(MousePos == MousePosLast)
                         return this.ObslugaSuwaka()
-                        
+
                     DistToMouse := (kierunek == 1) ? (ThumbPos - MousePos) : (MousePos - (ThumbPos + ThumbSize))
                     geo := this.LastGeo
                     TrackRange := Max(1, geo.TrackLen - ThumbSize)
                     ScrollRange := geo.Content - geo.View
                     DistScrollUnits := DistToMouse * (ScrollRange / TrackRange)
                     DostepnyPed := Max(0, DistScrollUnits - Abs(this.Kinetyka.Cel - this.Kinetyka.Vis))
-                    
+
                     if (this.StanInt.PierwszyKlik) {
-                        this.Silnik.Stan.ClipGui.GetPos(,, &vW, &vH)
+                        this.Silnik.Stan.ClipGui.GetPos(, , &vW, &vH)
                         this.DodajPed(kierunek * (IsV ? vH : vW))
                         this.StanInt.PierwszyKlik := false
                     } else {
@@ -4925,18 +4956,18 @@ class SilnikGUI extends SubWindows {
                             this.StanInt.Speed := 1.0
                         }
                     }
-                    
+
                     this.StanInt.cXLast := cX
                     this.StanInt.cYLast := cY
-                    
+
                 case "Suwak":
                     PrecKeys := (GetKeyState("Ctrl", "P") || GetKeyState("Shift", "P") || GetKeyState("Alt", "P"))
                     PrecMod := this.StanInt.PrecMod
                     NormMod := this.StanInt.NormMod
-                    
+
                     addMod := PrecKeys ? PrecMod : NormMod
                     add := (addMod < 0.5 ? Max(0.01, addMod * 0.2) : (addMod < 2 ? addMod * 0.1 : addMod * 0.05))
-                    
+
                     if (sDelta := this.Silnik.Stan.ScrollDelta) {
                         if PrecKeys
                             PrecMod := (sDelta > 0) ? PrecMod + add : Max(0.01, PrecMod - add)
@@ -4944,54 +4975,54 @@ class SilnikGUI extends SubWindows {
                             NormMod := (sDelta > 0) ? NormMod + add : Max(0.01, NormMod - add)
                         this.Silnik.Stan.ScrollDelta := 0
                     }
-                    
+
                     if GetKeyState("MButton", "P") {
                         PrecMod := PrecKeys ? 1 : PrecMod
                         NormMod := PrecKeys ? NormMod : 1
                     }
-                    
+
                     this.StanInt.PrecMod := PrecMod
                     this.StanInt.NormMod := NormMod
-                    
+
                     Info := PrecKeys ? PrecMod : NormMod
                     if (Info != this.StanInt.LastInfo || PrecKeys != this.StanInt.LastPrecKeys) {
                         pAlpha := WinGetTransparent(this.Silnik.GuiObj.Hwnd)
-                        SilnikGUI.CustomTooltip(PrecKeys ? "x" . Format("{:.2f}", Info) . "`n1:1" : "x" . Format("{:.2f}", Info) . "`nprop.", {opoznienie: 0, czas: 1000, trybPozycji: this.StanInt.Fake, Transparent: IsNumber(pAlpha) ? (1.0 - (pAlpha / 255)) : 0.0})
+                        SilnikGUI.CustomTooltip(PrecKeys ? "x" . Format("{:.2f}", Info) . "`n1:1" : "x" . Format("{:.2f}", Info) . "`nprop.", { opoznienie: 0, czas: 1000, trybPozycji: this.StanInt.Fake, Transparent: IsNumber(pAlpha) ? (1.0 - (pAlpha / 255)) : 0.0 })
                     }
-                    
+
                     this.StanInt.LastInfo := Info
                     this.StanInt.LastPrecKeys := PrecKeys
-                    
+
                     Utils.ClientToScreen(0, 0, &mX, &mY)
                     sX := this.StanInt.sX
                     sY := this.StanInt.sY
                     dMouseX := mX - sX
                     dMouseY := mY - sY
-                    
+
                     if (dMouseX != 0 || dMouseY != 0) {
                         DllCall("SetCursorPos", "Int", sX, "Int", sY)
                         this.Silnik.Stan.ChildGui.GetPos(&cX, &cY)
-                        
+
                         Factor := this.StanInt.Factor
                         Factor1f1 := this.StanInt.Factor1f1
                         Precision := PrecKeys ? Factor1f1 * PrecMod : 1.0 * NormMod
-                        
+
                         RawDelta := IsV ? -(dMouseY * Factor * Precision) : -(dMouseX * Factor * Precision)
-                        
+
                         VirtualX := this.StanInt.VirtualX
                         VirtualY := this.StanInt.VirtualY
                         VisualFakeX := this.StanInt.VisualFakeX
                         VisualFakeY := this.StanInt.VisualFakeY
-                        
+
                         if IsV {
                             VirtualY += RawDelta
                             VisualFakeX += dMouseX * Precision
                             ProgressY := -VirtualY / Max(1, this.StanInt.ScrollRange)
                             VisualFakeY := this.StanInt.trrY + (ProgressY * this.StanInt.TrackRange) + this.StanInt.OffsetThumbY
-                            
+
                             InTrack := (VisualFakeY >= this.StanInt.trrY && VisualFakeY <= this.StanInt.trrY + this.StanInt.trrH)
                             IsOvershoot := (VirtualY > 0 || VirtualY < -this.StanInt.MaxScrollY)
-                            
+
                             if (InTrack && IsOvershoot) {
                                 VirtualY := Min(0, Max(-this.StanInt.MaxScrollY, VirtualY))
                                 ThumbScreenY_at_edge := this.StanInt.trrY + ((-VirtualY / Max(1, this.StanInt.ScrollRange)) * this.StanInt.TrackRange)
@@ -5003,10 +5034,10 @@ class SilnikGUI extends SubWindows {
                             VisualFakeY += dMouseY * Precision
                             ProgressX := -VirtualX / Max(1, this.StanInt.ScrollRange)
                             VisualFakeX := this.StanInt.trrX + (ProgressX * this.StanInt.TrackRange) + this.StanInt.OffsetThumbX
-                            
+
                             InTrack := (VisualFakeX >= this.StanInt.trrX && VisualFakeX <= this.StanInt.trrX + this.StanInt.trrW)
                             IsOvershoot := (VirtualX > 0 || VirtualX < -this.StanInt.MaxScrollX)
-                            
+
                             if (InTrack && IsOvershoot) {
                                 VirtualX := Min(0, Max(-this.StanInt.MaxScrollX, VirtualX))
                                 ThumbScreenX_at_edge := this.StanInt.trrX + ((-VirtualX / Max(1, this.StanInt.ScrollRange)) * this.StanInt.TrackRange)
@@ -5014,12 +5045,12 @@ class SilnikGUI extends SubWindows {
                             }
                             this.PrzewinObszar(VirtualX - cX, 0)
                         }
-                        
+
                         this.StanInt.VirtualX := VirtualX
                         this.StanInt.VirtualY := VirtualY
                         this.StanInt.VisualFakeX := VisualFakeX
                         this.StanInt.VisualFakeY := VisualFakeY
-                        
+
                         this.StanInt.Fake.Move(VisualFakeX, VisualFakeY)
                     }
             }
@@ -5034,20 +5065,20 @@ class SilnikGUI extends SubWindows {
             if (!this.Silnik.Stan.UseChild)
                 return false
 
-        this.Silnik.Stan.ChildGui.GetPos(&cX, &cY, &cW, &cH) ; Obecna pozycja i rozmiar treści
-        this.Silnik.Stan.ClipGui.GetPos(,, &vW, &vH)         ; Rozmiar widoku
+            this.Silnik.Stan.ChildGui.GetPos(&cX, &cY, &cW, &cH) ; Obecna pozycja i rozmiar treści
+            this.Silnik.Stan.ClipGui.GetPos(, , &vW, &vH)         ; Rozmiar widoku
 
             maxX := (cW - vW)
             maxY := Max(0, cH - vH)
 
             nX := Min(0, Max(-maxX, cX + dx))
             nY := Min(0, Max(-maxY, cY + dy))
-            
+
             if (nX != cX || nY != cY) {
-            this.Silnik.Stan.ChildGui.Move(nX, nY)
+                this.Silnik.Stan.ChildGui.Move(nX, nY)
                 (this.Silnik.Stan.VBar) && this.Silnik.Stan.VBar.ZaktualizujSuwak(nY)
                 (this.Silnik.Stan.HBar) && this.Silnik.Stan.HBar.ZaktualizujSuwak(nX)
-                
+
                 this.Silnik.PrzesunTooltipy(nX - cX, nY - cY)
                 if (this.Kinetyka.TrybFocus)
                     this.Silnik.PrzesunPopupy(nX - cX, nY - cY)

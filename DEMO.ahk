@@ -4,7 +4,8 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2B2B2B")
-SilnikGUI.FontManagment("Segoe UI", 10)
+FontMultipl := 1
+SilnikGUI.FontManagment("Times New Roman", FontMultipl)
 
 ; Main app window
 App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
@@ -19,11 +20,10 @@ App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
 })
 PadL := 20
 ; --- Header ---
-App.Stan.ChildGui.SetFont("s16 bold")
-Welcome := App.Add("Text", "X" . padL + 10 . "  y20 h30", "Welcome to AHK2ColorfulGUI Demo")
-Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", { DelayON: 1000, czas: 3000, trybPozycji: Welcome }),
-    App.Stan.ChildGui.SetFont("s10 norm")
-App.Stan.ChildGui.SetFont("s12 italic")
+Welcome := App.Add("Text", "X" . padL + 10 . "  y20", "Welcome to AHK2ColorfulGUI Demo", 1, 16)
+Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", { DelayON: 1000, czas: 3000, trybPozycji: Welcome })
+; App.Stan.ChildGui.SetFont("s10 norm")
+; App.Stan.ChildGui.SetFont("s12 italic")
 Welcome2 := App.Add("Text", "x" . padL + 10. " y+15 cAAAAAA", "--- Input Fields ---")
 
 ; String Validation (Type 2)
@@ -67,7 +67,7 @@ ConfigLine4 := App.DodajWierszKonfiguracji("Multiline mode:", "Line 1: AHK is gr
 ;only visual frame around several controls (does not move them automaticly)
 App.Ramka(ConfigLine1, ConfigLine4, 10)
 ; --- Toggles and Selectors ---
-App.Add("Text", "xm y+20 w600 cAAAAAA", "--- Controls ---").SetFont("s12 italic")
+App.Add("Text", "xm y+20 cAAAAAA", "--- Controls ---") ; .SetFont("s12 italic")
 
 ; Checkbox
 chk := App.DodajCheckbox("Enable Advanced Mode", { pozycja: "x60", czyZaznaczony: true, InfoRight: 0 })
@@ -80,40 +80,38 @@ App.DodajDDList(["First Option", "Second Option", "Third Option", "Fourth Option
 )
 
 ; --- Interactive Buttons ---
-App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---").SetFont("s12 italic")
+App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---") ; .SetFont("s12 italic")
 
 ; Custom Error Dialog
-App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (
-    SilnikGUI.OknoBledu("Critical Failure", "This is a demonstration of the custom error dialog.", "Please contact support or try again.", App.GuiObj.Hwnd)
-), "xm w150 h30")
+App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (SilnikGUI.OknoBledu("Critical Failure", "This is a demonstration of the custom error dialog.", "Please contact support or try again.", App.GuiObj.Hwnd)), "xm")
 
 ; Custom Tooltip
 App.DodajPrzycisk("Show Tooltip", (ctrl, *) => (
     SilnikGUI.CustomTooltip("This is a stylized tooltip!`nIt follows the mouse and supports`nmultiple lines.`n.[3].`n...And separators!", { transparent: 0.2, czas: 3000, czyPogrubione: 1 })
-), "x+10 yp w150 h30")
+), "x+10 yp")
 
 ; Auto-expanding dialog demo
 App.DodajPrzycisk("Dynamic Window", (ctrl, *) => (
     SilnikGUI.CustomTooltip("This window will auto-expand when typing long text.", { czas: 3000, trybPozycji: "Mouse" }),
     ShowDynamicDialog()
-), "x+10 yp w150 h30")
+), "x+10 yp")
 
 ; Tab tracking demo
-ptzycikRuchomy := App.DodajPrzycisk("Tab tracking demo", (ctrl, *) => ShowTabTrackingDemo(), "x+10 yp w150 h30")
-ptzycikRuchomy.move(20, 425, 146)
+ptzycikRuchomy := App.DodajPrzycisk("Tab tracking demo", (ctrl, *) => ShowTabTrackingDemo(), "x+10 yp")
+; ptzycikRuchomy.move(20, 425, 146)
 ; --- Panels ---
-App.Add("Text", "xm y+20", "--- Panels & Scrolling ---").SetFont("s12 italic")
+App.Add("Text", "xm y+20", "--- Panels & Scrolling ---") ; .SetFont("s12 italic")
 
 ; Nested Scrollable Sub-Panel
 SubPanel := App.DodajPanel(2, 1, 1, { PadD: 10 })
 SubPanel.Add("Text", "xm", "I am a nested panel!")
 Loop 5
     SubPanel.DodajCheckbox("Sub-item " A_Index, { pozycja: "xm" })
-SubPanel.PokazPanel(App, "y+10", "w250 h80")
+SubPanel.PokazPanel(App, "xp y+10", "w250 h80")
 
 ; Scrollable Text Panel
 LongText := "This is line 1 inside the text panel........`nThis is line 2.`nKeep scrolling down...`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nEnd of text."
-TxtPanel := App.DodajPanelTxt(LongText, 250, 80, { InfiniteLine: 1, pozycja: "x+20 yp" })
+TxtPanel := App.DodajPanelTxt(LongText, 250, 80, { InfiniteLine: 1, pozycja: "yp x+10" })
 TxtPanel.Stan.VBar.Thumb.HoverAction := (*) => SilnikGUI.CustomTooltip("Hold CTRL while dragging`nto feel TRUE PRECISION!", { czas: 2000, trybPozycji: "Mouse", czyPogrubione: 1 })
 TxtPanel.Stan.HBar.Thumb.HoverAction := (*) => SilnikGUI.CustomTooltip("Try scrolling with the mouse wheel over my", { czas: 2000, trybPozycji: "Mouse", czyPogrubione: 1 })
 
@@ -126,20 +124,27 @@ ShowDynamicDialog() {
         return Z.Pokaz()
 
     ; Inicjalizacja bez paska tytułowego, dopasowująca szerokość (AutoFitW: 0.99)
-    Z := SilnikGUI("DYNAMIC RENAME", "MinSize300x0", { unikalny: 1, pokazPasek: 0, createChild: true, zamknijNaEsc: 1, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
+    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: 1, pokazPasek: 0, createChild: true, zamknijNaEsc: 1, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
     if (!Z.nowaInstancja)
         return Z.Pokaz()
 
     Z.GuiObj.OnEvent("Close", (*) => Z := 0)
-    Z.GuiObj.SetFont("s10")
+    ; Z.GuiObj.SetFont("s10")
 
     closeAction := (*) => (Z.Zakoncz(), Z := 0)
-    Z.DodajWierszKonfiguracji("New name:", "Type a very long text here...", { trybWalidacji: 2, pozycja: "x20 yp+15", SzerPola: 100, AutoCenter: true, SzRamki: 2, ResizeEditW: true, obslugaEnter: closeAction })
+    Z.DodajWierszKonfiguracji("New name:", "Type a.", { trybWalidacji: 2, pozycja: "x20 yp+15", SzerPola: 100, AutoCenter: true, SzRamki: 2, ResizeEditW: true, obslugaEnter: closeAction })
 
     btnZapisz := Z.DodajPrzycisk("Save", closeAction, "xm y+20 w100 h30")
     btnAnuluj := Z.DodajPrzycisk("Cancel", closeAction, "yp w100 h30")
 
-    Z.CallbackLayout := (Szer, Off := 0, *) => (gap := (Szer - 200) / 3, btnZapisz.Move(gap + Off), btnAnuluj.Move(Szer - gap - 100 + Off))
+    Z.CallbackLayout := (Szer, Off := 0, *) => (
+        Sk := A_ScreenDPI / 96,
+        RealW := 100 * FontMultipl * Sk,
+        gap := (Szer - 2 * RealW) / 3,
+        btnZapisz.Move(gap + Off, "", "", "", false),
+        btnAnuluj.Move(Szer - gap - RealW + Off, "", "", "", false)
+    )
+
     Z.Pokaz()
 }
 
