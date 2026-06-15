@@ -107,7 +107,7 @@ SubPanel := App.DodajPanel(2, 1, 1, { PadD: 10 })
 SubPanel.Add("Text", "xm", "I am a nested panel!")
 Loop 5
     SubPanel.DodajCheckbox("Sub-item " A_Index, { pozycja: "xm" })
-SubPanel.PokazPanel(App, "xp y+10", "w250 h80")
+SubPanel.PokazPanel(App, "y+10", "w250 h80")
 
 ; Scrollable Text Panel
 LongText := "This is line 1 inside the text panel........`nThis is line 2.`nKeep scrolling down...`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nLine 4`nLine 5`nLine 6`nLine 7`nLine 8`nEnd of text."

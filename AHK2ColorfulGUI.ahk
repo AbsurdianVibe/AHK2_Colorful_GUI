@@ -2982,13 +2982,14 @@ class SubWindows extends CtlFactory {
     PokazPanel(RodzicPanelu, pozycja := "xm", opcje := "", ApplyScale := true) {
         this.Pokaz(opcje)
         this.GuiObj.GetClientPos(, , &wPanel, &hPanel)
+        Skala := 1 / (A_ScreenDPI / 96)
 
         if !HasProp(this, "DummyCtrl") {
             gRamki := this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki
             myScaledPos := ApplyScale ? Utils.ScaleOptions(pozycja) : pozycja
             this.DummyCtrl := RodzicPanelu.Add("Text", myScaledPos . " w" . wPanel . " h" . hPanel . " BackgroundTrans", "", false)
             this.DummyCtrl.GetPos(&cX, &cY)
-            this.DummyCtrl.Move(cX + gRamki, cY + gRamki) ; Korekta o grubość ramki
+            this.DummyCtrl.Move((cX + gRamki) * Skala, (cY + gRamki) * Skala) ; Korekta o grubość ramki
 
             this.DummyCtrl.PanelObj := this
             this.DummyCtrl.Rola := "Panel"
