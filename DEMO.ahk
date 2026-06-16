@@ -4,8 +4,12 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2B2B2B")
-FontMultipl := 1
-SilnikGUI.FontManagment("Times New Roman", FontMultipl)
+TotalScale := 1
+SilnikGUI.Statics.GlobFont.Name := "times new roman"
+;todo what to do witch GlobFont.Size?????
+SilnikGUI.Statics.GlobFont.Size := 10
+SilnikGUI.Statics.TotalScale := TotalScale
+
 
 ; Main app window
 App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
@@ -139,7 +143,7 @@ ShowDynamicDialog() {
 
     Z.CallbackLayout := (Szer, Off := 0, *) => (
         Sk := A_ScreenDPI / 96,
-        RealW := 100 * FontMultipl * Sk,
+        RealW := 100 * TotalScale * Sk,
         gap := (Szer - 2 * RealW) / 3,
         btnZapisz.Move(gap + Off, "", "", "", false),
         btnAnuluj.Move(Szer - gap - RealW + Off, "", "", "", false)

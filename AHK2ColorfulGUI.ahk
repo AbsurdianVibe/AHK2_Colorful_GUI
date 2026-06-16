@@ -148,7 +148,8 @@ class Data extends ConfigGUI {
         AktywneInstancje: [],      ; Globalny rejestr do Raycastingu
         AktywneBledy: [],          ; Stos otwartych okien błędów
         OstatniScrollTick: 0,      ; Zegar blokady wizualnej (Hover) i interakcji
-        DomyslnaCzcionka: { Name: "Segoe UI", Size: 10 }, FontMultiplier: 1.0,
+        GlobFont: { Name: "Segoe UI", Size: 10 },
+        TotalScale: 1.0,
         StanMButtonScroll: { Aktywny: false, TrybToggle: false, Instancja: 0, StartX: 0, StartY: 0, TickStart: 0, OstatnieVx: 0, OstatnieVy: 0, AccumX: 0.0, AccumY: 0.0, Fake: 0, LastCurId: 0, LastClipDir: "", LastScale: 1.0, Opcje: {}, CanX: false, CanY: false },
         PetlaMButtonScrollObj: 0,
         ZakonczMButtonScrollObj: 0,
@@ -201,7 +202,7 @@ class Utils extends Data {
         if (Type(optionsStr) !== "String")
             return optionsStr
 
-        myDpiScale := (A_ScreenDPI / 96) * SilnikGUI.Statics.FontMultiplier
+        myDpiScale := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
         if (myDpiScale == 1.0)
             return optionsStr
 
@@ -572,7 +573,7 @@ class Grafika extends Motyw {
      * @param {Boolean} [ApplyScale=true] - Czy skalować margines i grubość linii zgodnie z DPI ekranu.
      */
     Ramka(StartCtrl, EndCtrl := 0, Margin := 10, Kolor := "", Grubosc := 2, Dynamic := 0, ApplyScale := true) {
-        Skala := A_ScreenDPI / 96
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
         Margin := ApplyScale ? Round(Margin * Skala) : Margin
         Grubosc := ApplyScale ? Round(Grubosc * Skala) : Grubosc
 
@@ -1675,6 +1676,10 @@ Class ExWinAndPopups extends Logika {
     static CustomTooltip(tresc := "", opcje?) {
         opcje := Utils.MergeOptions(opcje?, { Align: "+Down", Move: "", ON: 1, czas: 0, DelayON: this.TipDelayON, DelayOFF: this.TipDelayOFF, trybPozycji: "Mouse", kolorTla: "", kolorTekstu: "", kolorRamki: "", MargPion: 4, MargPoz: 8, FontSize: 10, FontOpt: "", rozmiarCzcionki: 10, czyPogrubione: 0, Transparent: "", TransClick: "" })
         Align := opcje.Align, Move := opcje.Move, ON := opcje.ON, czas := opcje.czas, DelayON := opcje.DelayON, DelayOFF := opcje.DelayOFF, trybPozycji := opcje.trybPozycji, kolorTla := opcje.kolorTla, kolorTekstu := opcje.kolorTekstu, kolorRamki := opcje.kolorRamki, MargPion := opcje.MargPion, MargPoz := opcje.MargPoz, FontSize := opcje.FontSize, FontOpt := opcje.FontOpt, rozmiarCzcionki := opcje.rozmiarCzcionki, czyPogrubione := opcje.czyPogrubione, Transparent := opcje.Transparent, TransClick := opcje.TransClick
+
+        FontMulti := SilnikGUI.Statics.TotalScale
+        Skala := (A_ScreenDPI / 96) * FontMulti
+
         ; [ADAPTER] Kompatybilność wsteczna + bezpieczne kierowanie typów (Mouse, Screen, Anchor)
         trybStr := (trybPozycji == 0 || trybPozycji == "0" || trybPozycji == "Mouse") ? "Mouse" : (IsObject(trybPozycji) ? "Anchor" : "Screen")
 
@@ -1813,33 +1818,36 @@ Class ExWinAndPopups extends Logika {
 
             MoznaWMiejscu := !CzyPrzebudowacStyl && HasProp(GuiTip, "Segmenty") && (NoweSegmenty.Length == GuiTip.Segmenty.Length)
 
+            sMargPion := Round(MargPion * Skala)
+            sMargPoz := Round(MargPoz * Skala)
+            sGruboscRamki := Round(1 * Skala)
+
             maxW := 0
-            FinalSize := Round(rozmiarCzcionki * SilnikGUI.Statics.FontMultiplier)
+            FinalSize := Round((FontSize != 10 ? FontSize : rozmiarCzcionki) * FontMulti)
             fOpt := "s" . FinalSize . (czyPogrubione ? " bold" : " norm")
             for seg in NoweSegmenty {
-                wym := SilnikGUI.ZmierzTekst(seg.txt, SilnikGUI.Statics.DomyslnaCzcionka.Name, fOpt)
+                wym := SilnikGUI.ZmierzTekst(seg.txt, SilnikGUI.Statics.GlobFont.Name, fOpt)
                 seg.w := wym.w, seg.h := wym.h
-                maxW := Max(maxW, wym.w) + MargPoz * 2
+                maxW := Max(maxW, wym.w) + sMargPoz * 2
             }
-            gruboscRamki := 1
 
             if (MoznaWMiejscu) {
-                aktualneY := gruboscRamki
+                aktualneY := sGruboscRamki
                 for i, item in GuiTip.Segmenty {
                     seg := NoweSegmenty[i]
                     if (item.main.Value != seg.txt)
                         item.main.Value := seg.txt
 
-                    item.top.Move(gruboscRamki, aktualneY, maxW, MargPion)
-                    aktualneY += MargPion
-                    item.main.Move(gruboscRamki, aktualneY, maxW, seg.h)
+                    item.top.Move(sGruboscRamki, aktualneY, maxW, sMargPion)
+                    aktualneY += sMargPion
+                    item.main.Move(sGruboscRamki, aktualneY, maxW, seg.h)
                     aktualneY += seg.h
-                    item.bot.Move(gruboscRamki, aktualneY, maxW, MargPion)
-                    aktualneY += MargPion
+                    item.bot.Move(sGruboscRamki, aktualneY, maxW, sMargPion)
+                    aktualneY += sMargPion
                     if (seg.sepH > 0)
-                        aktualneY += seg.sepH
+                        aktualneY += Round(seg.sepH * Skala)
                 }
-                GuiTip.Move(, , maxW + 2 * gruboscRamki, aktualneY + gruboscRamki)
+                GuiTip.Move(, , maxW + 2 * sGruboscRamki, aktualneY + sGruboscRamki)
             } else {
                 czyPrzenika := (TransClick !== "") ? TransClick : (trybStr == "Mouse")
                 needsAlpha := (czyPrzenika || Transparent < 1.0)
@@ -1850,26 +1858,26 @@ Class ExWinAndPopups extends Logika {
                     WinSetTransparent(alphaVal, NoweGui.Hwnd)
                 }
                 NoweGui.BackColor := kolorRamki
-                NoweGui.MarginX := gruboscRamki, NoweGui.MarginY := gruboscRamki
-                NoweGui.SetFont("s" . Round((FontSize != 10 ? FontSize : rozmiarCzcionki) * SilnikGUI.Statics.FontMultiplier) . " " . FontOpt . " " . kolorTekstu . (czyPogrubione ? " bold" : ""), "Segoe UI")
+                NoweGui.MarginX := sGruboscRamki, NoweGui.MarginY := sGruboscRamki
+                NoweGui.SetFont("s" . FinalSize . " " . FontOpt . " " . kolorTekstu . (czyPogrubione ? " bold" : ""), SilnikGUI.Statics.GlobFont.Name)
 
                 NoweGui.Segmenty := []
-                aktualneY := gruboscRamki
+                aktualneY := sGruboscRamki
 
                 for seg in NoweSegmenty {
-                    top := NoweGui.Add("Text", "x" . gruboscRamki . " y" . aktualneY . " w" . maxW . " h" . MargPion . " Background" . kolorTla, "")
-                    aktualneY += MargPion
-                    main := NoweGui.Add("Text", "Center x" . gruboscRamki . " y" . aktualneY . " w" . maxW . " h" . seg.h . " Background" . kolorTla, seg.txt)
+                    top := NoweGui.Add("Text", "x" . sGruboscRamki . " y" . aktualneY . " w" . maxW . " h" . sMargPion . " Background" . kolorTla, "")
+                    aktualneY += sMargPion
+                    main := NoweGui.Add("Text", "Center x" . sGruboscRamki . " y" . aktualneY . " w" . maxW . " h" . seg.h . " Background" . kolorTla, seg.txt)
                     aktualneY += seg.h
-                    bot := NoweGui.Add("Text", "x" . gruboscRamki . " y" . aktualneY . " w" . maxW . " h" . MargPion . " Background" . kolorTla, "")
-                    aktualneY += MargPion
+                    bot := NoweGui.Add("Text", "x" . sGruboscRamki . " y" . aktualneY . " w" . maxW . " h" . sMargPion . " Background" . kolorTla, "")
+                    aktualneY += sMargPion
                     if (seg.sepH > 0)
-                        aktualneY += seg.sepH
+                        aktualneY += Round(seg.sepH * Skala)
 
                     NoweGui.Segmenty.Push({ top: top, main: main, bot: bot })
                 }
 
-                NoweGui.Show("Hide w" . (maxW + 2 * gruboscRamki) . " h" . (aktualneY + gruboscRamki))
+                NoweGui.Show("Hide w" . (maxW + 2 * sGruboscRamki) . " h" . (aktualneY + sGruboscRamki))
 
                 StareGui := GuiTip
                 GuiTip := NoweGui
@@ -1884,7 +1892,7 @@ Class ExWinAndPopups extends Logika {
 
         isSkipMon := false
         Silnik := 0
-        OffY := 24, OffX := 15
+        OffY := Round(24 * Skala), OffX := Round(15 * Skala)
         km := GetKObj()
         mAlignX := 0, mAlignY := 0
 
@@ -1904,7 +1912,7 @@ Class ExWinAndPopups extends Logika {
                         (m.dir == "up" || m.dir == "down" || m.dir == "centery") && mAlignY := 1
                     }
                 }
-                OffY := isSkipMon ? 24 : 0, OffX := isSkipMon ? 15 : 0
+                OffY := Round((isSkipMon ? 24 : 0) * Skala), OffX := Round((isSkipMon ? 15 : 0) * Skala)
                 pos := SilnikGUI.DopasujDoKotwicy(trybStr, km.K, tipW, tipH, ParsedAlign, ParsedMove, OffY, OffX, km.M)
         }
 
@@ -2015,7 +2023,7 @@ Class ExWinAndPopups extends Logika {
      * @param {Integer} [ParentHwnd=0] - HWND okna rodzica (dla modalności/Owner).
      */
     static OknoBledu(Naglowek, Tresc, Podtytul := "", ParentHwnd := 0) {
-        FontMulti := SilnikGUI.Statics.FontMultiplier
+        FontMulti := SilnikGUI.Statics.TotalScale
         pad := 10
         Opcje := "+AlwaysOnTop" . (ParentHwnd ? " +Owner" . ParentHwnd : "")
         Ostrzezenie := SilnikGUI(Naglowek, Opcje, { pokazPasek: 0, createChild: true, zamknijNaEsc: 0, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, PadD: pad, PadR: pad }) ; 0=Off (Ręczna obsługa ESC)
@@ -2143,12 +2151,12 @@ class CtlFactory extends ExWinAndPopups {
         if (ApplyScale)
             Options := Utils.ScaleOptions(Options)
 
-        FinalSize := Round(FontSize * SilnikGUI.Statics.FontMultiplier)
-        this.Stan.ChildGui.SetFont("s" . FinalSize . " " . FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+        FinalSize := Round(FontSize * SilnikGUI.Statics.TotalScale)
+        this.Stan.ChildGui.SetFont("s" . FinalSize . " " . FontOpt, SilnikGUI.Statics.GlobFont.Name)
 
         ctrl := this.Stan.ChildGui.Add(Type, Options, Text)
 
-        this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+        this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
 
         this.Stan.Kontrolki.Push(ctrl)
         Utils.SetTag(ctrl.Hwnd, "IsSilnikControl")
@@ -2174,7 +2182,7 @@ class CtlFactory extends ExWinAndPopups {
      * - [obslugaEnter: 0] {Func} Callback dla Enter.
      * - [WysInput: 0] {Number} Wysokość pola edycji (w wierszach).
      * - [ResizeEdit: false] {Boolean} Dynamiczne dopasowanie szerokości pola do tekstu.
-     * - [FontName: "SilnikGUI.Statics.DomyslnaCzcionka.Name"] {String} Nazwa czcionki.
+     * - [FontName: "SilnikGUI.Statics.GlobFont.Name"] {String} Nazwa czcionki.
      * - [FontSize: 10] {Number} Bazowy rozmiar czcionki przed przemnożeniem.
      * - [FontOpt: ""] {String} Opcje stylu czcionki (np. "bold").
      * - [EditOpt: "Center"] {String} Opcje dla Edit.
@@ -2187,17 +2195,17 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {Gui.Edit} - Zwraca obiekt kontrolki Edit, aby można było pobrać z niego wartość.
      */
     DodajWierszKonfiguracji(etykieta, wartoscDomyslna, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, { trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: 10, FontOpt: "", EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true })
+        opcje := Utils.MergeOptions(opcje?, { trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.GlobFont.Name, FontSize: 10, FontOpt: "", EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true })
         trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, FontOpt := opcje.FontOpt, EditOpt := opcje.ApplyScale ? Utils.ScaleOptions(opcje.EditOpt) : opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
         SzerPola := SzerPola - (2 * SzRamki)
         WysPola := WysPola - (2 * SzRamki)
 
-        FinalSize := Round(FontSize * SilnikGUI.Statics.FontMultiplier)
+        FinalSize := Round(FontSize * SilnikGUI.Statics.TotalScale)
         wymWiersz := SilnikGUI.ZmierzTekst("Wg", FontName, "s" . FinalSize . " " . FontOpt)
         hWiersza := wymWiersz.h
 
-        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.FontMultiplier
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
 
         ; Flaga dynamicznego pola (dopasowanie do tekstu)
         CzyDynamicznePole := (ResizeEditW || ResizeEditH)
@@ -2359,8 +2367,8 @@ class CtlFactory extends ExWinAndPopups {
     DodajCheckbox(tekst, opcje?) {
         opcje := Utils.MergeOptions(opcje?, { czyZaznaczony: false, pozycja: "", InfoRight: 1, ApplyScale: true, FontSize: 10, FontOpt: "" })
         czyZaznaczony := opcje.czyZaznaczony, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, InfoRight := opcje.InfoRight
-        FinalSize := opcje.FontSize * SilnikGUI.Statics.FontMultiplier
-        Skala := (A_ScreenDPI / 96) ; * SilnikGUI.Statics.FontMultiplier
+        FinalSize := opcje.FontSize ; * SilnikGUI.Statics.TotalScale
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
         WymiarBox := opcje.ApplyScale ? Round(1.4 * FinalSize * Skala) : Round(1.4 * FinalSize)
         Grubosc := opcje.ApplyScale ? Round(2 * Skala) : 2
 
@@ -2369,17 +2377,17 @@ class CtlFactory extends ExWinAndPopups {
 
         if (InfoRight) {
             CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX + Grubosc) . " y" . (dY + Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
-            CheckMark.SetFont("s" . Round(opcje.FontSize * 1.2 * SilnikGUI.Statics.FontMultiplier) . " bold " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            CheckMark.SetFont("s" . Round(opcje.FontSize * 1.2 * SilnikGUI.Statics.TotalScale) . " bold " . opcje.FontOpt, SilnikGUI.Statics.GlobFont.Name)
             this.Stan.Kontrolki.Push(CheckMark)
             ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc, , 0)
             txt := this.Stan.ChildGui.Add("Text", "x+10 yp +0x100", tekst)
-            txt.SetFont("s" . Round(opcje.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            txt.SetFont("s" . Round(opcje.FontSize * SilnikGUI.Statics.TotalScale) . " " . opcje.FontOpt, SilnikGUI.Statics.GlobFont.Name)
         } else {
             txt := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " h" . (WymiarBox + 2 * Grubosc) . " +0x200 +0x100", tekst)
-            txt.SetFont("s" . Round(opcje.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            txt.SetFont("s" . Round(opcje.FontSize * SilnikGUI.Statics.TotalScale) . " " . opcje.FontOpt, SilnikGUI.Statics.GlobFont.Name)
             txt.GetPos(, , &wEtyk)
             CheckMark := this.Stan.ChildGui.Add("Text", "x" . (dX + wEtyk + 10 + Grubosc) . " y" . (dY + Grubosc) . " w" . WymiarBox . " h" . WymiarBox . " Center +0x200 +Tabstop +0x100 Background" . SilnikGUI.Motyw.Wklesly . " c" . SilnikGUI.Motyw.Tekst, czyZaznaczony ? "✓" : "")
-            CheckMark.SetFont("s" . Round(opcje.FontSize * 1.2 * SilnikGUI.Statics.FontMultiplier) . " bold " . opcje.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            CheckMark.SetFont("s" . Round(opcje.FontSize * 1.2 * SilnikGUI.Statics.TotalScale) . " bold " . opcje.FontOpt, SilnikGUI.Statics.GlobFont.Name)
             this.Stan.Kontrolki.Push(CheckMark)
             ramkaObj := this.Ramka(CheckMark, 0, 0, "", Grubosc, , 0)
         }
@@ -2476,13 +2484,13 @@ class CtlFactory extends ExWinAndPopups {
      */
     DodajDDList(opcje, callback := 0, wybranyIndex := 1, szerokosc := 200, pozycja := "xm", Padding := 0, Ramkapopupu := 1, SeparatorW := 1, ApplyScale := true, fontOptions?) {
         fontOptions := Utils.MergeOptions(fontOptions?, { FontSize: 10, FontOpt: "" })
-        FinalSize := fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier
+        FinalSize := fontOptions.FontSize
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
         if (ApplyScale) {
             pozycja := Utils.ScaleOptions(pozycja)
-            szerokosc := Round(szerokosc * SilnikGUI.Statics.FontMultiplier * (A_ScreenDPI / 96))
-            Ramkapopupu := Round(Ramkapopupu * (A_ScreenDPI / 96))
+            szerokosc := Round(szerokosc * Skala)
+            Ramkapopupu := Round(Ramkapopupu * Skala)
         }
-        Skala := A_ScreenDPI / 96
         WysWiersza := ApplyScale ? Round(2.2 * FinalSize * Skala) : Round(2.2 * FinalSize)
         Grubosc := ApplyScale ? Round(2 * Skala) : 2
         ArrowW := ApplyScale ? Round(2.0 * FinalSize * Skala) : Round(2.0 * FinalSize)
@@ -2497,9 +2505,9 @@ class CtlFactory extends ExWinAndPopups {
         AlignOpt := Padding == 0 ? "Center" : ""
         ValueCtrl := this.Stan.ChildGui.Add("Text", "x" . (dX + Grubosc) . " y" . (dY + Grubosc) . " w" . SzerText . " h" . WysWiersza . " +0x200 +0x100 +Tabstop " . AlignOpt . " Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, Prefix . opcje[wybranyIndex])
 
-        ValueCtrl.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . fontOptions.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+        ValueCtrl.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.TotalScale) . " " . fontOptions.FontOpt, SilnikGUI.Statics.GlobFont.Name)
         ArrowCtrl := this.Stan.ChildGui.Add("Text", "x+" . SepW . " yp w" . ArrowW . " h" . WysWiersza . " +0x200 +0x100 Center Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, "▼")
-        ArrowCtrl.SetFont("s" . Round(fontOptions.FontSize * 0.8 * SilnikGUI.Statics.FontMultiplier) . " " . fontOptions.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+        ArrowCtrl.SetFont("s" . Round(fontOptions.FontSize * 0.8 * SilnikGUI.Statics.TotalScale) . " " . fontOptions.FontOpt, SilnikGUI.Statics.GlobFont.Name)
 
         ; 4. Konfiguracja Obiektu
         ValueCtrl.Opcje := opcje
@@ -2599,7 +2607,7 @@ class CtlFactory extends ExWinAndPopups {
             }
             pGui.BackColor := SilnikGUI.Motyw.Ramka
             pGui.MarginX := Ramkapopupu, pGui.MarginY := Ramkapopupu ; Ramka dynamiczna
-            pGui.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            pGui.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
             pGui.ListCtrls := []
             pGui.Silnik := this ; [FIX] Przypisanie instancji silnika dla logiki MonitorujStan
             this.Stan.PopupHwnd := pGui.Hwnd
@@ -2679,7 +2687,7 @@ class CtlFactory extends ExWinAndPopups {
 
         if (ApplyScale)
             opcje := Utils.ScaleOptions(opcje)
-        Skala := A_ScreenDPI / 96
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
         Grubosc := ApplyScale ? Round(2 * Skala) : 2
 
         ; 1. DUMMY: Rezerwacja przestrzeni w layoucie (Bounding Box)
@@ -2697,7 +2705,7 @@ class CtlFactory extends ExWinAndPopups {
 
         ; 3. WŁAŚCIWY PRZYCISK (Pozycjonowanie absolutne wewnątrz Dummy)
         btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . " " . SilnikGUI.Motyw.Tekst . " +0x0200 +0x100 +Tabstop", tekst)
-        btn.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.FontMultiplier) . " " . fontOptions.FontOpt, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+        btn.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.TotalScale) . " " . fontOptions.FontOpt, SilnikGUI.Statics.GlobFont.Name)
         this.Stan.Kontrolki.Push(btn) ; [FIX] Rejestracja w systemie (dla Ramka i stylów)
 
         ; [MOD] Wrapper Multiklik: Flash + Callback
@@ -2737,13 +2745,13 @@ class CtlFactory extends ExWinAndPopups {
      * @param {Integer} [MinH = 18] - Minimalna wysokość kontrolki.
      */
     DostosujRozmiar(SzerEtykiety, ctrl, MinW := 50, MinH := 18, *) {
-        fName := HasProp(ctrl, "FontName") ? ctrl.FontName : SilnikGUI.Statics.DomyslnaCzcionka.Name
-        fSize := HasProp(ctrl, "FontSize") ? ctrl.FontSize : SilnikGUI.Statics.DomyslnaCzcionka.Size
-        FinalSize := Round(fSize * SilnikGUI.Statics.FontMultiplier)
+        fName := HasProp(ctrl, "FontName") ? ctrl.FontName : SilnikGUI.Statics.GlobFont.Name
+        fSize := HasProp(ctrl, "FontSize") ? ctrl.FontSize : SilnikGUI.Statics.GlobFont.Size
+        FinalSize := Round(fSize * SilnikGUI.Statics.TotalScale)
         hWiersza := HasProp(ctrl, "WysWiersza") ? ctrl.WysWiersza : 18
 
         ; 2. Grubość z cache
-        Grubosc := HasProp(ctrl, "GruboscRamki") ? ctrl.GruboscRamki : Round(2 * (A_ScreenDPI / 96))
+        Grubosc := HasProp(ctrl, "GruboscRamki") ? ctrl.GruboscRamki : Round(2 * ((A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale))
 
         ; BazoweX (domyślnie 10)
         MargL := HasProp(ctrl, "BazoweX") ? ctrl.BazoweX : 10
@@ -2815,12 +2823,12 @@ class CtlFactory extends ExWinAndPopups {
             if !(c.Type = "Edit" && HasProp(c, "CzyDynamiczne") && c.CzyDynamiczne)
                 continue
 
-            cfName := HasProp(c, "FontName") ? c.FontName : SilnikGUI.Statics.DomyslnaCzcionka.Name
-            cfSize := HasProp(c, "FontSize") ? c.FontSize : SilnikGUI.Statics.DomyslnaCzcionka.Size
+            cfName := HasProp(c, "FontName") ? c.FontName : SilnikGUI.Statics.GlobFont.Name
+            cfSize := HasProp(c, "FontSize") ? c.FontSize : SilnikGUI.Statics.GlobFont.Size
 
-            cFinalSize := Round(cfSize * SilnikGUI.Statics.FontMultiplier)
+            cFinalSize := Round(cfSize * SilnikGUI.Statics.TotalScale)
 
-            cGrubosc := HasProp(c, "GruboscRamki") ? c.GruboscRamki : Round(2 * (A_ScreenDPI / 96))
+            cGrubosc := HasProp(c, "GruboscRamki") ? c.GruboscRamki : Round(2 * ((A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale))
             cMargL := HasProp(c, "BazoweX") ? c.BazoweX : 10
             cSzerEtykiety := HasProp(c, "SzerEtykiety") ? c.SzerEtykiety : 0
             cSzerPola := HasProp(c, "SzerPola") ? c.SzerPola : MinW
@@ -2982,7 +2990,7 @@ class SubWindows extends CtlFactory {
     PokazPanel(RodzicPanelu, pozycja := "xm", opcje := "", ApplyScale := true) {
         this.Pokaz(opcje)
         this.GuiObj.GetClientPos(, , &wPanel, &hPanel)
-        Skala := 1 / (A_ScreenDPI / 96)
+        Skala := 1 / ((A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale)
 
         if !HasProp(this, "DummyCtrl") {
             gRamki := this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki
@@ -3028,15 +3036,15 @@ class SubWindows extends CtlFactory {
      * - [InfiniteLine=false] {Boolean} - Czy panel ma być nieskończoną linią (rozciągać się na całą szerokość).
      * - [BackCol=SilnikGUI.Motyw.Wklesly] {String} - Kolor tła panelu (np. "#FFFFFF" lub nazwa z motywu).
      * - [TextCol=SilnikGUI.Motyw.Tekst] {String} - Kolor tekstu w polu.
-     * - [FontName=SilnikGUI.Statics.DomyslnaCzcionka.Name] {String} - Nazwa czcionki.
-     * - [FontSize=SilnikGUI.Statics.DomyslnaCzcionka.Size] {Integer} - Rozmiar czcionki w pkt.
+     * - [FontName=SilnikGUI.Statics.GlobFont.Name] {String} - Nazwa czcionki.
+     * - [FontSize=SilnikGUI.Statics.GlobFont.Size] {Integer} - Rozmiar czcionki w pkt.
      * - [Backlight=0] {Integer} - Poziom podświetlenia (0 = brak, 1 = delikatne, 2 = mocne).
      * - [ApplyScale=true] {Boolean} - Applies DPI scaling to options.
      * @tag WinAPI: "IsSilnikPanel" (panel) oraz "IsSilnikInput" (pole tekstowe).
      * @return {SilnikGUI} - Instancja utworzonego sub-panelu.
      */
     DodajPanelTxt(tekst, w, h, opcje?) {
-        opcje := Utils.MergeOptions(opcje?, { pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.DomyslnaCzcionka.Name, FontSize: SilnikGUI.Statics.DomyslnaCzcionka.Size, Backlight: 0, ApplyScale: true })
+        opcje := Utils.MergeOptions(opcje?, { pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.GlobFont.Name, FontSize: SilnikGUI.Statics.GlobFont.Size, Backlight: 0, ApplyScale: true })
         pozycja := opcje.pozycja, gruboscRamki := opcje.gruboscRamki, infLine := opcje.InfiniteLine, FontName := opcje.FontName, FontSize := opcje.FontSize, Backlight := opcje.Backlight, ApplyScale := opcje.ApplyScale
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
 
@@ -3045,7 +3053,7 @@ class SubWindows extends CtlFactory {
 
         opcjeWiersza := { trybWalidacji: 3, pozycja: "x0 y0", ResizeEditW: infLine, ResizeEditH: true, SzRamki: 0, AutoCenter: false, EditOpt: "Left", FontName: FontName, FontSize: FontSize, BackCol: BackCol, TextCol: TextCol, Backlight: Backlight }
 
-        Skala := A_ScreenDPI / 96
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
         wFizyczne := ApplyScale ? Round(w * Skala) : w
         hFizyczne := ApplyScale ? Round(h * Skala) : h
 
@@ -3090,16 +3098,6 @@ class SubWindows extends CtlFactory {
  */
 class SilnikGUI extends SubWindows {
 
-
-    /**
-     * @desc Globalne sterowanie mnożnikiem domyślnej czcionki w silniku.
-     * @param {String} nazwa - Rodzaj czcionki.
-     * @param {Number} mnoznik - Mnożnik bazowego rozmiaru czcionki (domyślnie 1.0).
-     */
-    static FontManagment(nazwa := "Segoe UI", mnoznik := 1.0) {
-        SilnikGUI.Statics.DomyslnaCzcionka.Name := nazwa
-        SilnikGUI.Statics.FontMultiplier := mnoznik
-    }
     /**
      * Tworzy nowe okno GUI z zadanym tytułem i stylem.
      * @param {String} tytul - Tytuł okna.
@@ -3194,7 +3192,7 @@ class SilnikGUI extends SubWindows {
         }
     }
     /**
-     * @desc Pobiera wymiary tekstu korzystając z jednego globalnego obiektu w pamięci.
+     * @desc Pobiera wymiary tekstu korzystając z jednego globalnego obiektu w pamięci. 
      */
     static ZmierzTekst(tresc, fontName := "", fontOptions := "") {
         if !this.Statics.HasProp("GlobalDummyGui") {
@@ -3202,7 +3200,7 @@ class SilnikGUI extends SubWindows {
             this.Statics.GlobalDummyTxt := this.Statics.GlobalDummyGui.Add("Text", "")
             this.Statics.GlobalDummyEdit := this.Statics.GlobalDummyGui.Add("Edit", "+Multi -VScroll")
         }
-        fName := fontName != "" ? fontName : this.Statics.DomyslnaCzcionka.Name
+        fName := fontName != "" ? fontName : this.Statics.GlobFont.Name
         this.Statics.GlobalDummyTxt.SetFont(fontOptions, fName)
         hDC := DllCall("GetDC", "Ptr", this.Statics.GlobalDummyTxt.Hwnd, "Ptr")
         hOldFont := DllCall("SelectObject", "Ptr", hDC, "Ptr", SendMessage(0x0031, 0, 0, this.Statics.GlobalDummyTxt.Hwnd), "Ptr")
@@ -3219,7 +3217,7 @@ class SilnikGUI extends SubWindows {
     static ZmierzWysokoscEdita(tresc, w, fontName := "", fontOptions := "") {
         if !this.Statics.HasProp("GlobalDummyGui")
             this.ZmierzTekst("")
-        fName := fontName != "" ? fontName : this.Statics.DomyslnaCzcionka.Name
+        fName := fontName != "" ? fontName : this.Statics.GlobFont.Name
         this.Statics.GlobalDummyEdit.SetFont(fontOptions, fName)
         this.Statics.GlobalDummyEdit.Move(, , , 10)
         this.Statics.GlobalDummyEdit.Move(, , w)
@@ -3382,7 +3380,7 @@ class SilnikGUI extends SubWindows {
         if (pokazPasek == 0 && !InStr(opcje, "-Caption"))
             opcje .= " -Caption "
 
-        Skala := A_ScreenDPI / 96
+        Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
 
         this.Stan.UseChild := createChild
         this.Stan.CSBarV := CSBarV
@@ -3399,13 +3397,13 @@ class SilnikGUI extends SubWindows {
         this.Stan.PadD := Round(PadD * Skala)
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
-        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala * SilnikGUI.Statics.FontMultiplier) : 0
+        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala) : 0
 
 
         this.GuiObj := Gui(opcje, tytul)
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
-        this.GuiObj.SetFont("s" . Round(10 * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+        this.GuiObj.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
         this.GuiObj.MarginX := this.Stan.PadL
         this.GuiObj.MarginY := 0
 
@@ -3428,7 +3426,7 @@ class SilnikGUI extends SubWindows {
             ; Parentem Childa jest teraz ClipGui, a nie GuiObj
             this.Stan.ChildGui := Gui("-Caption -Border +Parent" . this.Stan.ClipGui.Hwnd . " +E0x10000 +0x02000000 -DPIScale")
             this.Stan.ChildGui.BackColor := SilnikGUI.Motyw.Tlo
-            this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.FontMultiplier) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.DomyslnaCzcionka.Name)
+            this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
             this.Stan.ChildGui.MarginX := this.Stan.PadL
             this.Stan.ChildGui.MarginY := 0
             this.Stan.ChildGui.Silnik := this
@@ -3491,7 +3489,7 @@ class SilnikGUI extends SubWindows {
      * @param [Opt= ""] {String} Dodatkowe opcje dla metody Show (np. "w500 h300 NA").
      */
     Pokaz(Opt := "") {
-        myDpiScale := A_ScreenDPI / 96
+        myDpiScale := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
 
         ; Statyczna weryfikacja zdolności przyjmowania focusu (WS_TABSTOP = 0x10000)
         maTabstop := false
@@ -3939,7 +3937,7 @@ class SilnikGUI extends SubWindows {
          * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
          */
         Move(x := "", y := "", w := "", h := "", ApplyScale := true) {
-            Skala := A_ScreenDPI / 96
+            Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
             x := (ApplyScale && x !== "") ? Round(x * Skala) : x
             y := (ApplyScale && y !== "") ? Round(y * Skala) : y
             w := (ApplyScale && w !== "") ? Round(w * Skala) : w
@@ -4446,9 +4444,10 @@ class SilnikGUI extends SubWindows {
          * @tag WinAPI: "IsSilnikScrollbarBtn" (przyciski), "IsSilnikScrollbarThumb" (suwak), "IsSilnikScrollbarTrack" (tło).
          */
         __New(Silnik, Typ) {
+            skala := SilnikGUI.Statics.TotalScale
             this.Silnik := Silnik
             this.Typ := Typ ; "V" lub "H"
-            this.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * (A_ScreenDPI / 96)) ; Skalowana szerokość
+            this.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * skala) ; Skalowana szerokość
             this.LastGeo := { x: 0, y: 0, w: 0, h: 0, Content: 0, View: 0, TrackLen: 0, BS: 0 } ; Cache geometrii
             this.IsVisible := false ; Flaga widoczności kontenera
 
@@ -4474,8 +4473,8 @@ class SilnikGUI extends SubWindows {
 
             this.Btn1 := GuiObj.Add("Text", OptBtn, Sym1)
             this.Btn2 := GuiObj.Add("Text", OptBtn, Sym2)
-            this.Btn1.SetFont("s9", "arial")
-            this.Btn2.SetFont("s9", "arial")
+            this.Btn1.SetFont("s" . 9 * skala, "arial")
+            this.Btn2.SetFont("s" . 9 * skala, "arial")
 
             this.Thumb := GuiObj.Add("Text", "+0x100 Background" . SilnikGUI.Motyw.Przycisk)
 
