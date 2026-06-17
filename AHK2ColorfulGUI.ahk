@@ -294,6 +294,22 @@ class Utils extends Data {
     static GetTag(Hwnd, NazwaTaga) => DllCall("GetProp", "Ptr", Hwnd, "Str", NazwaTaga, "Ptr")
     ; Usuwa tag WinAPI.
     static RemoveTag(Hwnd, NazwaTaga) => DllCall("RemoveProp", "Ptr", Hwnd, "Str", NazwaTaga)
+
+    /**
+     * Normalizes padding properties directly within the provided configuration object.
+     * @param {Object} [rawOpt] - Options object. If not provided, a new object is created.
+     * @param {Integer} [defaultPad=4] - Default padding value.
+     * @returns {Object} Mutated input object with normalized Pad, PadX, and PadY properties.
+     */
+    static myNormalizePadding(rawOpt?, defaultPad := 4) {
+        if !IsSet(rawOpt) || Type(rawOpt) !== "Object"
+            rawOpt := {}
+        pad := rawOpt.HasProp("Pad") ? rawOpt.Pad : defaultPad
+        rawOpt.Pad := pad
+        rawOpt.PadX := rawOpt.HasProp("PadX") ? rawOpt.PadX : pad
+        rawOpt.PadY := rawOpt.HasProp("PadY") ? rawOpt.PadY : pad
+        return rawOpt
+    }
 }
 /**
  * 1. WARSTWA MOTYWU (BASE)
@@ -2471,91 +2487,126 @@ class CtlFactory extends ExWinAndPopups {
     }
 
     /**
-     * Dodaje Custom DropDownList (DDList) - Faza 1: Kotwica.
-     * @param {Array} opcje - Tablica opcji (Strings).
-     * @param {Func} [callback=0] - Funkcja wywoływana po zmianie (ctrl, index).
-     * @param {Integer} [wybranyIndex=1] - Domyślnie wybrany indeks.
-     * @param {Integer} [szerokosc=200] - Szerokość kontrolki.
-     * @param {String} [pozycja="xm"] - Pozycja (np. "xm", "y+10").
-     * @param {Intiger} [Padding=0] - Czy wyśrodkować tekst (w kotwicy i popupie) 0= centrowanie.
-     * @param {Integer} [Ramkapopupu=1] - Grubość ramki okna popup (domyślnie 1px).
-     * @param {Integer} [SeparatorW=1] - Grubość separatora pionowego (domyślnie 1px).
-     * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to numeric and positional options.
-     * @param {Object} [fontOptions] - Opcje czcionki: {FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: ""}.
-     * @tag WinAPI: "IsSilnikInput" (dla tekstu, strzałki i ramki).
+     * Adds a Custom DropDownList (DDList).
+     * @param {Array} opcje - Array of options (Strings).
+     * @param {Func} [callback=0] - Function called on change (ctrl, index).
+     * @param {Integer} [wybranyIndex=1] - Default selected index.
+     * @param {Object} [Opt] - Optional configuration object with parameters:
+     * - [w = 0] {Integer} - Fixed width. If 0, autosizes based on longest string.
+     * - [pos = "xm"] {String} - Positioning options (e.g. "xm", "y+10").
+     * - [Border = 1] {Integer} - Thickness of popup border (px).
+     * - [sepW = 1] {Integer} - Thickness of the vertical separator (px).
+     * - [scale = true] {Boolean} - Apply DPI scaling to numeric options.
+     * - [fSize = glob] {Integer} - Font size.
+     * - [fOpt = ""] {String} - Font options (e.g. "bold").
+     * - [padX = 4] {Integer} - Horizontal padding.
+     * - [padY = 4] {Integer} - Vertical padding.
+     * - [align = "C"] {String} - Text alignment logic. Syntax: L/R/C[+spaces] (e.g. "L+2", "R+5").
+     * @tag WinAPI: "IsSilnikInput" (for text, arrow and frame).
      */
-    DodajDDList(opcje, callback := 0, wybranyIndex := 1, szerokosc := 200, pozycja := "xm", Padding := 0, Ramkapopupu := 1, SeparatorW := 1, ApplyScale := true, fontOptions?) {
-        fontOptions := Utils.MergeOptions(fontOptions?, { FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "" })
-        FinalSize := fontOptions.FontSize
+    DDList(opcje, callback := 0, wybranyIndex := 1, Opt?) {
+        Opt := Utils.MergeOptions(Utils.myNormalizePadding(Opt?, 2), { w: 0, pos: "xm", Border: 2, sepW: 1, scale: true, fSize: SilnikGUI.Statics.GlobFont.Size, fOpt: "", align: "C" })
+        FinalSize := Opt.fSize
         Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
-        if (ApplyScale) {
-            pozycja := Utils.ScaleOptions(pozycja)
-            szerokosc := Round(szerokosc * Skala)
-            Ramkapopupu := Round(Ramkapopupu * Skala)
+
+        if (Opt.scale) {
+            Opt.pos := Utils.ScaleOptions(Opt.pos)
+            Opt.w := Round(Opt.w * Skala)
+            Opt.Border := Round(Opt.Border * Skala)
         }
-        WysWiersza := ApplyScale ? Round(2.2 * FinalSize * Skala) : Round(2.2 * FinalSize)
-        Grubosc := ApplyScale ? Round(2 * Skala) : 2
-        ArrowW := ApplyScale ? Round(2.0 * FinalSize * Skala) : Round(2.0 * FinalSize)
-        SepW := ApplyScale ? Round(SeparatorW * Skala) : SeparatorW
-        Prefix := Format("{:" . (Padding) . "}", "")
+
+        wymiarBazowy := SilnikGUI.ZmierzTekst("W", SilnikGUI.Statics.GlobFont.Name, "s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt)
+        WysWiersza := wymiarBazowy.h + (Opt.scale ? Round(Opt.PadY * Skala * 2) : (Opt.PadY * 2))
+        Grubosc := Opt.scale ? Round(Opt.Border * Skala) : 2
+        ArrowW := Opt.scale ? Round(2.0 * FinalSize * Skala) : Round(2.0 * FinalSize)
+        SepW := Opt.scale ? Round(Opt.sepW * Skala) : Opt.sepW
+
+        AlignMode := "Center"
+        AlignSpaces := 0
+        if (RegExMatch(Opt.align, "i)^([LRC])(?:\+(\d+))?$", &m)) {
+            ModeChar := StrUpper(m[1])
+            AlignSpaces := (m[2] != "") ? Integer(m[2]) : 0
+            if (ModeChar == "L")
+                AlignMode := "Left"
+            else if (ModeChar == "R")
+                AlignMode := "Right"
+        }
+        SpcStr := Format("{:" . AlignSpaces . "}", "")
+        
+        _ApplyAlign(str) {
+            return SpcStr . str . SpcStr
+        }
+
+        ; --- AUTO-SIZING ---
+        maxStrW := 0
+        if (Opt.w <= 0) {
+            for opcja in opcje {
+                wym := SilnikGUI.ZmierzTekst(_ApplyAlign(opcja), SilnikGUI.Statics.GlobFont.Name, "s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt)
+                if (wym.w > maxStrW)
+                    maxStrW := wym.w
+            }
+            autosizeW := maxStrW + (Opt.scale ? Round(Opt.PadX * Skala * 2) : (Opt.PadX * 2)) + ArrowW + SepW + (2 * Grubosc)
+            Opt.w := Max(Opt.w, autosizeW)
+        }
+
         ParsedAlign := SilnikGUI.ParsujAlign("+Down +Left")
 
-        dummy := this.Stan.ChildGui.Add("Text", pozycja . " w0 h0 Hidden"), dummy.GetPos(&dX, &dY)
+        dummy := this.Stan.ChildGui.Add("Text", Opt.pos . " w0 h0 Hidden"), dummy.GetPos(&dX, &dY)
         dummy.IsDummy := true
-        ; 2. Kontrolka Wartości (Text z Tabstop dla Focusu)
-        SzerText := szerokosc - (2 * Grubosc) - ArrowW - SepW
-        AlignOpt := Padding == 0 ? "Center" : ""
-        ValueCtrl := this.Stan.ChildGui.Add("Text", "x" . (dX + Grubosc) . " y" . (dY + Grubosc) . " w" . SzerText . " h" . WysWiersza . " +0x200 +0x100 +Tabstop " . AlignOpt . " Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, Prefix . opcje[wybranyIndex])
 
-        ValueCtrl.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.TotalScale) . " " . fontOptions.FontOpt, SilnikGUI.Statics.GlobFont.Name)
+        ; 2. Value Control (Text with Tabstop for Focus)
+        SzerText := Opt.w - (2 * Grubosc) - ArrowW - SepW
+        ValueCtrl := this.Stan.ChildGui.Add("Text", "x" . (dX + Grubosc) . " y" . (dY + Grubosc) . " w" . SzerText . " h" . WysWiersza . " +0x200 +0x100 +Tabstop " . AlignMode . " Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, _ApplyAlign(opcje[wybranyIndex]))
+
+        ValueCtrl.SetFont("s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt, SilnikGUI.Statics.GlobFont.Name)
         ArrowCtrl := this.Stan.ChildGui.Add("Text", "x+" . SepW . " yp w" . ArrowW . " h" . WysWiersza . " +0x200 +0x100 Center Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, "▼")
-        ArrowCtrl.SetFont("s" . Round(fontOptions.FontSize * 0.8 * SilnikGUI.Statics.TotalScale) . " " . fontOptions.FontOpt, SilnikGUI.Statics.GlobFont.Name)
+        ArrowCtrl.SetFont("s" . Round(Opt.fSize * 0.8 * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt, SilnikGUI.Statics.GlobFont.Name)
 
-        ; 4. Konfiguracja Obiektu
+        ; 4. Object Configuration
         ValueCtrl.Opcje := opcje
         ValueCtrl.SelectedIndex := wybranyIndex
         ValueCtrl.Callback := callback
-        ValueCtrl.Rola := "DDList" ; Dla MonitorujStan
+        ValueCtrl.Rola := "DDList" ; For MonitorujStan
         ValueCtrl.GruboscRamki := Grubosc
         ValueCtrl.PopupGui := 0
 
-        ; Powiązania (Hover/Focus)
+        ; Bindings (Hover/Focus)
         ArrowCtrl.ParentCtrl := ValueCtrl
-        ValueCtrl.ArrowCtrl := ArrowCtrl ; Przypisanie PRZED Ramka(), aby objęła strzałkę
+        ValueCtrl.ArrowCtrl := ArrowCtrl ; Assign BEFORE Ramka() to include the arrow
         this.Stan.Kontrolki.Push(ValueCtrl)
         ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc, , 0)
         ramkaObj.ParentCtrl := ValueCtrl
         ValueCtrl.Ramka := ramkaObj
 
-        ; 5. Logika Scrolla (Zmiana wartości w miejscu LUB nawigacja w liście)
+        ; 5. Scroll Logic (Change value in place OR navigate in list)
         _ScrollAction(ctrl, k) {
             if (ValueCtrl.PopupGui) {
-                ; Tryb otwarty: Tylko wizualnie
+                ; Open mode: Visual only
                 res := SilnikGUI.ObliczLimit(ctrl.SelectedIndex, -k, 1, ctrl.Opcje.Length)
                 (res.Flash) && SilnikGUI.EfektFlash(ValueCtrl)
                 ctrl.SelectedIndex := res.V
                 SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)
             } else {
-                ; Tryb zamknięty: Zmiana wartości
+                ; Closed mode: Change value
                 res := SilnikGUI.ObliczLimit(ctrl.SelectedIndex, -k, 1, ctrl.Opcje.Length)
                 (res.Flash) && SilnikGUI.EfektFlash(ctrl)
                 ctrl.SelectedIndex := res.V
-                ctrl.Value := Prefix . ctrl.Opcje[ctrl.SelectedIndex]
+                ctrl.Value := _ApplyAlign(ctrl.Opcje[ctrl.SelectedIndex])
                 if (ctrl.Callback)
                     ctrl.Callback.Call(ctrl, ctrl.SelectedIndex)
             }
         }
         ValueCtrl.DefineProp("VScrollAction", { Call: _ScrollAction })
 
-        ; InputHook (Tylko Escape - resztę obsługuje InicjalizujSkroty)
+        ; InputHook (Only Escape - the rest is handled by InicjalizujSkroty)
         ih := InputHook("V")
         ih.KeyOpt("{Escape}", "NS")
         ih.OnKeyDown := (hook, vk, sc) => Zamknij()
 
-        ; Inteligentny Enter (Otwórz / Zatwierdź)
+        ; Smart Enter (Open / Confirm)
         _OnEnter(ctrl) {
             if (ValueCtrl.PopupGui) {
-                ValueCtrl.Value := Prefix . ValueCtrl.Opcje[ValueCtrl.SelectedIndex]
+                ValueCtrl.Value := _ApplyAlign(ValueCtrl.Opcje[ValueCtrl.SelectedIndex])
                 if (ValueCtrl.Callback)
                     ValueCtrl.Callback.Call(ValueCtrl, ValueCtrl.SelectedIndex)
                 Zamknij()
@@ -2565,7 +2616,7 @@ class CtlFactory extends ExWinAndPopups {
         }
         ValueCtrl.DefineProp("OnEnter", { Call: _OnEnter })
 
-        ; Logika Popup
+        ; Popup Logic
         Zamknij(*) {
             if (this.GuiObj) {
                 this.Stan.PopupActive := false
@@ -2593,13 +2644,13 @@ class CtlFactory extends ExWinAndPopups {
             this.GuiObj.PopupActive := true
             (this.Stan.UseChild) && this.Stan.ChildGui.PopupActive := true
 
-            ; 1. Pozycja (Smart Positioning względem ramki)
+            ; 1. Position (Smart Positioning relative to frame)
             wysokoscListy := (ValueCtrl.Opcje.Length * WysWiersza)
             try WinGetPos(&rX, &rY, &rW, &rH, "ahk_id " ramkaObj.Hwnd)
             catch
                 rX := 0, rY := 0, rW := 0, rH := 0
             MonitorGetWorkArea(MonitorGetPrimary(), &mL, &mT, &mR, &mB)
-            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, szerokosc, wysokoscListy + (2 * Ramkapopupu), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
+            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, Opt.w, wysokoscListy + (2 * Opt.Border), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
 
             ; 2. GUI Popup
             pGui := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x08000000 +Owner" . this.GuiObj.Hwnd . " -DPIScale")
@@ -2608,55 +2659,50 @@ class CtlFactory extends ExWinAndPopups {
                 WinSetTransparent(pAlpha, pGui.Hwnd)
             }
             pGui.BackColor := SilnikGUI.Motyw.Ramka
-            pGui.MarginX := Ramkapopupu, pGui.MarginY := Ramkapopupu ; Ramka dynamiczna
-            pGui.SetFont("s" . Round(fontOptions.FontSize * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
+            pGui.MarginX := Opt.Border, pGui.MarginY := Opt.Border
+            pGui.SetFont("s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
             pGui.ListCtrls := []
-            pGui.Silnik := this ; [FIX] Przypisanie instancji silnika dla logiki MonitorujStan
+            pGui.Silnik := this ; Assign engine instance for MonitorujStan logic
             this.Stan.PopupHwnd := pGui.Hwnd
             pGui.WektorX := pos.x, pGui.WektorY := pos.y
-            pGui.Zamknij := Zamknij ; [FIX] Interfejs zamykania
+            pGui.Zamknij := Zamknij ; Closing interface
             this.Stan.PopupGuiObj := pGui
 
-
-            ; 3. Elementy
+            ; 3. Elements
             for i, opcja in ValueCtrl.Opcje {
                 bg := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Motyw.Focus : SilnikGUI.Motyw.Przycisk
                 ram := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka, SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
+                yPos := (i == 1) ? "y" . Opt.Border : "y+0"
 
-                yPos := (i == 1) ? "y" . Ramkapopupu : "y+0"
+                ; [TRYB CENTER] Dzielimy wiersz na 3 części: Left (wyrównanie), Main (tekst), Right (reszta)
+                ; Zapewnia to idealne pokrycie pozycji X tekstu w popupie i kotwicy.
+                LeftW := (Grubosc) - Opt.Border
+                LeftW := (LeftW > 0) ? LeftW : 0
+                l := pGui.Add("Text", "x" . Opt.Border . " " . yPos . " w" . LeftW . " h" . WysWiersza . " +0x200 Background" . bg)
+                t := pGui.Add("Text", "x+0 yp w" . SzerText . " h" . WysWiersza . " +0x200 " . AlignMode . " Background" . bg, _ApplyAlign(opcja))
+                r1 := pGui.Add("Text", "x+0 yp w" . SepW . " h" . WysWiersza . " +0x200 Background" . ram)
 
-                if (Padding == 0) {
-                    ; [TRYB CENTER] Dzielimy wiersz na 3 części: Left (wyrównanie), Main (tekst), Right (reszta)
-                    ; Zapewnia to idealne pokrycie pozycji X tekstu w popupie i kotwicy.
-                    LeftW := (Grubosc) - Ramkapopupu
-                    l := pGui.Add("Text", "x" . Ramkapopupu . " " . yPos . " w" . LeftW . " h" . WysWiersza . " +0x200 Background" . bg)
-                    t := pGui.Add("Text", "x+0 yp w" . SzerText . " h" . WysWiersza . " +0x200 Center Background" . bg, opcja)
-                    r1 := pGui.Add("Text", "x+0 yp w" . SepW . " h" . WysWiersza . " +0x200 Background" . ram)
-                    r2 := pGui.Add("Text", "x+0 yp w" . (szerokosc - (Ramkapopupu + LeftW + SzerText) - Ramkapopupu - SepW) . " h" . WysWiersza . " +0x200 Background" . bg)
+                Right2W := Opt.w - Opt.Border - LeftW - SzerText - SepW - Opt.Border
+                Right2W := (Right2W > 0) ? Right2W : 0
+                r2 := pGui.Add("Text", "x+0 yp w" . Right2W . " h" . WysWiersza . " +0x200 Background" . bg)
 
-                    itemObj := { Main: t, Left: l, Right1: r1, Right2: r2 }
-                    pGui.ListCtrls.Push(itemObj)
+                itemObj := { Main: t, Left: l, Right1: r1, Right2: r2 }
+                pGui.ListCtrls.Push(itemObj)
 
-                    bindClick := ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback.Call(ValueCtrl, idx), Zamknij())).Bind(i, opcja)
-                    bindHover := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
+                bindClick := ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := _ApplyAlign(val), (ValueCtrl.Callback) && ValueCtrl.Callback.Call(ValueCtrl, idx), Zamknij())).Bind(i, opcja)
+                bindHover := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
 
-                    t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r1.OnEvent("Click", bindClick)
-                    t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r2.OnEvent("Click", bindClick)
-                    t.HoverAction := bindHover, l.HoverAction := bindHover, r1.HoverAction := bindHover
-                    t.HoverAction := bindHover, l.HoverAction := bindHover, r2.HoverAction := bindHover
-                } else {
-                    t := pGui.Add("Text", "x" . Ramkapopupu . " " . yPos . " w" . (szerokosc - (2 * Ramkapopupu)) . " h" . WysWiersza . " +0x200 Background" . bg, Prefix . opcja)
-                    pGui.ListCtrls.Push(t)
-                    t.OnEvent("Click", ((idx, val, *) => (ValueCtrl.SelectedIndex := idx, ValueCtrl.Value := Prefix . val, (ValueCtrl.Callback) && ValueCtrl.Callback.Call(ValueCtrl, idx), Zamknij())).Bind(i, opcja))
-                    t.HoverAction := ((idx, *) => (ValueCtrl.SelectedIndex != idx && (ValueCtrl.SelectedIndex := idx, SilnikGUI.AktualizujListe(ValueCtrl.PopupGui.ListCtrls, ValueCtrl.SelectedIndex)))).Bind(i)
-                }
+                t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r1.OnEvent("Click", bindClick)
+                t.OnEvent("Click", bindClick), l.OnEvent("Click", bindClick), r2.OnEvent("Click", bindClick)
+                t.HoverAction := bindHover, l.HoverAction := bindHover, r1.HoverAction := bindHover
+                t.HoverAction := bindHover, l.HoverAction := bindHover, r2.HoverAction := bindHover
             }
 
-            pGui.Show("x" . pos.x . " y" . pos.y . " w" . szerokosc . " NA")
+            pGui.Show("x" . pos.x . " y" . pos.y . " w" . Opt.w . " NA")
             ValueCtrl.PopupGui := pGui
             ih.Start()
 
-            ; 4. Watchdog (Zamykanie po kliknięciu poza) - Użycie uniwersalnego strażnika
+            ; 4. Watchdog (Closing on click outside)
             ValueCtrl.Watchdog := SilnikGUI.MonitorujWyjscie(Zamknij, [pGui.Hwnd, ValueCtrl.Hwnd, ArrowCtrl.Hwnd, ramkaObj.Top.Hwnd, ramkaObj.Bot.Hwnd, ramkaObj.Left.Hwnd, ramkaObj.Right.Hwnd], "Click")
         }
 
@@ -2676,20 +2722,16 @@ class CtlFactory extends ExWinAndPopups {
     }
 
     /**
-     * Dodaje przycisk o niestandardowym wyglądzie (Text jako przycisk).
-     * @param {String} tekst - Napis na przycisku.
-     * @param {Func} funkcjaKlikniecia - Funkcja wywoływana po kliknięciu (callback).
-     * @param {String} [opcje=""] - Ciąg opcji AHK określający pozycję i wymiary (np. "x10 y10 w100 h40").
+     * Adds a custom-styled button (Text control acting as a button).
+     * @param {String} tekst - Text displayed on the button.
+     * @param {Func} funkcjaKlikniecia - Callback function triggered on click.
+     * @param {String} [opcje=""] - AHK options string for position and size (e.g., "x10 y10 w100 h40").
      * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
-     * @param {Object} [Opt] - Opcje czcionki: {FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "", Pad: 4, PadX: 4, PadY: 4}.
-     * @tag WinAPI: "IsSilnikInput" (dla przycisku i ramki).
+     * @param {Object} [Opt] - Font and padding options: {FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "", Pad: 4, PadX: 4, PadY: 4}.
+     * @tag WinAPI: "IsSilnikInput" (for button and frame).
      */
     DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "", ApplyScale := true, Opt?) {
-        myRawOpt := Opt ?? {}
-        myPad := myRawOpt.HasProp("Pad") ? myRawOpt.Pad : 4
-        myPadX := myRawOpt.HasProp("PadX") ? myRawOpt.PadX : myPad
-        myPadY := myRawOpt.HasProp("PadY") ? myRawOpt.PadY : myPad
-        Opt := Utils.MergeOptions(myRawOpt, { FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "", Pad: myPad, PadX: myPadX, PadY: myPadY })
+        Opt := Utils.MergeOptions(Utils.myNormalizePadding(Opt?, 4), { FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "" })
 
         if (ApplyScale)
             opcje := Utils.ScaleOptions(opcje)

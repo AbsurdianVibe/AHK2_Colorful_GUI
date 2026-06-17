@@ -80,11 +80,15 @@ ch2 := App.DodajCheckbox("Enable Advanced Mode", { pozycja: "x60", czyZaznaczony
 
 
 ; DropDown List
-App.DodajDDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
-    (ctrl, idx) => SilnikGUI.CustomTooltip("Selected: " ctrl.Opcje[idx], { czas: 2000, trybPozycji: "Mouse" }),
-    2, 200, "xp"
+App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
+    (ctrl, index) => SilnikGUI.CustomTooltip("You selected: " . ctrl.Value, { czas: 2000, trybPozycji: "Mouse" }),
+    1, { pos: "xm", padY: 0, pad: 0, sepw: 1, align: "C" }
 )
-
+; DropDown List
+App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
+    (ctrl, index) => SilnikGUI.CustomTooltip("You selected: " . ctrl.Value, { czas: 2000, trybPozycji: "Mouse" }),
+    1, { pos: "xm", padX: 5 }
+)
 ; --- Interactive Buttons ---
 App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---") ; .SetFont("s12 italic")
 
@@ -94,7 +98,7 @@ App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (SilnikGUI.OknoBledu("Critic
 ; Custom Tooltip
 App.DodajPrzycisk("Show Tooltip", (ctrl, *) => (
     SilnikGUI.CustomTooltip("This is a stylized tooltip!`nIt follows the mouse and supports`nmultiple lines.`n.[3].`n...And separators!", { transparent: 0.2, czas: 3000, czyPogrubione: 1 })
-), "x+1 yp", , { Pad: 30 })
+), "x+1 yp", , { Pad: 20, PadX: 30 })
 
 ; Auto-expanding dialog demo
 App.DodajPrzycisk("Dynamic Window", (ctrl, *) => (
@@ -170,7 +174,7 @@ ShowTabTrackingDemo() {
 
     T.DodajWierszKonfiguracji("Step 1:", "Press TAB...", { pozycja: "x20 y20", SzerPola: 120 }) ;
     T.DodajCheckbox("Step 2 (Far Right)", { pozycja: "x600 y150" })
-    T.DodajDDList(["Step 3.A", "Step 3.B"], 0, 1, 150, "x50 y500")
+    T.DDList(["Step 3.A", "Step 3.B"], 0, 1, { w: 150, pos: "x50 y500" })
     T.DodajPrzycisk("Step 4 (Far Bottom)", (*) => SilnikGUI.CustomTooltip("Done!", { czas: 2000, trybPozycji: "Mouse" }), "x500 y800 w150 h30")
 
     T.Pokaz("w300 h300")
