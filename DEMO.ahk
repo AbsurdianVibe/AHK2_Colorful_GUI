@@ -7,7 +7,7 @@ SilnikGUI.Konfiguruj("2B2B2B")
 TotalScale := 1
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
-SilnikGUI.Statics.GlobFont.Size := 10
+SilnikGUI.Statics.GlobFont.Size := 11
 SilnikGUI.Statics.TotalScale := TotalScale
 
 
@@ -74,8 +74,10 @@ App.Ramka(ConfigLine1, ConfigLine4, 10)
 App.Add("Text", "xm y+20 cAAAAAA", "--- Controls ---") ; .SetFont("s12 italic")
 
 ; Checkbox
-chk := App.DodajCheckbox("Enable Advanced Mode", { pozycja: "x60", czyZaznaczony: true, InfoRight: 0 })
+chk := App.DodajCheckbox("Enable Advanced Mode", { pozycja: "x60", czyZaznaczony: true, InfoRight: 1 })
 chk.OnEvent("Click", (ctrl, *) => SilnikGUI.CustomTooltip(ctrl.Value ? "Enabled!" : "Disabled!", { czas: 2000, trybPozycji: "Mouse" }))
+ch2 := App.DodajCheckbox("Enable Advanced Mode", { pozycja: "x60", czyZaznaczony: true, InfoRight: 0 })
+
 
 ; DropDown List
 App.DodajDDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
@@ -92,7 +94,7 @@ App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (SilnikGUI.OknoBledu("Critic
 ; Custom Tooltip
 App.DodajPrzycisk("Show Tooltip", (ctrl, *) => (
     SilnikGUI.CustomTooltip("This is a stylized tooltip!`nIt follows the mouse and supports`nmultiple lines.`n.[3].`n...And separators!", { transparent: 0.2, czas: 3000, czyPogrubione: 1 })
-), "x+10 yp")
+), "x+1 yp", , { Pad: 30 })
 
 ; Auto-expanding dialog demo
 App.DodajPrzycisk("Dynamic Window", (ctrl, *) => (
@@ -166,7 +168,7 @@ ShowTabTrackingDemo() {
 
     T.GuiObj.OnEvent("Close", (*) => (T.Zakoncz(), T := 0))
 
-    T.DodajWierszKonfiguracji("Step 1:", "Press TAB...", { pozycja: "x20 y20", SzerPola: 120 })
+    T.DodajWierszKonfiguracji("Step 1:", "Press TAB...", { pozycja: "x20 y20", SzerPola: 120 }) ;
     T.DodajCheckbox("Step 2 (Far Right)", { pozycja: "x600 y150" })
     T.DodajDDList(["Step 3.A", "Step 3.B"], 0, 1, 150, "x50 y500")
     T.DodajPrzycisk("Step 4 (Far Bottom)", (*) => SilnikGUI.CustomTooltip("Done!", { czas: 2000, trybPozycji: "Mouse" }), "x500 y800 w150 h30")
