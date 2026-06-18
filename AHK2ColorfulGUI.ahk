@@ -2146,6 +2146,18 @@ Class ExWinAndPopups extends Logika {
             dziecko.PrzesunTooltipy(dx, dy)
     }
 }
+class SilnikDummyProxy {
+    __Call(Name, Params) {
+        return this
+    }
+    __Get(Name, Params) {
+        return this
+    }
+    __Set(Name, Params, Value) {
+        return value
+    }
+}
+
 /**
  * 4. WARSTWA FABRYKI
  * Metody tworzące kontrolki (API dla użytkownika).
@@ -2164,6 +2176,8 @@ class CtlFactory extends ExWinAndPopups {
      * @tag WinAPI: "IsSilnikControl"
      */
     Add(Type, Options := "", Text := "", ApplyScale := true, FontSize := SilnikGUI.Statics.GlobFont.Size, FontOpt := "") {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         if (ApplyScale)
             Options := Utils.ScaleOptions(Options)
 
@@ -2211,6 +2225,8 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DodajWierszKonfiguracji(etykieta, wartoscDomyslna, opcje?) {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         opcje := Utils.MergeOptions(opcje?, { trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.GlobFont.Name, FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "", EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true })
         trybWalidacji := opcje.trybWalidacji, minVal := opcje.minVal, maxVal := opcje.maxVal, skok := opcje.skok, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, pokazBlad := opcje.pokazBlad, czasSekundy := opcje.czasSekundy, SzerText := opcje.SzerText, SzerPola := opcje.SzerPola, AutoCenter := opcje.AutoCenter, SzRamki := opcje.SzRamki, obslugaEnter := opcje.obslugaEnter, WysInput := opcje.WysInput, WysPola := opcje.WysPola, ResizeEditW := opcje.ResizeEditW, ResizeEditH := opcje.ResizeEditH, FontName := opcje.FontName, FontSize := opcje.FontSize, FontOpt := opcje.FontOpt, EditOpt := opcje.ApplyScale ? Utils.ScaleOptions(opcje.EditOpt) : opcje.EditOpt, Backlight := opcje.Backlight, InfoRight := opcje.InfoRight
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
@@ -2381,6 +2397,8 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DodajCheckbox(tekst, opcje?) {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         opcje := Utils.MergeOptions(opcje?, { czyZaznaczony: false, pozycja: "", InfoRight: 1, ApplyScale: true, FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "" })
         czyZaznaczony := opcje.czyZaznaczony, pozycja := opcje.ApplyScale ? Utils.ScaleOptions(opcje.pozycja) : opcje.pozycja, InfoRight := opcje.InfoRight
         FinalSize := opcje.FontSize ; * SilnikGUI.Statics.TotalScale
@@ -2506,6 +2524,8 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DDList(opcje, callback := 0, wybranyIndex := 1, Opt?) {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         Opt := Utils.MergeOptions(Utils.myNormalizePadding(Opt?, 2), { w: 0, pos: "xm", Border: 2, sepW: 1, scale: true, fSize: SilnikGUI.Statics.GlobFont.Size, fOpt: "", align: "C" })
         FinalSize := Opt.fSize
         Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
@@ -2733,6 +2753,8 @@ class CtlFactory extends ExWinAndPopups {
      * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "", ApplyScale := true, Opt?) {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         Opt := Utils.MergeOptions(Utils.myNormalizePadding(Opt?, 4), { FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "" })
 
         if (ApplyScale)
@@ -3030,6 +3052,8 @@ class SubWindows extends CtlFactory {
      * @returns {SilnikGUI}
      */
     DodajPanel(GruboscRamki := 2, CSBarV := 1, CSBarH := 1, opcjePanela := "") {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         opcje := Utils.MergeOptions(opcjePanela, { pokazPasek: 0, createChild: true, zamknijNaEsc: 0, CSBarV: CSBarV, CSBarH: CSBarH, ResizeMarg: 0, GruboscRamki: 0, dragBezPaska: 0, RamkaPanelu: GruboscRamki })
         ChildPanel := SilnikGUI("PANEL_" . this.GuiObj.Hwnd, "-Border +Parent" . this.Stan.ChildGui.Hwnd . " +AlwaysOnTop +E0x10000", opcje)
 
@@ -3114,6 +3138,8 @@ class SubWindows extends CtlFactory {
      * @return {SilnikGUI} - Instancja utworzonego sub-panelu.
      */
     DodajPanelTxt(tekst, w, h, opcje?) {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
         opcje := Utils.MergeOptions(opcje?, { pozycja: "xm", gruboscRamki: 2, InfiniteLine: false, BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, FontName: SilnikGUI.Statics.GlobFont.Name, FontSize: SilnikGUI.Statics.GlobFont.Size, Backlight: 0, ApplyScale: true })
         pozycja := opcje.pozycja, gruboscRamki := opcje.gruboscRamki, infLine := opcje.InfiniteLine, FontName := opcje.FontName, FontSize := opcje.FontSize, Backlight := opcje.Backlight, ApplyScale := opcje.ApplyScale
         BackCol := SilnikGUI.PobierzHex(opcje.BackCol), TextCol := "c" . SilnikGUI.PobierzHex(opcje.TextCol)
@@ -3194,7 +3220,7 @@ class SilnikGUI extends SubWindows {
      */
     static Call(tytul, opcje := "", parametry?) { ; metoda bezpiecznikowa (Singleton) antydubel, rzeczywisty konstruktor to drugi "_New"
         id := (IsSet(parametry) && parametry.HasOwnProp("unikalny") && parametry.unikalny) ? (parametry.unikalny = 1 ? tytul : parametry.unikalny) : false
-        if (id && this.Statics.unikalneInstancje.Has(id) && (inst := this.Statics.unikalneInstancje[id]) && inst.GuiObj && WinExist("ahk_id " inst.GuiObj.Hwnd)) {
+        if (id && this.Statics.unikalneInstancje.Has(id) && (inst := this.Statics.unikalneInstancje[id]) && inst.GuiObj && DllCall("IsWindow", "Ptr", inst.GuiObj.Hwnd)) {
             inst.nowaInstancja := false
             return inst
         }
@@ -3550,6 +3576,7 @@ class SilnikGUI extends SubWindows {
      * @param [Opt= ""] {String} Dodatkowe opcje dla metody Show (np. "w500 h300 NA").
      */
     Pokaz(Opt := "") {
+        this.Stan.IsLocked := true
         myDpiScale := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
 
         ; Statyczna weryfikacja zdolności przyjmowania focusu (WS_TABSTOP = 0x10000)

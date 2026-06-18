@@ -129,18 +129,16 @@ TxtPanel.Stan.VBar.Thumb.HoverAction := (*) => SilnikGUI.CustomTooltip("Hold CTR
 TxtPanel.Stan.HBar.Thumb.HoverAction := (*) => SilnikGUI.CustomTooltip("Try scrolling with the mouse wheel over my", { czas: 2000, trybPozycji: "Mouse", czyPogrubione: 1 })
 
 /**
- * @desc Dynamiczne okno demonstracyjne (klon mechaniki okna zmiany nazwy F2).
+ * @desc Dynamic demo window (clone of F2 rename window mechanics).
  */
 ShowDynamicDialog() {
-    static Z := 0
-    if (Z && WinExist(Z.GuiObj.Hwnd))
-        return Z.Pokaz()
-    ; Inicjalizacja bez paska tytułowego, dopasowująca szerokość (AutoFitW: 0.99)
-    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 1, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
-    ;if (!Z.nowaInstancja) {
-    ;    Z.Pokaz()
-    ;    return
-    ;}
+    ; [NOTE] 'zamknijNaEsc: 2' means the window is destroyed on Esc.
+    ; Because of the new State Lock and WinAPI validation, we do not need 
+    ; any 'early return' checks anymore. The engine automatically returns
+    ; a safe proxy object to swallow any duplicate control creation.
+    ; Initialization without title bar, fitting width automatically (AutoFitW: 0.99)
+    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 2, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
+
     Z.GuiObj.OnEvent("Close", (*) => Z := 0)
     ; Z.GuiObj.SetFont("s10")
 
@@ -162,16 +160,15 @@ ShowDynamicDialog() {
 }
 
 /**
- * @desc Demo śledzenia fokusu (Tab) z szeroko rozrzuconymi kontrolkami.
+ * @desc Focus tracking demo (Tab key) with widely scattered controls.
  */
 ShowTabTrackingDemo() {
-    static T := 0
-    if (T && WinExist(T.GuiObj.Hwnd))
-        return T.Pokaz()
 
+    ; [NOTE] 'zamknijNaEsc: 1' means the window hides when Esc is pressed.
+    ; Even if the window is just hidden, the WinAPI IsWindow check ensures
+    ; it is correctly found. The State Lock then prevents new controls from
+    ; being added to the existing GUI, making early returns completely obsolete.
     T := SilnikGUI("Tab Tracking Demo", "MinSize200x200", { unikalny: "TabDemo", pokazPasek: 1, createChild: true, zamknijNaEsc: 1, CSBarV: 1, CSBarH: 1, PadD: 30, PadR: 30 })
-    if (!T.nowaInstancja)
-        return T.Pokaz()
 
     T.GuiObj.OnEvent("Close", (*) => (T.Zakoncz(), T := 0))
 
