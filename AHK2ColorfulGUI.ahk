@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 
-class ConfigGUI {
+class ConfigGUI extends Gui {
     static _TickRate := 15
     ; [TickRate=15] - Globalne taktowanie silnika (ms). Wartości <15 wymuszają wysoką rozdzielczość zegara (timeBeginPeriod).
     static TickRate {
@@ -2160,8 +2160,8 @@ class CtlFactory extends ExWinAndPopups {
      * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
      * @param {Integer} [FontSize=10] - Bazowy rozmiar czcionki przed przemnożeniem.
      * @param {String} [FontOpt=""] - Opcje stylu czcionki (np. "bold cWhite").
+     * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      * @tag WinAPI: "IsSilnikControl"
-     * @returns {GuiCtrl} - Utworzona kontrolka.
      */
     Add(Type, Options := "", Text := "", ApplyScale := true, FontSize := SilnikGUI.Statics.GlobFont.Size, FontOpt := "") {
         if (ApplyScale)
@@ -2208,7 +2208,7 @@ class CtlFactory extends ExWinAndPopups {
      * - [InfoRight: 0] {Integer} Etykieta z prawej strony (1) lub z lewej (0).
      * - [ApplyScale: true] {Boolean} Applies DPI scaling to numeric and positional options.
      * @tag WinAPI: "IsSilnikInput" (dla wszystkich elementów wiersza).
-     * @returns {Gui.Edit} - Zwraca obiekt kontrolki Edit, aby można było pobrać z niego wartość.
+     * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DodajWierszKonfiguracji(etykieta, wartoscDomyslna, opcje?) {
         opcje := Utils.MergeOptions(opcje?, { trybWalidacji: 0, minVal: "", maxVal: "", skok: "", pozycja: "xm", pokazBlad: true, czasSekundy: 4.0, SzerText: 0, SzerPola: 50, AutoCenter: false, SzRamki: 2, obslugaEnter: 0, WysInput: 0, WysPola: 0, ResizeEditW: false, ResizeEditH: false, FontName: SilnikGUI.Statics.GlobFont.Name, FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "", EditOpt: "Center", BackCol: SilnikGUI.Motyw.Wklesly, TextCol: SilnikGUI.Motyw.Tekst, Backlight: 1, InfoRight: 0, ApplyScale: true })
@@ -2378,7 +2378,7 @@ class CtlFactory extends ExWinAndPopups {
      * - [FontSize: SilnikGUI.Statics.GlobFont.Size] {Integer} Bazowy rozmiar czcionki przed przemnożeniem.
      * - [FontOpt: ""] {String} Opcje stylu czcionki (np. "bold").
      * @tag WinAPI: "IsSilnikInput" (dla znaczników, tekstu i ramki).
-     * @returns {Gui.Checkbox} - Zwraca obiekt kontrolki Checkbox z dodaną właściwością `LabelX` (współrzędna X etykiety).
+     * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DodajCheckbox(tekst, opcje?) {
         opcje := Utils.MergeOptions(opcje?, { czyZaznaczony: false, pozycja: "", InfoRight: 1, ApplyScale: true, FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "" })
@@ -2503,6 +2503,7 @@ class CtlFactory extends ExWinAndPopups {
      * - [padY = 4] {Integer} - Vertical padding.
      * - [align = "C"] {String} - Text alignment logic. Syntax: L/R/C[+spaces] (e.g. "L+2", "R+5").
      * @tag WinAPI: "IsSilnikInput" (for text, arrow and frame).
+     * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DDList(opcje, callback := 0, wybranyIndex := 1, Opt?) {
         Opt := Utils.MergeOptions(Utils.myNormalizePadding(Opt?, 2), { w: 0, pos: "xm", Border: 2, sepW: 1, scale: true, fSize: SilnikGUI.Statics.GlobFont.Size, fOpt: "", align: "C" })
@@ -2532,7 +2533,7 @@ class CtlFactory extends ExWinAndPopups {
                 AlignMode := "Right"
         }
         SpcStr := Format("{:" . AlignSpaces . "}", "")
-        
+
         _ApplyAlign(str) {
             return SpcStr . str . SpcStr
         }
@@ -2729,6 +2730,7 @@ class CtlFactory extends ExWinAndPopups {
      * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
      * @param {Object} [Opt] - Font and padding options: {FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "", Pad: 4, PadX: 4, PadY: 4}.
      * @tag WinAPI: "IsSilnikInput" (for button and frame).
+     * @returns {SilnikGUI.GrupaKontrolek} - Utworzona kontrolka.
      */
     DodajPrzycisk(tekst, funkcjaKlikniecia, opcje := "", ApplyScale := true, Opt?) {
         Opt := Utils.MergeOptions(Utils.myNormalizePadding(Opt?, 4), { FontSize: SilnikGUI.Statics.GlobFont.Size, FontOpt: "" })
@@ -3188,6 +3190,7 @@ class SilnikGUI extends SubWindows {
      * - [AutoFitW: 0] {Number} - Dopasowanie szerokości.
      * - [AutoFitH: 0] {Number} - Dopasowanie wysokości.
      * - [Transparent: 0] {Integer} - Przezroczystość okna (0.0-1.0).
+     * @return {SilnikGUI}
      */
     static Call(tytul, opcje := "", parametry?) { ; metoda bezpiecznikowa (Singleton) antydubel, rzeczywisty konstruktor to drugi "_New"
         id := (IsSet(parametry) && parametry.HasOwnProp("unikalny") && parametry.unikalny) ? (parametry.unikalny = 1 ? tytul : parametry.unikalny) : false
@@ -3979,6 +3982,9 @@ class SilnikGUI extends SubWindows {
      * Zarządza pozycją grupy elementów (Lider + Dekoracje) i automatycznie dopasowuje ramkę.
      */
     class GrupaKontrolek {
+        /**
+         * @return {SilnikGUI}
+         */
         __New(CoreControls, ElementyTablica := []) {
             this.DefineProp("CoreControls", { Value: CoreControls })
             this.DefineProp("MainCtrl", { Value: CoreControls[1] }) ; Lider grupy (do Proxy)
@@ -3988,11 +3994,13 @@ class SilnikGUI extends SubWindows {
         ; Jawne gettery dla kompatybilności z HasProp()
         Hwnd => this.MainCtrl.Hwnd
         Gui => this.MainCtrl.Gui
+        ; ful size control (with frame)
         AnchorCtrl => HasProp(this.MainCtrl, "Ramka") ? this.MainCtrl.Ramka : this.MainCtrl
 
         /**
-         * Moves the control group.
-         * @param {Boolean} [ApplyScale=true] - Applies DPI scaling to options.
+         * Moves the control group 
+         * Override's native method.
+         * @param {Boolean} [ApplyScale=true] - Applies DPI and `Statics.TotalScale` scaling to options.
          */
         Move(x := "", y := "", w := "", h := "", ApplyScale := true) {
             Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale

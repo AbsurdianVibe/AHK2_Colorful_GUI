@@ -10,8 +10,6 @@ SilnikGUI.Statics.GlobFont.Name := "times new roman"
 SilnikGUI.Statics.GlobFont.Size := 11
 SilnikGUI.Statics.TotalScale := TotalScale
 
-
-; Main app window
 App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
     MainGUI: true,
     CSBarV: 1,
@@ -29,6 +27,8 @@ Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type toolt
 ; App.Stan.ChildGui.SetFont("s10 norm")
 ; App.Stan.ChildGui.SetFont("s12 italic")
 Welcome2 := App.Add("Text", "x" . padL + 10. " y+15 cAAAAAA", "--- Input Fields ---")
+Welcome2.GetPos(, , &W2W, &W2H)
+Welcome2.Move(320, 50, , , 1)
 
 ; String Validation (Type 2)
 ConfigLine1 := App.DodajWierszKonfiguracji("standard mode:", "Guest User", {
@@ -59,6 +59,7 @@ ConfigLine3 := App.DodajWierszKonfiguracji("Float mode:", 1.25, {
     SzerPola: 100,
     pozycja: "y+10 xp"
 })
+ConfigLine3.Move()
 
 ; Multiline (Type 3)
 ConfigLine4 := App.DodajWierszKonfiguracji("Multiline mode:", "Line 1: AHK is great!`nLine 2: ColorfulGUI is awesome!", {
@@ -107,8 +108,10 @@ App.DodajPrzycisk("Dynamic Window", (ctrl, *) => (
 ), "x+10 yp")
 
 ; Tab tracking demo
-ptzycikRuchomy := App.DodajPrzycisk("Tab tracking demo", (ctrl, *) => ShowTabTrackingDemo(), "x+10 yp")
+przyciskRuchomy := App.DodajPrzycisk("Tab tracking demo", (ctrl, *) => ShowTabTrackingDemo(), "x+10 yp w100 h40")
 ; ptzycikRuchomy.move(20, 425, 146)
+przyciskRuchomy.AnchorCtrl.GetPos(, , &W2W, &W2H)
+przyciskRuchomy.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip W: " . W2W . " H: " . W2H, { DelayON: 0, czas: 0, trybPozycji: przyciskRuchomy })
 ; --- Panels ---
 App.Add("Text", "xm y+20", "--- Panels & Scrolling ---") ; .SetFont("s12 italic")
 
@@ -132,12 +135,12 @@ ShowDynamicDialog() {
     static Z := 0
     if (Z && WinExist(Z.GuiObj.Hwnd))
         return Z.Pokaz()
-
     ; Inicjalizacja bez paska tytułowego, dopasowująca szerokość (AutoFitW: 0.99)
-    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: 1, pokazPasek: 0, createChild: true, zamknijNaEsc: 1, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
-    if (!Z.nowaInstancja)
-        return Z.Pokaz()
-
+    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 1, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
+    ;if (!Z.nowaInstancja) {
+    ;    Z.Pokaz()
+    ;    return
+    ;}
     Z.GuiObj.OnEvent("Close", (*) => Z := 0)
     ; Z.GuiObj.SetFont("s10")
 
