@@ -3235,6 +3235,39 @@ class SilnikGUI extends SubWindows {
     ; Statyczny inicjalizator: Wymusza DPI Awareness V2 dla wątku
     static __New() {
         try DllCall("SetThreadDpiAwarenessContext", "ptr", -4, "ptr")
+        
+        OgAdd := Gui.Prototype.Add
+        Gui.Prototype.DefineProp("Add", { Call: (guiObj, type, opt?, text?) => (
+            ctrl := OgAdd(guiObj, type, opt?, text?),
+            ctrl.GetPos(&x, &y, &w, &h),
+            sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+            ctrl.BaseX := x / sc,
+            ctrl.BaseY := y / sc,
+            ctrl.BaseW := w / sc,
+            ctrl.BaseH := h / sc,
+            ctrl
+        ) })
+
+        OgSetFont := Gui.Control.Prototype.SetFont
+        Gui.Control.Prototype.DefineProp("SetFont", { Call: (ctrl, opt?, name?) => (
+            sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+            ((IsSet(opt) && RegExMatch(opt, "i)(?:^|\s)s([\d\.]+)", &m)) && ctrl.BaseFontSize := m[1] / sc),
+            OgSetFont(ctrl, opt?, name?)
+        ) })
+
+        OgMove := Gui.Control.Prototype.Move
+        Gui.Control.Prototype.DefineProp("Move", { Call: (ctrl, x?, y?, w?, h?) => (
+            OgMove(ctrl, x?, y?, w?, h?),
+            (!SilnikGUI.Statics.HasProp("IsRescaling") || !SilnikGUI.Statics.IsRescaling) && (
+                ctrl.GetPos(&cx, &cy, &cw, &ch),
+                sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+                ctrl.BaseX := cx / sc,
+                ctrl.BaseY := cy / sc,
+                ctrl.BaseW := cw / sc,
+                ctrl.BaseH := ch / sc
+            )
+        ) })
+
         ; [FIX] Przejście na pasywny nasłuch komunikatów (likwiduje konflikt z Hookiem mouse_ctrl)
         OnMessage(0x020A, (w, l, m, h) => this.ObslugaZdarzenSystemowych(w, l, m, h)) ; WM_MOUSEWHEEL
         OnMessage(0x020E, (w, l, m, h) => this.ObslugaZdarzenSystemowych(w, l, m, h)) ; WM_MOUSEHWHEEL
@@ -3255,6 +3288,45 @@ class SilnikGUI extends SubWindows {
         OnMessage(0x0047, (w, l, m, h) => this.ObslugaZmianyRozmiaruSystem(w, l, m, h)) ; WM_WINDOWPOSCHANGED
 
         SetTimer(ObjBindMethod(this, "GłównaPętlaStanu"), SilnikGUI.TickRate)
+    }
+
+    static PrzeskalujWszystko(nowaSkala) {
+        this.Statics.IsRescaling := true
+        this.Statics.TotalScale := nowaSkala
+        for app in this.Statics.AktywneInstancje
+            app.Przeskaluj(nowaSkala)
+        this.Statics.IsRescaling := false
+    }
+
+    Przeskaluj(nowaSkala) {
+        this.Stan.TotalScale := nowaSkala
+        
+        Zaktualizuj(g) {
+            if !g
+                return
+            for ctrl in g {
+                if !HasProp(ctrl, "BaseX")
+                    continue
+                nx := Round(ctrl.BaseX * nowaSkala)
+                ny := Round(ctrl.BaseY * nowaSkala)
+                nw := Round(ctrl.BaseW * nowaSkala)
+                nh := Round(ctrl.BaseH * nowaSkala)
+                ctrl.Move(nx, ny, nw, nh)
+                if HasProp(ctrl, "BaseFontSize")
+                    ctrl.SetFont("s" . (ctrl.BaseFontSize * nowaSkala))
+            }
+        }
+        
+        Zaktualizuj(this.GuiObj)
+        if (this.Stan.UseChild)
+            Zaktualizuj(this.Stan.ChildGui)
+            
+        if (this.CallbackLayout) {
+            try this.GuiObj.GetClientPos(,, &cw, &ch)
+            try this.CallbackLayout(cw, 0, ch, 20)
+        }
+        
+        this.WymusPelnyRedraw()
     }
 
     /**

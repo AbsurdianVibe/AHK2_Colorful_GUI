@@ -50,7 +50,7 @@ ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
 })
 
 ; Float Validation (Type 1) with limits
-ConfigLine3 := App.DodajWierszKonfiguracji("Float mode:", 1.25, {
+ConfigLine3 := App.DodajWierszKonfiguracji("UI Scale:", SilnikGUI.Statics.TotalScale, {
     trybWalidacji: 1,
     minVal: 0.1,
     maxVal: 5.0,
@@ -59,7 +59,9 @@ ConfigLine3 := App.DodajWierszKonfiguracji("Float mode:", 1.25, {
     SzerPola: 100,
     pozycja: "y+10 xp"
 })
-ConfigLine3.Move()
+ConfigLine3.OnEvent("Change", (*) => SilnikGUI.PrzeskalujWszystko(ConfigLine3.Value))
+OgVScroll := ConfigLine3.VScrollAction
+ConfigLine3.VScrollAction := (ctrl, dir) => (OgVScroll(ctrl, dir), SilnikGUI.PrzeskalujWszystko(ctrl.Value))
 
 ; Multiline (Type 3)
 ConfigLine4 := App.DodajWierszKonfiguracji("Multiline mode:", "Line 1: AHK is great!`nLine 2: ColorfulGUI is awesome!", {
@@ -133,7 +135,7 @@ TxtPanel.Stan.HBar.Thumb.HoverAction := (*) => SilnikGUI.CustomTooltip("Try scro
  */
 ShowDynamicDialog() {
     ; [NOTE] 'zamknijNaEsc: 2' means the window is destroyed on Esc.
-    ; Because of the new State Lock and WinAPI validation, we do not need 
+    ; Because of the new State Lock and WinAPI validation, we do not need
     ; any 'early return' checks anymore. The engine automatically returns
     ; a safe proxy object to swallow any duplicate control creation.
     ; Initialization without title bar, fitting width automatically (AutoFitW: 0.99)
