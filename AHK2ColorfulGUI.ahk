@@ -3089,25 +3089,31 @@ class SubWindows extends CtlFactory {
         if !HasProp(this, "DummyCtrl") {
             gRamki := this.Stan.RamkaPanelu ? this.Stan.RamkaPanelu : this.Stan.GruboscRamki
             myScaledPos := ApplyScale ? Utils.ScaleOptions(pozycja) : pozycja
+
+            ; DummyCtrl to obiekt GrupaKontrolek
             this.DummyCtrl := RodzicPanelu.Add("Text", myScaledPos . " w" . wPanel . " h" . hPanel . " BackgroundTrans", "", false)
             this.DummyCtrl.GetPos(&cX, &cY)
-            this.DummyCtrl.Move((cX + gRamki) * Skala, (cY + gRamki) * Skala) ; Korekta o grubość ramki
+            this.DummyCtrl.Move((cX + gRamki) * Skala, (cY + gRamki) * Skala)
 
-            this.DummyCtrl.PanelObj := this
-            this.DummyCtrl.Rola := "Panel"
+            ; [POPRAWKA]: Przypinamy właściwości i nadpisujemy Move bezpośrednio na natywnej kontrolce (MainCtrl)
+            this.DummyCtrl.MainCtrl.PanelObj := this
+            this.DummyCtrl.MainCtrl.Rola := "Panel"
 
-            this.DummyCtrl.DefineProp("Move", { Call: (ctrl, p*) => (
+            this.DummyCtrl.MainCtrl.DefineProp("Move", { Call: (ctrl, p*) => (
                 ctrl.GetPos(&oldX, &oldY),
                 Gui.Control.Prototype.Move.Call(ctrl, p*),
-                ctrl.GetPos(&cX, &cY),
-                ctrl.PanelObj.GuiObj.Move(cX, cY),
+                ctrl.GetPos(&cX, &cY, &cW, &cH),
+                ctrl.PanelObj.GuiObj.Move(cX, cY, cW, cH),
                 ctrl.PanelObj.PrzesunPopupy(cX - oldX, cY - oldY)
             ) })
-            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki, , 0)
-            this.DummyCtrl.Ramka.ParentCtrl := this.DummyCtrl
-            this.DummyCtrl.MouseDownAction := (ctrl, *) => DllCall("SetFocus", "Ptr", ctrl.PanelObj.Stan.FocusSink.Hwnd)
 
-            ; [TAGOWANIE WinAPI]
+            ; Ramka sama w sobie przyjmuje GrupeKontrolek, więc to zostaje bez zmian
+            this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki, , 0)
+
+            ; [POPRAWKA]: ParentCtrl musi wskazywać na natywną kontrolkę dla prawidłowego routingu interakcji
+            this.DummyCtrl.Ramka.ParentCtrl := this.DummyCtrl.MainCtrl
+            this.DummyCtrl.MainCtrl.MouseDownAction := (ctrl, *) => DllCall("SetFocus", "Ptr", ctrl.PanelObj.Stan.FocusSink.Hwnd)
+
             Utils.SetTag(this.DummyCtrl.Hwnd, "IsSilnikPanel")
             for c in this.DummyCtrl.Ramka.Ctrls
                 Utils.SetTag(c.Hwnd, "IsSilnikPanel")

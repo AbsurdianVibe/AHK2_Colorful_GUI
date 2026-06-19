@@ -133,7 +133,7 @@ TxtPanel.Stan.HBar.Thumb.HoverAction := (*) => SilnikGUI.CustomTooltip("Try scro
  */
 ShowDynamicDialog() {
     ; [NOTE] 'zamknijNaEsc: 2' means the window is destroyed on Esc.
-    ; Because of the new State Lock and WinAPI validation, we do not need 
+    ; Because of the new State Lock and WinAPI validation, we do not need
     ; any 'early return' checks anymore. The engine automatically returns
     ; a safe proxy object to swallow any duplicate control creation.
     ; Initialization without title bar, fitting width automatically (AutoFitW: 0.99)
