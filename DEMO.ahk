@@ -4,7 +4,7 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2B2B2B")
-TotalScale := 1
+TotalScale := 1.2
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
@@ -54,7 +54,7 @@ ConfigLine3 := App.DodajWierszKonfiguracji("UI Scale:", SilnikGUI.Statics.TotalS
     trybWalidacji: 1,
     minVal: 0.1,
     maxVal: 5.0,
-    skok: 0.1,
+    skok: 0.02,
     SzerText: 90,
     SzerPola: 100,
     pozycja: "y+10 xp"

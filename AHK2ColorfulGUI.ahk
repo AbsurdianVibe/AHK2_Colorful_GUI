@@ -3099,8 +3099,8 @@ class SubWindows extends CtlFactory {
             this.DummyCtrl.DefineProp("Move", { Call: (ctrl, p*) => (
                 ctrl.GetPos(&oldX, &oldY),
                 Gui.Control.Prototype.Move.Call(ctrl, p*),
-                ctrl.GetPos(&cX, &cY),
-                ctrl.PanelObj.GuiObj.Move(cX, cY),
+                ctrl.GetPos(&cX, &cY, &cW, &cH),
+                ctrl.PanelObj.GuiObj.Move(cX, cY, cW, cH),
                 ctrl.PanelObj.PrzesunPopupy(cX - oldX, cY - oldY)
             ) })
             this.DummyCtrl.Ramka := RodzicPanelu.Ramka(this.DummyCtrl, 0, 0, "", gRamki, , 0)
@@ -3235,7 +3235,18 @@ class SilnikGUI extends SubWindows {
     ; Statyczny inicjalizator: Wymusza DPI Awareness V2 dla wątku
     static __New() {
         try DllCall("SetThreadDpiAwarenessContext", "ptr", -4, "ptr")
-        
+
+        OgShow := Gui.Prototype.Show
+        Gui.Prototype.DefineProp("Show", { Call: (guiObj, opt?) => (
+            OgShow(guiObj, opt?),
+            guiObj.GetPos(&x, &y, &w, &h),
+            sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+            guiObj.BaseX := x / sc,
+            guiObj.BaseY := y / sc,
+            guiObj.BaseW := w / sc,
+            guiObj.BaseH := h / sc
+        ) })
+
         OgAdd := Gui.Prototype.Add
         Gui.Prototype.DefineProp("Add", { Call: (guiObj, type, opt?, text?) => (
             ctrl := OgAdd(guiObj, type, opt?, text?),
@@ -3245,6 +3256,7 @@ class SilnikGUI extends SubWindows {
             ctrl.BaseY := y / sc,
             ctrl.BaseW := w / sc,
             ctrl.BaseH := h / sc,
+            (!HasProp(ctrl, "BaseFontSize") && SilnikGUI.Statics.HasProp("GlobFont") && SilnikGUI.Statics.GlobFont.HasProp("Size")) ? (ctrl.BaseFontSize := SilnikGUI.Statics.GlobFont.Size) : 0,
             ctrl
         ) })
 
@@ -3293,14 +3305,45 @@ class SilnikGUI extends SubWindows {
     static PrzeskalujWszystko(nowaSkala) {
         this.Statics.IsRescaling := true
         this.Statics.TotalScale := nowaSkala
+
         for app in this.Statics.AktywneInstancje
             app.Przeskaluj(nowaSkala)
+
+        for app in this.Statics.AktywneInstancje
+            app.WymusPelnyRedraw()
+
         this.Statics.IsRescaling := false
     }
 
     Przeskaluj(nowaSkala) {
+        staraSkala := HasProp(this.Stan, "TotalScale") ? this.Stan.TotalScale : 1.0
+        wspolczynnik := nowaSkala / staraSkala
         this.Stan.TotalScale := nowaSkala
-        
+
+        if HasProp(this, "Kinetyka") {
+            this.Kinetyka.Cel *= wspolczynnik
+            this.Kinetyka.Curr *= wspolczynnik
+            this.Kinetyka.Vis *= wspolczynnik
+        }
+
+        ; 1. Skalowanie głównych okien
+        if HasProp(this.GuiObj, "BaseW") {
+            nw := Round(this.GuiObj.BaseW * nowaSkala)
+            nh := Round(this.GuiObj.BaseH * nowaSkala)
+            this.GuiObj.Move(, , nw, nh)
+        }
+        if (this.Stan.UseChild && HasProp(this.Stan.ChildGui, "BaseW")) {
+            nw := Round(this.Stan.ChildGui.BaseW * nowaSkala)
+            nh := Round(this.Stan.ChildGui.BaseH * nowaSkala)
+            this.Stan.ChildGui.Move(, , nw, nh)
+
+            if HasProp(this.Stan, "ClipGui") && HasProp(this.Stan.ClipGui, "BaseW") {
+                nwClip := Round(this.Stan.ClipGui.BaseW * nowaSkala)
+                nhClip := Round(this.Stan.ClipGui.BaseH * nowaSkala)
+                this.Stan.ClipGui.Move(, , nwClip, nhClip)
+            }
+        }
+
         Zaktualizuj(g) {
             if !g
                 return
@@ -3316,17 +3359,19 @@ class SilnikGUI extends SubWindows {
                     ctrl.SetFont("s" . (ctrl.BaseFontSize * nowaSkala))
             }
         }
-        
+
         Zaktualizuj(this.GuiObj)
         if (this.Stan.UseChild)
             Zaktualizuj(this.Stan.ChildGui)
-            
-        if (this.CallbackLayout) {
-            try this.GuiObj.GetClientPos(,, &cw, &ch)
-            try this.CallbackLayout(cw, 0, ch, 20)
+
+        if HasProp(this, "GuiObj") && this.GuiObj {
+            try this.GuiObj.GetClientPos(, , &cw, &ch)
+            if (this.Stan.UseChild)
+                this.AktualizujLayout(cw, ch)
+
+            if (this.CallbackLayout)
+                try this.CallbackLayout(cw, 0, ch, 20)
         }
-        
-        this.WymusPelnyRedraw()
     }
 
     /**
@@ -3744,11 +3789,11 @@ class SilnikGUI extends SubWindows {
      */
     WymusPelnyRedraw() {
         if (this.GuiObj)
-            WinRedraw("ahk_id " . this.GuiObj.Hwnd)
+            try WinRedraw(this.GuiObj.Hwnd)
         if (this.Stan.UseChild && this.Stan.ClipGui)
-            WinRedraw("ahk_id " . this.Stan.ClipGui.Hwnd)
+            try WinRedraw(this.Stan.ClipGui.Hwnd)
         if (this.Stan.UseChild && this.Stan.ChildGui)
-            WinRedraw("ahk_id " . this.Stan.ChildGui.Hwnd)
+            try WinRedraw(this.Stan.ChildGui.Hwnd)
         if (this.Stan.UseChild) {
             (this.Stan.VBar) && this.Stan.VBar.Redraw()
             (this.Stan.HBar) && this.Stan.HBar.Redraw()
@@ -4766,8 +4811,8 @@ class SilnikGUI extends SubWindows {
         }
         ; Metoda wymuszająca natychmiastowe odświeżenie paska na ekranie. Przydatna po asynchronicznych zmianach pozycji scrolla lub rozmiaru, gdy nie używamy atomowego DWP.
         Redraw() {
-            if (this.IsVisible)
-                WinRedraw("ahk_id " . this.BarGui.Hwnd)
+            if (this.IsVisible && this.BarGui)
+                try WinRedraw(this.BarGui.Hwnd)
         }
 
         ; --- WSPÓLNY SILNIK KINETYCZNY (KONSUMENT) ---
