@@ -4,7 +4,7 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2B2B2B")
-TotalScale := 1.3
+TotalScale := 0.6
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
@@ -90,7 +90,7 @@ App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
 ; DropDown List
 App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
     (ctrl, index) => SilnikGUI.CustomTooltip("You selected: " . ctrl.Value, { czas: 2000, trybPozycji: "Mouse" }),
-    1, { pos: "xm", padX: 5 }
+    1, { pos: "xm", padX: 5, sepW: 2 }
 )
 ; --- Interactive Buttons ---
 App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---") ; .SetFont("s12 italic")

@@ -494,23 +494,31 @@ class Grafika extends Motyw {
             Gui: guiObj,
             Hwnd: MainCtrl.Hwnd,
             x: rX, y: rY, w: w, h: h,
+            Grubosc: grubosc, ; Wyciągnięta właściwość grubości
             Ctrls: Ctrls,
-            ; Kompatybilność wsteczna (dla MonitorujWyjscie i logiki resize)
             Top: (wypelnienie ? MainCtrl : Ctrls[1]),
             Bot: (wypelnienie ? MainCtrl : Ctrls[2]),
             Left: (wypelnienie ? MainCtrl : Ctrls[3]),
             Right: (wypelnienie ? MainCtrl : Ctrls[4])
         }
 
+        ; Zapis wartości Base dla silnika skalującego
+        sc := SilnikGUI.Statics.TotalScale
+        Proxy.BaseX := rX / sc
+        Proxy.BaseY := rY / sc
+        Proxy.BaseW := w / sc
+        Proxy.BaseH := h / sc
+        Proxy.BaseGrubosc := grubosc / sc
+
         Proxy.DefineProp("Move", { Call: (this, nx := "", ny := "", nw := "", nh := "") => (
             (nx != "") && this.x := nx, (ny != "") && this.y := ny, (nw != "") && this.w := nw, (nh != "") && this.h := nh,
             (wypelnienie)
                 ? this.Ctrls[1].Move(this.x, this.y, this.w, this.h)
             : (
-                this.Top.Move(this.x, this.y, this.w, grubosc),
-                this.Bot.Move(this.x, this.y + this.h - grubosc, this.w, grubosc),
-                this.Left.Move(this.x, this.y + grubosc, grubosc, Max(0, this.h - 2 * grubosc)),
-                this.Right.Move(this.x + this.w - grubosc, this.y + grubosc, grubosc, Max(0, this.h - 2 * grubosc))
+                this.Top.Move(this.x, this.y, this.w, this.Grubosc),
+                this.Bot.Move(this.x, this.y + this.h - this.Grubosc, this.w, this.Grubosc),
+                this.Left.Move(this.x, this.y + this.Grubosc, this.Grubosc, Max(0, this.h - 2 * this.Grubosc)),
+                this.Right.Move(this.x + this.w - this.Grubosc, this.y + this.Grubosc, this.Grubosc, Max(0, this.h - 2 * this.Grubosc))
             )
         ) })
 
@@ -535,6 +543,10 @@ class Grafika extends Motyw {
             set: (this, val) => Batch("DefineProp", "ParentCtrl", { Value: val }),
             get: (this) => this.Ctrls[1].ParentCtrl
         })
+
+        ; Przypięcie relacji odwrotnej (kontrolka -> Proxy) dla pętli Zaktualizuj
+        for c in Ctrls
+            c.Proxy := Proxy
 
         return Proxy
     }
@@ -3320,63 +3332,123 @@ class SilnikGUI extends SubWindows {
 
         this.Statics.IsRescaling := false
     }
-
     Przeskaluj(nowaSkala) {
         staraSkala := HasProp(this.Stan, "TotalScale") ? this.Stan.TotalScale : 1.0
         wspolczynnik := nowaSkala / staraSkala
         this.Stan.TotalScale := nowaSkala
 
-        if HasProp(this, "Kinetyka") {
-            this.Kinetyka.Cel *= wspolczynnik
-            this.Kinetyka.Curr *= wspolczynnik
-            this.Kinetyka.Vis *= wspolczynnik
-        }
+        ; 1. ZAMROŻENIE RENDEROWANIA (Blokujemy TYLKO okno główne, system sam kaskaduje to na dzieci)
+        DllCall("SendMessage", "Ptr", this.GuiObj.Hwnd, "UInt", 0x000B, "Ptr", 0, "Ptr", 0)
 
-        ; 1. Skalowanie głównych okien
-        if HasProp(this.GuiObj, "BaseW") {
-            nw := Round(this.GuiObj.BaseW * nowaSkala)
-            nh := Round(this.GuiObj.BaseH * nowaSkala)
-            this.GuiObj.Move(, , nw, nh)
-        }
-        if (this.Stan.UseChild && HasProp(this.Stan.ChildGui, "BaseW")) {
-            nw := Round(this.Stan.ChildGui.BaseW * nowaSkala)
-            nh := Round(this.Stan.ChildGui.BaseH * nowaSkala)
-            this.Stan.ChildGui.Move(, , nw, nh)
-
-            if HasProp(this.Stan, "ClipGui") && HasProp(this.Stan.ClipGui, "BaseW") {
-                nwClip := Round(this.Stan.ClipGui.BaseW * nowaSkala)
-                nhClip := Round(this.Stan.ClipGui.BaseH * nowaSkala)
-                this.Stan.ClipGui.Move(, , nwClip, nhClip)
+        try {
+            if HasProp(this, "Kinetyka") {
+                this.Kinetyka.Cel *= wspolczynnik
+                this.Kinetyka.Curr *= wspolczynnik
+                this.Kinetyka.Vis *= wspolczynnik
             }
-        }
 
-        Zaktualizuj(g) {
-            if !g
-                return
-            for ctrl in g {
-                if !HasProp(ctrl, "BaseX")
-                    continue
-                nx := Round(ctrl.BaseX * nowaSkala)
-                ny := Round(ctrl.BaseY * nowaSkala)
-                nw := Round(ctrl.BaseW * nowaSkala)
-                nh := Round(ctrl.BaseH * nowaSkala)
-                ctrl.Move(nx, ny, nw, nh)
-                if HasProp(ctrl, "BaseFontSize")
-                    ctrl.SetFont("s" . (ctrl.BaseFontSize * nowaSkala))
+            if HasProp(this.GuiObj, "BaseW") {
+                nw := Round(this.GuiObj.BaseW * nowaSkala)
+                nh := Round(this.GuiObj.BaseH * nowaSkala)
+                this.GuiObj.Move(, , nw, nh)
             }
-        }
 
-        Zaktualizuj(this.GuiObj)
-        if (this.Stan.UseChild)
-            Zaktualizuj(this.Stan.ChildGui)
+            if (this.Stan.UseChild && HasProp(this.Stan.ChildGui, "BaseW")) {
+                nw := Round(this.Stan.ChildGui.BaseW * nowaSkala)
+                nh := Round(this.Stan.ChildGui.BaseH * nowaSkala)
+                this.Stan.ChildGui.Move(, , nw, nh)
 
-        if HasProp(this, "GuiObj") && this.GuiObj {
-            try this.GuiObj.GetClientPos(, , &cw, &ch)
+                if HasProp(this.Stan, "ClipGui") && HasProp(this.Stan.ClipGui, "BaseW") {
+                    nwClip := Round(this.Stan.ClipGui.BaseW * nowaSkala)
+                    nhClip := Round(this.Stan.ClipGui.BaseH * nowaSkala)
+                    this.Stan.ClipGui.Move(, , nwClip, nhClip)
+                }
+            }
+
+            Zaktualizuj(g) {
+                if !g
+                    return
+
+                ramkiProxy := []
+
+                ; Faza 1: Skalowanie kontrolek bazowych (wymiary i fonty)
+                for ctrl in g {
+                    if !HasProp(ctrl, "BaseX")
+                        continue
+
+                    if (HasProp(ctrl, "IsFrame") && ctrl.IsFrame) {
+                        if HasProp(ctrl, "Proxy") {
+                            prx := ctrl.Proxy
+                            if (!HasProp(prx, "SkalaTick") || prx.SkalaTick != nowaSkala) {
+                                prx.SkalaTick := nowaSkala
+                                ramkiProxy.Push(prx)
+                            }
+                        }
+                        continue
+                    }
+
+                    nx := Round(ctrl.BaseX * nowaSkala)
+                    ny := Round(ctrl.BaseY * nowaSkala)
+                    nw := Round(ctrl.BaseW * nowaSkala)
+                    nh := Round(ctrl.BaseH * nowaSkala)
+
+                    ctrl.Move(nx, ny, nw, nh)
+                    if HasProp(ctrl, "BaseFontSize")
+                        ctrl.SetFont("s" . (ctrl.BaseFontSize * nowaSkala))
+                }
+
+                ; Faza 2: Pozycjonowanie relatywne ramek względem kontrolek-kotwic
+                for prx in ramkiProxy {
+                    prx.Grubosc := Max(1, Round(prx.BaseGrubosc * nowaSkala))
+
+                    hasAnchor := false
+                    try if (HasProp(prx.Ctrls[1], "ParentCtrl") && prx.Ctrls[1].ParentCtrl)
+                        hasAnchor := true
+
+                    if (hasAnchor) {
+                        anchor := prx.Ctrls[1].ParentCtrl
+                        anchor.GetPos(&aX, &aY, &aW, &aH)
+
+                        ; Różnica zostaje sprowadzona do marginesu bazowego
+                        diffX := prx.BaseX - anchor.BaseX
+                        diffY := prx.BaseY - anchor.BaseY
+                        diffW := prx.BaseW - anchor.BaseW
+                        diffH := prx.BaseH - anchor.BaseH
+
+                        nx := aX + Round(diffX * nowaSkala)
+                        ny := aY + Round(diffY * nowaSkala)
+                        nw := aW + Round(diffW * nowaSkala)
+                        nh := aH + Round(diffH * nowaSkala)
+                    } else {
+                        nx := Round(prx.BaseX * nowaSkala)
+                        ny := Round(prx.BaseY * nowaSkala)
+                        nw := Round(prx.BaseW * nowaSkala)
+                        nh := Round(prx.BaseH * nowaSkala)
+                    }
+
+                    prx.Move(nx, ny, nw, nh)
+                }
+            }
+
+            Zaktualizuj(this.GuiObj)
             if (this.Stan.UseChild)
-                this.AktualizujLayout(cw, ch)
+                Zaktualizuj(this.Stan.ChildGui)
 
-            if (this.CallbackLayout)
-                try this.CallbackLayout(cw, 0, ch, 20)
+            if HasProp(this, "GuiObj") && this.GuiObj {
+                try this.GuiObj.GetClientPos(, , &cw, &ch)
+                if (this.Stan.UseChild)
+                    this.AktualizujLayout(cw, ch)
+
+                if (this.CallbackLayout)
+                    try this.CallbackLayout(cw, 0, ch, 20)
+            }
+        } finally {
+            ; 2. BEZWZGLĘDNE WZNOWIENIE RENDEROWANIA (Gwarantowane wykonanie)
+            DllCall("SendMessage", "Ptr", this.GuiObj.Hwnd, "UInt", 0x000B, "Ptr", 1, "Ptr", 0)
+
+            ; 3. OSTATECZNY ZRZUT EKRANU (Wymuszenie z flagą RDW_ALLCHILDREN)
+            ; 0x0585 = RDW_INVALIDATE (1) | RDW_ERASE (4) | RDW_ALLCHILDREN (80) | RDW_UPDATENOW (100) | RDW_FRAME (400)
+            DllCall("RedrawWindow", "Ptr", this.GuiObj.Hwnd, "Ptr", 0, "Ptr", 0, "UInt", 0x0585)
         }
     }
 
