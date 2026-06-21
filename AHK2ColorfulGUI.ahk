@@ -4275,11 +4275,15 @@ class SilnikGUI extends SubWindows {
         }
 
         Redraw() {
-            try DllCall("InvalidateRect", "Ptr", this.MainCtrl.Gui.Hwnd, "Ptr", 0, "Int", 1)
             this.MainCtrl.Opt("+Redraw")
             for item in this.Elementy {
                 if (item.Hwnd == this.MainCtrl.Hwnd)
                     continue
+
+                ; Ochrona obiektów technicznych
+                if (HasProp(item, "IsDummy") && item.IsDummy)
+                    continue
+
                 (HasProp(item, "Redraw")) ? item.Redraw() : item.Opt("+Redraw")
             }
         }
