@@ -2678,12 +2678,23 @@ class CtlFactory extends ExWinAndPopups {
             (this.Stan.UseChild) && this.Stan.ChildGui.PopupActive := true
 
             ; 1. Position (Smart Positioning relative to frame)
-            wysokoscListy := (ValueCtrl.Opcje.Length * WysWiersza)
+            AktualnaSkala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
+            AktW := Opt.scale ? Round((Opt.w / Skala) * AktualnaSkala) : Opt.w
+            AktBorder := Opt.scale ? Round((Opt.Border / Skala) * AktualnaSkala) : Opt.Border
+            AktGrubosc := ramkaObj.Grubosc
+            AktArrowW := Opt.scale ? Round(2.0 * FinalSize * AktualnaSkala) : Round(2.0 * FinalSize)
+            AktSepW := Opt.scale ? Round(Opt.sepW * AktualnaSkala) : Opt.sepW
+            
+            ValueCtrl.GetPos(&vX, &vY, &vW, &vH)
+            AktWysWiersza := vH
+            AktSzerText := AktW - (2 * AktGrubosc) - AktArrowW - AktSepW
+
+            wysokoscListy := (ValueCtrl.Opcje.Length * AktWysWiersza)
             try WinGetPos(&rX, &rY, &rW, &rH, "ahk_id " ramkaObj.Hwnd)
             catch
                 rX := 0, rY := 0, rW := 0, rH := 0
             MonitorGetWorkArea(MonitorGetPrimary(), &mL, &mT, &mR, &mB)
-            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, Opt.w, wysokoscListy + (2 * Opt.Border), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
+            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, AktW, wysokoscListy + (2 * AktBorder), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
 
             ; 2. GUI Popup
             pGui := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x08000000 +Owner" . this.GuiObj.Hwnd . " -DPIScale")
@@ -2692,7 +2703,7 @@ class CtlFactory extends ExWinAndPopups {
                 WinSetTransparent(pAlpha, pGui.Hwnd)
             }
             pGui.BackColor := SilnikGUI.Motyw.Ramka
-            pGui.MarginX := Opt.Border, pGui.MarginY := Opt.Border
+            pGui.MarginX := AktBorder, pGui.MarginY := AktBorder
             pGui.SetFont("s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
             pGui.ListCtrls := []
             pGui.Silnik := this ; Assign engine instance for MonitorujStan logic
@@ -2705,19 +2716,19 @@ class CtlFactory extends ExWinAndPopups {
             for i, opcja in ValueCtrl.Opcje {
                 bg := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Motyw.Focus : SilnikGUI.Motyw.Przycisk
                 ram := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka, SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
-                yPos := (i == 1) ? "y" . Opt.Border : "y+0"
+                yPos := (i == 1) ? "y" . AktBorder : "y+0"
 
                 ; [TRYB CENTER] Dzielimy wiersz na 3 części: Left (wyrównanie), Main (tekst), Right (reszta)
                 ; Zapewnia to idealne pokrycie pozycji X tekstu w popupie i kotwicy.
-                LeftW := (Grubosc) - Opt.Border
+                LeftW := AktGrubosc - AktBorder
                 LeftW := (LeftW > 0) ? LeftW : 0
-                l := pGui.Add("Text", "x" . Opt.Border . " " . yPos . " w" . LeftW . " h" . WysWiersza . " +0x200 Background" . bg)
-                t := pGui.Add("Text", "x+0 yp w" . SzerText . " h" . WysWiersza . " +0x200 " . AlignMode . " Background" . bg, _ApplyAlign(opcja))
-                r1 := pGui.Add("Text", "x+0 yp w" . SepW . " h" . WysWiersza . " +0x200 Background" . ram)
+                l := pGui.Add("Text", "x" . AktBorder . " " . yPos . " w" . LeftW . " h" . AktWysWiersza . " +0x200 Background" . bg)
+                t := pGui.Add("Text", "x+0 yp w" . AktSzerText . " h" . AktWysWiersza . " +0x200 " . AlignMode . " Background" . bg, _ApplyAlign(opcja))
+                r1 := pGui.Add("Text", "x+0 yp w" . AktSepW . " h" . AktWysWiersza . " +0x200 Background" . ram)
 
-                Right2W := Opt.w - Opt.Border - LeftW - SzerText - SepW - Opt.Border
+                Right2W := AktW - AktBorder - LeftW - AktSzerText - AktSepW - AktBorder
                 Right2W := (Right2W > 0) ? Right2W : 0
-                r2 := pGui.Add("Text", "x+0 yp w" . Right2W . " h" . WysWiersza . " +0x200 Background" . bg)
+                r2 := pGui.Add("Text", "x+0 yp w" . Right2W . " h" . AktWysWiersza . " +0x200 Background" . bg)
 
                 itemObj := { Main: t, Left: l, Right1: r1, Right2: r2 }
                 pGui.ListCtrls.Push(itemObj)
@@ -2731,7 +2742,7 @@ class CtlFactory extends ExWinAndPopups {
                 t.HoverAction := bindHover, l.HoverAction := bindHover, r2.HoverAction := bindHover
             }
 
-            pGui.Show("x" . pos.x . " y" . pos.y . " w" . Opt.w . " NA")
+            pGui.Show("x" . pos.x . " y" . pos.y . " w" . AktW . " NA")
             ValueCtrl.PopupGui := pGui
             ih.Start()
 
@@ -3346,6 +3357,11 @@ class SilnikGUI extends SubWindows {
                 this.Kinetyka.Curr *= wspolczynnik
                 this.Kinetyka.Vis *= wspolczynnik
             }
+
+            if (this.Stan.VBar)
+                this.Stan.VBar.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * nowaSkala * (A_ScreenDPI / 96))
+            if (this.Stan.HBar)
+                this.Stan.HBar.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * nowaSkala * (A_ScreenDPI / 96))
 
             if HasProp(this.GuiObj, "BaseW") {
                 nw := Round(this.GuiObj.BaseW * nowaSkala)
