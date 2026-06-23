@@ -3269,11 +3269,14 @@ class SilnikGUI extends SubWindows {
         Gui.Prototype.DefineProp("Show", { Call: (guiObj, opt?) => (
             OgShow(guiObj, opt?),
             guiObj.GetPos(&x, &y, &w, &h),
+            guiObj.GetClientPos(, , &cw, &ch),
             sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
             guiObj.BaseX := x / sc,
             guiObj.BaseY := y / sc,
-            guiObj.BaseW := w / sc,
-            guiObj.BaseH := h / sc
+            guiObj.BaseW := cw / sc,
+            guiObj.BaseH := ch / sc,
+            guiObj.NC_W := w - cw,
+            guiObj.NC_H := h - ch
         ) })
 
         OgAdd := Gui.Prototype.Add
@@ -3348,6 +3351,16 @@ class SilnikGUI extends SubWindows {
         wspolczynnik := nowaSkala / staraSkala
         this.Stan.TotalScale := nowaSkala
 
+        myDpiScale := (A_ScreenDPI / 96) * nowaSkala
+        if HasProp(this.Stan, "BasePadR") {
+            this.Stan.ResizeMarg := Round(this.Stan.BaseResizeMarg * myDpiScale)
+            this.Stan.GruboscRamki := Round(this.Stan.BaseGruboscRamki * myDpiScale)
+            this.Stan.RamkaPanelu := Round(this.Stan.BaseRamkaPanelu * myDpiScale)
+            this.Stan.PadL := Round(this.Stan.BasePadL * myDpiScale)
+            this.Stan.PadR := Round(this.Stan.BasePadR * myDpiScale)
+            this.Stan.PadD := Round(this.Stan.BasePadD * myDpiScale)
+        }
+
         ; 1. ZAMROŻENIE RENDEROWANIA (Blokujemy TYLKO okno główne, system sam kaskaduje to na dzieci)
         DllCall("SendMessage", "Ptr", this.GuiObj.Hwnd, "UInt", 0x000B, "Ptr", 0, "Ptr", 0)
 
@@ -3364,19 +3377,25 @@ class SilnikGUI extends SubWindows {
                 this.Stan.HBar.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * nowaSkala * (A_ScreenDPI / 96))
 
             if HasProp(this.GuiObj, "BaseW") {
-                nw := Round(this.GuiObj.BaseW * nowaSkala)
-                nh := Round(this.GuiObj.BaseH * nowaSkala)
+                ncw := HasProp(this.GuiObj, "NC_W") ? this.GuiObj.NC_W : 0
+                nch := HasProp(this.GuiObj, "NC_H") ? this.GuiObj.NC_H : 0
+                nw := Round(this.GuiObj.BaseW * nowaSkala) + ncw
+                nh := Round(this.GuiObj.BaseH * nowaSkala) + nch
                 this.GuiObj.Move(, , nw, nh)
             }
 
             if (this.Stan.UseChild && HasProp(this.Stan.ChildGui, "BaseW")) {
-                nw := Round(this.Stan.ChildGui.BaseW * nowaSkala)
+                ncw := HasProp(this.Stan.ChildGui, "NC_W") ? this.Stan.ChildGui.NC_W : 0
+                nch := HasProp(this.Stan.ChildGui, "NC_H") ? this.Stan.ChildGui.NC_H : 0
+                nw := Round(this.Stan.ChildGui.BaseW * nowaSkala) + ncw
                 nh := Round(this.Stan.ChildGui.BaseH * nowaSkala)
                 this.Stan.ChildGui.Move(, , nw, nh)
 
                 if HasProp(this.Stan, "ClipGui") && HasProp(this.Stan.ClipGui, "BaseW") {
-                    nwClip := Round(this.Stan.ClipGui.BaseW * nowaSkala)
-                    nhClip := Round(this.Stan.ClipGui.BaseH * nowaSkala)
+                    ncwClip := HasProp(this.Stan.ClipGui, "NC_W") ? this.Stan.ClipGui.NC_W : 0
+                    nchClip := HasProp(this.Stan.ClipGui, "NC_H") ? this.Stan.ClipGui.NC_H : 0
+                    nwClip := Round(this.Stan.ClipGui.BaseW * nowaSkala) + ncwClip
+                    nhClip := Round(this.Stan.ClipGui.BaseH * nowaSkala) + nchClip
                     this.Stan.ClipGui.Move(, , nwClip, nhClip)
                 }
             }
@@ -3449,6 +3468,8 @@ class SilnikGUI extends SubWindows {
             Zaktualizuj(this.GuiObj)
             if (this.Stan.UseChild)
                 Zaktualizuj(this.Stan.ChildGui)
+
+            this.Stan.LastObszarTick := 0
 
             if HasProp(this, "GuiObj") && this.GuiObj {
                 try this.GuiObj.GetClientPos(, , &cw, &ch)
@@ -3685,6 +3706,13 @@ class SilnikGUI extends SubWindows {
         this.Stan.CSBarH := CSBarH
         this.Stan.PokazPasek := pokazPasek
         this.Stan.zamknijNaEsc := zamknijNaEsc
+        this.Stan.BaseResizeMarg := ResizeMarg
+        this.Stan.BaseGruboscRamki := GruboscRamki
+        this.Stan.BaseRamkaPanelu := RamkaPanelu
+        this.Stan.BasePadL := PadL
+        this.Stan.BasePadR := PadR
+        this.Stan.BasePadD := PadD
+
         this.Stan.ResizeMarg := Round(ResizeMarg * Skala)
         this.Stan.GruboscRamki := Round(GruboscRamki * Skala)
         this.Stan.dragBezPaska := dragBezPaska
@@ -4479,20 +4507,21 @@ class SilnikGUI extends SubWindows {
         ; 3. Decyzja (Iteracyjna)
         ShowV := false, ShowH := false
         BarSize := this.Stan.VBar ? this.Stan.VBar.BarSize : (this.Stan.HBar ? this.Stan.HBar.BarSize : 20)
+        tol := 1 ; [FIX] Tolerancja na zaokraglenia zmiennoprzecinkowe (Epsilon)
 
         ; A: Pion
-        if this.Stan.CSBarV && (ContentH > AvailH) {
+        if this.Stan.CSBarV && (ContentH > AvailH + tol) {
             ShowV := true
             AvailW -= (BarSize + gap)
         }
 
         ; B: Poziom
-        if this.Stan.CSBarH && (ContentW > AvailW) {
+        if this.Stan.CSBarH && (ContentW > AvailW + tol) {
             ShowH := true
             AvailH -= (BarSize + gap)
 
             ; [STRATEGIA 2] Adaptacyjny Shrink: Kompresja elastycznych kontrolek przed VBar
-            if (ContentH > AvailH) {
+            if (ContentH > AvailH + tol) {
                 for c in this.Stan.Kontrolki {
                     if (HasProp(c, "FlexH") && c.FlexH) {
                         c.GetPos(&cX, &cY, &cW, &cH)
@@ -4512,7 +4541,7 @@ class SilnikGUI extends SubWindows {
         }
 
         ; C: Korekta zwrotna
-        if this.Stan.CSBarV && (!ShowV && ContentH > AvailH) {
+        if this.Stan.CSBarV && (!ShowV && ContentH > AvailH + tol) {
             ShowV := true
             AvailW -= (BarSize + gap)
         }
