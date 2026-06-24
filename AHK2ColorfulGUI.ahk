@@ -3437,12 +3437,11 @@ class SilnikGUI extends SubWindows {
                     prx.Grubosc := Max(1, Round(prx.BaseGrubosc * nowaSkala))
 
                     hasAnchor := false
-                    try if (HasProp(prx.Ctrls[1], "ParentCtrl") && prx.Ctrls[1].ParentCtrl)
+                    if (prx.Ctrls.Length > 0 && HasProp(prx.Ctrls[1], "ParentCtrl") && prx.Ctrls[1].ParentCtrl)
                         hasAnchor := true
 
                     if (hasAnchor) {
                         anchor := prx.Ctrls[1].ParentCtrl
-                        anchor.GetPos(&aX, &aY, &aW, &aH)
 
                         ; Różnica zostaje sprowadzona do marginesu bazowego
                         diffX := prx.BaseX - anchor.BaseX
@@ -3450,10 +3449,10 @@ class SilnikGUI extends SubWindows {
                         diffW := prx.BaseW - anchor.BaseW
                         diffH := prx.BaseH - anchor.BaseH
 
-                        nx := aX + Round(diffX * nowaSkala)
-                        ny := aY + Round(diffY * nowaSkala)
-                        nw := aW + Round(diffW * nowaSkala)
-                        nh := aH + Round(diffH * nowaSkala)
+                        nx := Round((anchor.BaseX * nowaSkala) + (diffX * nowaSkala))
+                        ny := Round((anchor.BaseY * nowaSkala) + (diffY * nowaSkala))
+                        nw := Round((anchor.BaseW * nowaSkala) + (diffW * nowaSkala))
+                        nh := Round((anchor.BaseH * nowaSkala) + (diffH * nowaSkala))
                     } else {
                         nx := Round(prx.BaseX * nowaSkala)
                         ny := Round(prx.BaseY * nowaSkala)
@@ -3477,7 +3476,7 @@ class SilnikGUI extends SubWindows {
                     this.AktualizujLayout(cw, ch)
 
                 if (this.CallbackLayout)
-                    try this.CallbackLayout(cw, 0, ch, 20)
+                    this.CallbackLayout(cw, 0, ch, 20)
             }
         } finally {
             ; 2. BEZWZGLĘDNE WZNOWIENIE RENDEROWANIA (Gwarantowane wykonanie)
@@ -3910,12 +3909,12 @@ class SilnikGUI extends SubWindows {
      * Usuwa artefakty graficzne (ghosting) ramek.
      */
     WymusPelnyRedraw() {
-        if (this.GuiObj)
-            try WinRedraw(this.GuiObj.Hwnd)
-        if (this.Stan.UseChild && this.Stan.ClipGui)
-            try WinRedraw(this.Stan.ClipGui.Hwnd)
-        if (this.Stan.UseChild && this.Stan.ChildGui)
-            try WinRedraw(this.Stan.ChildGui.Hwnd)
+        if (this.GuiObj && DllCall("IsWindow", "Ptr", this.GuiObj.Hwnd))
+            WinRedraw(this.GuiObj.Hwnd)
+        if (this.Stan.UseChild && this.Stan.ClipGui && DllCall("IsWindow", "Ptr", this.Stan.ClipGui.Hwnd))
+            WinRedraw(this.Stan.ClipGui.Hwnd)
+        if (this.Stan.UseChild && this.Stan.ChildGui && DllCall("IsWindow", "Ptr", this.Stan.ChildGui.Hwnd))
+            WinRedraw(this.Stan.ChildGui.Hwnd)
         if (this.Stan.UseChild) {
             (this.Stan.VBar) && this.Stan.VBar.Redraw()
             (this.Stan.HBar) && this.Stan.HBar.Redraw()
@@ -4938,8 +4937,8 @@ class SilnikGUI extends SubWindows {
         }
         ; Metoda wymuszająca natychmiastowe odświeżenie paska na ekranie. Przydatna po asynchronicznych zmianach pozycji scrolla lub rozmiaru, gdy nie używamy atomowego DWP.
         Redraw() {
-            if (this.IsVisible && this.BarGui)
-                try WinRedraw(this.BarGui.Hwnd)
+            if (this.IsVisible && this.BarGui && DllCall("IsWindow", "Ptr", this.BarGui.Hwnd))
+                WinRedraw(this.BarGui.Hwnd)
         }
 
         ; --- WSPÓLNY SILNIK KINETYCZNY (KONSUMENT) ---

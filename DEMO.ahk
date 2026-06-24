@@ -21,14 +21,16 @@ App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
     PadL: 20
 })
 PadL := 20
+
+
 ; --- Header ---
-Welcome := App.Add("Text", "X" . padL + 10 . "  y20", "Welcome to AHK2ColorfulGUI Demo", 1, 16)
+Welcome := App.Add("Text", "X" . padL + 10 . "  y+20", "Welcome to AHK2ColorfulGUI Demo", 1, 16)
 Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", { DelayON: 1000, czas: 3000, trybPozycji: Welcome })
 ; App.Stan.ChildGui.SetFont("s10 norm")
 ; App.Stan.ChildGui.SetFont("s12 italic")
 Welcome2 := App.Add("Text", "x" . padL + 10. " y+15 cAAAAAA", "--- Input Fields ---")
 Welcome2.GetPos(, , &W2W, &W2H)
-Welcome2.Move(320, 50, , , 1)
+;Welcome2.Move(320, 50, , , 1)
 
 ; String Validation (Type 2)
 ConfigLine1 := App.DodajWierszKonfiguracji("standard mode:", "Guest User", {
@@ -50,13 +52,14 @@ ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
 })
 
 ; Float Validation (Type 1) with limits
-ConfigLine3 := App.DodajWierszKonfiguracji("UI Scale:", SilnikGUI.Statics.TotalScale, {
+ConfigLine3 := App.DodajWierszKonfiguracji("UI Scale", SilnikGUI.Statics.TotalScale, {
     trybWalidacji: 1,
     minVal: 0.1,
     maxVal: 5.0,
     skok: 0.02,
     SzerText: 90,
     SzerPola: 100,
+    InfoRight: 0,
     pozycja: "y+10 xp"
 })
 ConfigLine3.OnEvent("Change", (*) => SilnikGUI.PrzeskalujWszystko(ConfigLine3.Value))
