@@ -3338,15 +3338,21 @@ class SilnikGUI extends SubWindows {
         this.Statics.IsRescaling := true
         this.Statics.TotalScale := nowaSkala
 
+        MouseGetPos(, , &mHwnd)
+        pt := Buffer(8, 0)
+        DllCall("GetCursorPos", "Ptr", pt)
+        mx := NumGet(pt, 0, "Int")
+        my := NumGet(pt, 4, "Int")
+
         for app in this.Statics.AktywneInstancje
-            app.Przeskaluj(nowaSkala)
+            app.Przeskaluj(nowaSkala, mx, my, mHwnd)
 
         for app in this.Statics.AktywneInstancje
             app.WymusPelnyRedraw()
 
         this.Statics.IsRescaling := false
     }
-    Przeskaluj(nowaSkala) {
+    Przeskaluj(nowaSkala, mx := 0, my := 0, mHwnd := 0) {
         staraSkala := HasProp(this.Stan, "TotalScale") ? this.Stan.TotalScale : 1.0
         wspolczynnik := nowaSkala / staraSkala
         this.Stan.TotalScale := nowaSkala
@@ -3381,7 +3387,54 @@ class SilnikGUI extends SubWindows {
                 nch := HasProp(this.GuiObj, "NC_H") ? this.GuiObj.NC_H : 0
                 nw := Round(this.GuiObj.BaseW * nowaSkala) + ncw
                 nh := Round(this.GuiObj.BaseH * nowaSkala) + nch
-                this.GuiObj.Move(, , nw, nh)
+
+                isActive := false
+                currHwnd := mHwnd
+                while (currHwnd) {
+                    if (currHwnd == this.GuiObj.Hwnd) {
+                        isActive := true
+                        break
+                    }
+                    currHwnd := DllCall("GetAncestor", "Ptr", currHwnd, "UInt", 1, "Ptr")
+                }
+
+                this.GuiObj.GetPos(&wX, &wY)
+                this.GuiObj.GetClientPos(&cX, &cY, &cW, &cH)
+                borderL := cX - wX
+                borderT := cY - wY
+
+                if (HasProp(this.Stan, "ExactCX") && Abs(cX - Round(this.Stan.ExactCX)) <= 1 && Abs(cY - Round(this.Stan.ExactCY)) <= 1) {
+                    exactCX := this.Stan.ExactCX
+                    exactCY := this.Stan.ExactCY
+                } else {
+                    exactCX := cX
+                    exactCY := cY
+                }
+
+                if (isActive) {
+                    anchorX := mx
+                    anchorY := my
+                } else {
+                    anchorX := exactCX + (cW / 2)
+                    anchorY := exactCY + (cH / 2)
+                }
+
+                relX := anchorX - exactCX
+                relY := anchorY - exactCY
+
+                new_exactCX := anchorX - (relX * wspolczynnik)
+                new_exactCY := anchorY - (relY * wspolczynnik)
+
+                this.Stan.ExactCX := new_exactCX
+                this.Stan.ExactCY := new_exactCY
+
+                if (WinGetMinMax(this.GuiObj.Hwnd) != 0 || (HasProp(this, "IsPanel") && this.IsPanel)) {
+                    this.GuiObj.Move(, , nw, nh)
+                } else {
+                    nX := Round(new_exactCX) - borderL
+                    nY := Round(new_exactCY) - borderT
+                    this.GuiObj.Move(nX, nY, nw, nh)
+                }
             }
 
             if (this.Stan.UseChild && HasProp(this.Stan.ChildGui, "BaseW")) {
@@ -3476,7 +3529,7 @@ class SilnikGUI extends SubWindows {
                     this.AktualizujLayout(cw, ch)
 
                 if (this.CallbackLayout)
-                    this.CallbackLayout(cw, 0, ch, 20)
+                    this.CallbackLayout.Call(cw, 0, ch, 20)
             }
         } finally {
             ; 2. BEZWZGLĘDNE WZNOWIENIE RENDEROWANIA (Gwarantowane wykonanie)
