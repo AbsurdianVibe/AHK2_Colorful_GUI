@@ -2870,9 +2870,9 @@ class CtlFactory extends ExWinAndPopups {
     DostosujRozmiar(SzerEtykiety, ctrl, MinW := 50, MinH := 18, *) {
         fName := HasProp(ctrl, "FontName") ? ctrl.FontName : SilnikGUI.Statics.GlobFont.Name
         fSize := HasProp(ctrl, "FontSize") ? ctrl.FontSize : SilnikGUI.Statics.GlobFont.Size
-        SkalaWymiaru := SilnikGUI.Statics.TotalScale * (A_ScreenDPI / 96)
+        SkalaWymiaru := SilnikGUI.Statics.TotalScale
         FinalSize := Round(fSize * SkalaWymiaru)
-        
+
         MinW := Round(MinW * SkalaWymiaru)
         MinH := Round(MinH * SkalaWymiaru)
 
@@ -3030,7 +3030,7 @@ class CtlFactory extends ExWinAndPopups {
         TargetH := h
         TargetW := Round(NowaSzer + DiffW)
         this.Stan.LastObszarTick := 0 ; Wymuszenie czyszczenia cache po zmianach układu
-        
+
         if (this.Stan.AutoFitH > 0 || this.Stan.AutoFitW > 0)
             ContentAfter := this.ObliczObszarRoboczy()
 
@@ -3337,9 +3337,9 @@ class SilnikGUI extends SubWindows {
             (IsSet(w) && w != "") && cw := w,
             (IsSet(h) && h != "") && ch := h,
             (HasProp(ctrl, "Ramka")) && (
-                (HasProp(ctrl, "Rola") && ctrl.Rola == "CustomButton")
+                (HasProp(ctrl, "Rola")) ;  && ctrl.Rola == "CustomButton"
                     ? ctrl.Ramka.Move(cx - ctrl.Ramka.Grubosc, cy - ctrl.Ramka.Grubosc, cw + 2 * ctrl.Ramka.Grubosc, ch + 2 * ctrl.Ramka.Grubosc)
-                    : ctrl.Ramka.Move(cx, cy, cw, ch)
+                : ctrl.Ramka.Move(cx, cy, cw, ch)
             ),
             (!SilnikGUI.Statics.HasProp("IsRescaling") || !SilnikGUI.Statics.IsRescaling) && (
                 sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
@@ -4396,8 +4396,8 @@ class SilnikGUI extends SubWindows {
 
             ; Obejście blokady GetPos podczas suwaka (utrzymanie prawidłowych wymiarów dla Krok 4)
             if (SilnikGUI.Statics.HasProp("IsRescaling") && SilnikGUI.Statics.IsRescaling && HasProp(this.MainCtrl, "BaseW") && w == "") {
-                newW := Round(this.MainCtrl.BaseW * Skala)
-                newH := Round(this.MainCtrl.BaseH * Skala)
+                newW := Round(this.MainCtrl.BaseW * SilnikGUI.Statics.TotalScale)
+                newH := Round(this.MainCtrl.BaseH * SilnikGUI.Statics.TotalScale)
             }
             (w != "") && newW := w
             (h != "") && newH := h
