@@ -4,7 +4,7 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2B2B2B")
-TotalScale := 1
+TotalScale := 0.5
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
@@ -148,14 +148,14 @@ ShowDynamicDialog() {
     ; Z.GuiObj.SetFont("s10")
 
     closeAction := (*) => (Z.Zakoncz(), Z := 0)
-    Z.DodajWierszKonfiguracji("New name:", "Type a.", { trybWalidacji: 2, pozycja: "x20 yp+15", SzerPola: 100, AutoCenter: true, SzRamki: 2, ResizeEditW: true, obslugaEnter: closeAction })
+    Z.DodajWierszKonfiguracji("New name:", "Type a.", { trybWalidacji: 2, pozycja: "x20 yp+15", SzerPola: 100, AutoCenter: true, SzRamki: 2, ResizeEditW: true, ResizeEditH: true, obslugaEnter: closeAction })
 
     btnZapisz := Z.DodajPrzycisk("Save", closeAction, "xm y+20 w100 h30")
     btnAnuluj := Z.DodajPrzycisk("Cancel", closeAction, "yp w100 h30")
 
     Z.CallbackLayout := (Szer, Off := 0, *) => (
         Sk := A_ScreenDPI / 96,
-        RealW := 100 * TotalScale * Sk,
+        RealW := 100 * SilnikGUI.Statics.TotalScale * Sk,
         gap := (Szer - 2 * RealW) / 3,
         btnZapisz.Move(gap + Off, "", "", "", false),
         btnAnuluj.Move(Szer - gap - RealW + Off, "", "", "", false)
