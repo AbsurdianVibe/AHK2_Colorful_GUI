@@ -2605,6 +2605,7 @@ class CtlFactory extends ExWinAndPopups {
         ValueCtrl.SetFont("s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt, SilnikGUI.Statics.GlobFont.Name)
         ArrowCtrl := this.Stan.ChildGui.Add("Text", "x+" . SepW . " yp w" . ArrowW . " h" . WysWiersza . " +0x200 +0x100 Center Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, "▼")
         ArrowCtrl.SetFont("s" . Round(Opt.fSize * 0.8 * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt, SilnikGUI.Statics.GlobFont.Name)
+        ArrowCtrl.BaseSepW := SepW / SilnikGUI.Statics.TotalScale
 
         ; 4. Object Configuration
         ValueCtrl.Opcje := opcje
@@ -3512,7 +3513,12 @@ class SilnikGUI extends SubWindows {
                         continue
                     }
 
-                    nx := Round(ctrl.BaseX * nowaSkala)
+                    if (HasProp(ctrl, "BaseSepW") && HasProp(ctrl, "ParentCtrl") && ctrl.ParentCtrl) {
+                        anchor := ctrl.ParentCtrl
+                        nx := Round(anchor.BaseX * nowaSkala) + Round(anchor.BaseW * nowaSkala) + Round(ctrl.BaseSepW * nowaSkala)
+                    } else {
+                        nx := Round(ctrl.BaseX * nowaSkala)
+                    }
                     ny := Round(ctrl.BaseY * nowaSkala)
                     nw := Round(ctrl.BaseW * nowaSkala)
                     nh := Round(ctrl.BaseH * nowaSkala)
