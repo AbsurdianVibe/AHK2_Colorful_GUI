@@ -3406,8 +3406,7 @@ class SilnikGUI extends SubWindows {
         }
 
         ; 1. ZAMROŻENIE RENDEROWANIA (Blokujemy TYLKO okno główne, system sam kaskaduje to na dzieci)
-        DllCall("SendMessage", "Ptr", this.GuiObj.Hwnd, "UInt", 0x000B, "Ptr", 0, "Ptr", 0)
-
+        DllCall("LockWindowUpdate", "Ptr", this.GuiObj.Hwnd)
         try {
             if HasProp(this, "Kinetyka") {
                 this.Kinetyka.Cel *= wspolczynnik
@@ -3583,7 +3582,7 @@ class SilnikGUI extends SubWindows {
             }
         } finally {
             ; 2. BEZWZGLĘDNE WZNOWIENIE RENDEROWANIA (Gwarantowane wykonanie)
-            DllCall("SendMessage", "Ptr", this.GuiObj.Hwnd, "UInt", 0x000B, "Ptr", 1, "Ptr", 0)
+            DllCall("LockWindowUpdate", "Ptr", 0)
 
             ; 3. OSTATECZNY ZRZUT EKRANU (Wymuszenie z flagą RDW_ALLCHILDREN)
             ; 0x0585 = RDW_INVALIDATE (1) | RDW_ERASE (4) | RDW_ALLCHILDREN (80) | RDW_UPDATENOW (100) | RDW_FRAME (400)
