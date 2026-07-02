@@ -3248,6 +3248,8 @@ class SubWindows extends CtlFactory {
  * Opiera się na stylach i funkcjach z mouse_ctrl.ahk (ciemny motyw, ramki, walidacja).
  */
 class SilnikGUI extends SubWindows {
+    Kinetyka := unset
+    IsPanel := unset
 
     /**
      * Tworzy nowe okno GUI z zadanym tytułem i stylem.
