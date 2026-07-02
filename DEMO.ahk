@@ -3,14 +3,14 @@
 ;throw Error("CRITICAL_TEST_CRASH")
 
 ; Set dark theme base color, or any color you want!
-SilnikGUI.Konfiguruj("2B2B2B")
+SilnikGUI.Konfiguruj("2b2b2b")
 TotalScale := 1
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
 SilnikGUI.Statics.TotalScale := TotalScale
 
-App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
+App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize380x380 +MaxSize400x400", {
     MainGUI: true,
     CSBarV: 1,
     CSBarH: 1,
@@ -18,7 +18,8 @@ App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
     ResizeMarg: 8,
     PadD: 20,
     PadR: 20,
-    PadL: 20
+    PadL: 20,
+    pokazPasek: 1
 })
 PadL := 20
 
@@ -142,7 +143,7 @@ ShowDynamicDialog() {
     ; any 'early return' checks anymore. The engine automatically returns
     ; a safe proxy object to swallow any duplicate control creation.
     ; Initialization without title bar, fitting width automatically (AutoFitW: 0.99)
-    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 2, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
+    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 2, CSBarV: 0, CSBarH: 0, ResizeMarg: 2, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
 
     Z.GuiObj.OnEvent("Close", (*) => Z := 0)
     ; Z.GuiObj.SetFont("s10")
@@ -173,7 +174,7 @@ ShowTabTrackingDemo() {
     ; Even if the window is just hidden, the WinAPI IsWindow check ensures
     ; it is correctly found. The State Lock then prevents new controls from
     ; being added to the existing GUI, making early returns completely obsolete.
-    T := SilnikGUI("Tab Tracking Demo", "MinSize200x200", { unikalny: "TabDemo", pokazPasek: 1, createChild: true, zamknijNaEsc: 1, CSBarV: 1, CSBarH: 1, PadD: 30, PadR: 30 })
+    T := SilnikGUI("Tab Tracking Demo", "MinSize100x100", { unikalny: "TabDemo", pokazPasek: 1, createChild: true, zamknijNaEsc: 1, CSBarV: 1, CSBarH: 1, PadD: 30, PadR: 30 })
 
     T.GuiObj.OnEvent("Close", (*) => (T.Zakoncz(), T := 0))
 

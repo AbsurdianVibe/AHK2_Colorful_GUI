@@ -3372,6 +3372,34 @@ class SilnikGUI extends SubWindows {
         SetTimer(ObjBindMethod(this, "GłównaPętlaStanu"), SilnikGUI.TickRate)
     }
 
+    myApplyHardwareLimits() {
+        MonitorGetWorkArea(1, &WL, &WT, &WR, &WB)
+        safeMaxW := (WR - WL) - (SysGet(32) * 2)
+        safeMaxH := (WB - WT) - (this.Stan.PokazPasek ? SysGet(4) : 0) - (SysGet(33) * 2)
+
+        if HasProp(this.Stan, "MinW") && this.Stan.MinW > safeMaxW
+            this.Stan.MinW := safeMaxW
+        if HasProp(this.Stan, "MinH") && this.Stan.MinH > safeMaxH
+            this.Stan.MinH := safeMaxH
+            
+        if HasProp(this.Stan, "MaxW") && this.Stan.MaxW > safeMaxW
+            this.Stan.MaxW := safeMaxW
+        if HasProp(this.Stan, "MaxH") && this.Stan.MaxH > safeMaxH
+            this.Stan.MaxH := safeMaxH
+            
+        minOpt := ""
+        if (HasProp(this.Stan, "MinW") && this.Stan.MinW > 0)
+            minOpt .= this.Stan.MinW
+        if (HasProp(this.Stan, "MinH") && this.Stan.MinH > 0)
+            minOpt .= "x" . this.Stan.MinH
+        if (minOpt != "")
+            this.GuiObj.Opt("+MinSize" . minOpt)
+
+        effMaxW := (HasProp(this.Stan, "MaxW") && this.Stan.MaxW > 0) ? this.Stan.MaxW : safeMaxW
+        effMaxH := (HasProp(this.Stan, "MaxH") && this.Stan.MaxH > 0) ? this.Stan.MaxH : safeMaxH
+        this.GuiObj.Opt("+MaxSize" . effMaxW . "x" . effMaxH)
+    }
+
     static PrzeskalujWszystko(nowaSkala) {
         this.Statics.IsRescaling := true
         this.Statics.TotalScale := nowaSkala
@@ -3404,6 +3432,18 @@ class SilnikGUI extends SubWindows {
             this.Stan.PadR := Round(this.Stan.BasePadR * myDpiScale)
             this.Stan.PadD := Round(this.Stan.BasePadD * myDpiScale)
         }
+
+        if HasProp(this.Stan, "BaseMinW") && this.Stan.BaseMinW > 0
+            this.Stan.MinW := Round(this.Stan.BaseMinW * myDpiScale)
+        if HasProp(this.Stan, "BaseMinH") && this.Stan.BaseMinH > 0
+            this.Stan.MinH := Round(this.Stan.BaseMinH * myDpiScale)
+        if HasProp(this.Stan, "BaseMaxW") && this.Stan.BaseMaxW > 0
+            this.Stan.MaxW := Round(this.Stan.BaseMaxW * myDpiScale)
+        if HasProp(this.Stan, "BaseMaxH") && this.Stan.BaseMaxH > 0
+            this.Stan.MaxH := Round(this.Stan.BaseMaxH * myDpiScale)
+            
+        this.myApplyHardwareLimits()
+
 
         ; 1. ZAMROŻENIE RENDEROWANIA (Blokujemy TYLKO okno główne, system sam kaskaduje to na dzieci)
         DllCall("LockWindowUpdate", "Ptr", this.GuiObj.Hwnd)
@@ -3825,11 +3865,37 @@ class SilnikGUI extends SubWindows {
         this.Stan.PadD := Round(PadD * Skala)
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
-        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala) : 0
+        this.Stan.MinW := 0
+        this.Stan.MinH := 0
+        this.Stan.MaxW := 0
+        this.Stan.MaxH := 0
+        if RegExMatch(opcje, "i)\+?MinSize\s*(\d+)(?:x(\d+))?", &m) {
+            if (m[1] != "")
+                this.Stan.MinW := Round(Integer(m[1]) * Skala)
+            if (m[2] != "")
+                this.Stan.MinH := Round(Integer(m[2]) * Skala)
+            
+            ; Usunięcie MinSize z opcji, żeby AHK nie narzucił nieskalowalnego twardego limitu
+            opcje := RegExReplace(opcje, "i)\+?MinSize\s*\d*(?:x\d*)?", "")
+        }
+        if RegExMatch(opcje, "i)\+?MaxSize\s*(\d+)(?:x(\d+))?", &m) {
+            if (m[1] != "")
+                this.Stan.MaxW := Round(Integer(m[1]) * Skala)
+            if (m[2] != "")
+                this.Stan.MaxH := Round(Integer(m[2]) * Skala)
+            
+            opcje := RegExReplace(opcje, "i)\+?MaxSize\s*\d*(?:x\d*)?", "")
+        }
         this.Stan.BaseMinW := this.Stan.MinW / SilnikGUI.Statics.TotalScale
+        this.Stan.BaseMinH := this.Stan.MinH / SilnikGUI.Statics.TotalScale
+        this.Stan.BaseMaxW := this.Stan.MaxW / SilnikGUI.Statics.TotalScale
+        this.Stan.BaseMaxH := this.Stan.MaxH / SilnikGUI.Statics.TotalScale
 
 
         this.GuiObj := Gui(opcje, tytul)
+        
+        this.myApplyHardwareLimits()
+        
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
         this.GuiObj.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
@@ -4564,7 +4630,7 @@ class SilnikGUI extends SubWindows {
         WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " hwnd)
         x := lParam & 0xFFFF
         y := (lParam >> 16) & 0xFFFF
-        
+
         return {
             Top: (y >= wY && y < wY + margines),
             Bottom: (y >= wY + wH - margines && y < wY + wH),
