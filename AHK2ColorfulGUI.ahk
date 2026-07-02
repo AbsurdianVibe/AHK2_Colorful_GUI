@@ -3257,23 +3257,23 @@ class SilnikGUI extends SubWindows {
      * @param {String} tytul - Tytuł okna.
      * @param {String} [opcje=""] - Dodatkowe opcje GUI: +AlwaysOnTop, MinSize[W]x[H]
      * @param {Object} [parametry] - Opcjonalny obiekt konfiguracyjny z parametrami:
-     * - [unikalny: false] {Boolean|String} - Singleton. true = użyj tytułu okna jako ID, String = własne ID.
-     * - [pokazPasek: 1] {Integer} - 0 = Brak paska (Borderless), 1 = Pasek widoczny.
+     * - [AutoFitH: 0] {Number} - Dopasowanie wysokości.
+     * - [AutoFitW: 0] {Number} - Dopasowanie szerokości.
      * - [createChild: true] {Boolean} - Czy tworzyć warstwę kontrolek (ChildGui).
-     * - [zamknijNaEsc: 1] {Integer} - Akcja ESC: 0=Off, 1=Hide, 2=Destroy.
-     * - [CSBarV: 1] {Integer} - Czy pokazać pasek przewijania pionowego (1 lub 0).
      * - [CSBarH: 1] {Integer} - Czy pokazać pasek przewijania poziomego (1 lub 0).
-     * - [ResizeMarg: 6] {Integer} - Margines aktywujący zmianę rozmiaru (Borderless).
-     * - [GruboscRamki: 2] {Integer} - Grubość ramki (jeśli pokazPasek=0).
+     * - [CSBarV: 1] {Integer} - Czy pokazać pasek przewijania pionowego (1 lub 0).
      * - [dragBezPaska: 1] {Integer} - Czy umożliwić przeciąganie okna bez paska (1 lub 0).
+     * - [GruboscRamki: 2] {Integer} - Grubość ramki (jeśli pokazPasek=0).
      * - [MainGUI: false] {Boolean|Function} - Zamyka wszystkie inne instancje SilnikGUI i ubija skrypt: [true] - po posprzątaniu mechanizmów SilnikGUI skrypt zostanie zakmniety prostym ExitApp, [function] - callback po zamknięciu okien -jeśli twój skrypt  ma własny  mechanimz zamykania, podaj go tu, zostanie wykonany po posprzątaniu SilnikGUI)
-     * - [RamkaPanelu: 2] {Integer} - Wewnętrzny odstęp paneli.
+     * - [PadD: 0] {Integer} - Margines od dołu.
      * - [PadL: 0] {Integer} - Margines z lewej strony.
      * - [PadR: 0] {Integer} - Margines z prawej strony.
-     * - [PadD: 0] {Integer} - Margines od dołu.
-     * - [AutoFitW: 0] {Number} - Dopasowanie szerokości.
-     * - [AutoFitH: 0] {Number} - Dopasowanie wysokości.
+     * - [pokazPasek: 1] {Integer} - 0 = Brak paska (Borderless), 1 = Pasek widoczny.
+     * - [RamkaPanelu: 2] {Integer} - Wewnętrzny odstęp paneli.
+     * - [ResizeMarg: GruboscRamki] {Integer} - Margines aktywujący zmianę rozmiaru (Borderless).
      * - [Transparent: 0] {Integer} - Przezroczystość okna (0.0-1.0).
+     * - [unikalny: false] {Boolean|String} - Singleton. true = użyj tytułu okna jako ID, String = własne ID.
+     * - [zamknijNaEsc: 1] {Integer} - Akcja ESC: 0=Off, 1=Hide, 2=Destroy.
      * @return {SilnikGUI}
      */
     static Call(tytul, opcje := "", parametry?) { ; metoda bezpiecznikowa (Singleton) antydubel, rzeczywisty konstruktor to drugi "_New"
@@ -3789,7 +3789,7 @@ class SilnikGUI extends SubWindows {
 
     ; główny konstruktor, dokumentacja w static Call
     __New(tytul, opcje := "", parametry?) {
-        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: SilnikGUI.ResizeMarg, GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0 })
+        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: ((IsSet(parametry) && parametry.HasProp("GruboscRamki")) ? parametry.GruboscRamki : SilnikGUI.GruboscRamki), GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0 })
         pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadL := parametry.PadL, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent
 
         if !InStr(opcje, "-DPIScale")
@@ -3891,7 +3891,11 @@ class SilnikGUI extends SubWindows {
         if (this.Stan.PokazPasek == 0) {
             this.GuiObj.Opt(ResizeMarg > 0 ? "+Resize" : "-Resize")
             OnMessage(0x0083, (wp, lp, msg, hw) => (hw == hwnd) ? 0 : "")
-            OnMessage(0x0084, ObjBindMethod(SilnikGUI, "ObslugaHitTest", hwnd, ResizeMarg))
+            OnMessage(0x0084, ObjBindMethod(SilnikGUI, "ObslugaHitTest", hwnd, this))
+            if (this.Stan.UseChild) {
+                OnMessage(0x0084, ObjBindMethod(SilnikGUI, "myObslugaHitTestChild", this, this.Stan.ClipGui.Hwnd))
+                OnMessage(0x0084, ObjBindMethod(SilnikGUI, "myObslugaHitTestChild", this, this.Stan.ChildGui.Hwnd))
+            }
             OnMessage(0x0086, (wp, lp, msg, hw) => (hw == hwnd) ? 1 : "") ;(Blokada paska)
 
             ; Przeciąganie dla okien bez paska
@@ -4554,21 +4558,23 @@ class SilnikGUI extends SubWindows {
     }
 
     /**
-     * Funkcja pomocnicza do obsługi stref zmiany rozmiaru w oknie bezramkowym.
-     * Wywoływana z OnMessage dla WM_NCHITTEST (0x0084) w celu określenia, czy kursor znajduje się na krawędzi okna i jaki jest odpowiedni kod hit testu.
-     * @param {Integer} targetHwnd - Uchwyt okna docelowego, dla którego ma być obsługiwany hit test.
-     * @param {Integer} margines - Grubość strefy krawędzi (w pikselach), która będzie reagować na zmianę rozmiaru.
-     * @param {Integer} wParam - WPARAM z OnMessage, nie używany.
-     * @param {Integer} lParam - LPARAM z OnMessage, zawiera współrzędne kursora.
-     * @param {Integer} msg - Komunikat Windows (oczekiwany 0x0084).
-     * @param {Integer} hwnd - Uchwyt okna, dla którego jest wywoływana funkcja.
+     * Receptor handler for WM_NCHITTEST in borderless windows.
+     * Identifies active edge zones and returns directional flags (e.g., HTTOP) to the system.
+     * @param {Integer} targetHwnd - Target window handle for hit testing.
+     * @param {SilnikGUI} instancjaSilnika - Main GUI engine instance to retrieve dynamic ResizeMarg.
+     * @param {Integer} wParam - WPARAM from OnMessage (unused).
+     * @param {Integer} lParam - LPARAM containing cursor coordinates.
+     * @param {Integer} msg - Windows message code.
+     * @param {Integer} hwnd - Handle of the window triggering the event.
      */
-    static ObslugaHitTest(targetHwnd, margines, wParam, lParam, msg, hwnd) {
+    static ObslugaHitTest(targetHwnd, instancjaSilnika, wParam, lParam, msg, hwnd) {
         if (hwnd != targetHwnd)
             return
 
         if WinGetMinMax("ahk_id " hwnd)
             return 1 ; HTCLIENT
+
+        margines := instancjaSilnika.Stan.ResizeMarg
 
         x := lParam & 0xFFFF
         y := (lParam >> 16) & 0xFFFF
@@ -4597,6 +4603,39 @@ class SilnikGUI extends SubWindows {
         if (right)
             return 11 ; HTRIGHT
         return 1 ; HTCLIENT
+    }
+
+    /**
+     * Delegator handler for WM_NCHITTEST.
+     * Detects cursor overlap on parent's edge margins from within child windows. Returns HTTRANSPARENT (-1) to force event bubbling.
+     * @param {SilnikGUI} instancjaSilnika - Main GUI engine instance.
+     * @param {Integer} targetHwnd - Target child window handle.
+     * @param {Integer} wParam - WPARAM from OnMessage (unused).
+     * @param {Integer} lParam - LPARAM containing cursor coordinates.
+     * @param {Integer} msg - Windows message code.
+     * @param {Integer} hwnd - Handle of the window triggering the event.
+     */
+    static myObslugaHitTestChild(instancjaSilnika, targetHwnd, wParam, lParam, msg, hwnd) {
+        if (hwnd != targetHwnd)
+            return
+
+        if WinGetMinMax("ahk_id " instancjaSilnika.GuiObj.Hwnd)
+            return
+
+        margines := instancjaSilnika.Stan.ResizeMarg
+
+        x := lParam & 0xFFFF
+        y := (lParam >> 16) & 0xFFFF
+
+        WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " instancjaSilnika.GuiObj.Hwnd)
+
+        top := (y >= wY && y < wY + margines)
+        bottom := (y >= wY + wH - margines && y < wY + wH)
+        left := (x >= wX && x < wX + margines)
+        right := (x >= wX + wW - margines && x < wX + wW)
+
+        if (top || bottom || left || right)
+            return -1 ; HTTRANSPARENT
     }
 
     /**
