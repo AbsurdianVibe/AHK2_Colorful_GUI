@@ -3,14 +3,14 @@
 ;throw Error("CRITICAL_TEST_CRASH")
 
 ; Set dark theme base color, or any color you want!
-SilnikGUI.Konfiguruj("2B2B2B")
+SilnikGUI.Konfiguruj("2b2b2b")
 TotalScale := 1
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
 SilnikGUI.Statics.TotalScale := TotalScale
 
-App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
+App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize380x380 +MaxSize400x400", {
     MainGUI: true,
     CSBarV: 1,
     CSBarH: 1,
@@ -18,17 +18,20 @@ App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize200x200", {
     ResizeMarg: 8,
     PadD: 20,
     PadR: 20,
-    PadL: 20
+    PadL: 20,
+    pokazPasek: 1
 })
 PadL := 20
+
+
 ; --- Header ---
-Welcome := App.Add("Text", "X" . padL + 10 . "  y20", "Welcome to AHK2ColorfulGUI Demo", 1, 16)
+Welcome := App.Add("Text", "X" . padL + 10 . "  y+20", "Welcome to AHK2ColorfulGUI Demo", 1, 16)
 Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", { DelayON: 1000, czas: 3000, trybPozycji: Welcome })
 ; App.Stan.ChildGui.SetFont("s10 norm")
 ; App.Stan.ChildGui.SetFont("s12 italic")
 Welcome2 := App.Add("Text", "x" . padL + 10. " y+15 cAAAAAA", "--- Input Fields ---")
 Welcome2.GetPos(, , &W2W, &W2H)
-Welcome2.Move(320, 50, , , 1)
+;Welcome2.Move(320, 50, , , 1)
 
 ; String Validation (Type 2)
 ConfigLine1 := App.DodajWierszKonfiguracji("standard mode:", "Guest User", {
@@ -50,16 +53,19 @@ ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
 })
 
 ; Float Validation (Type 1) with limits
-ConfigLine3 := App.DodajWierszKonfiguracji("Float mode:", 1.25, {
+ConfigLine3 := App.DodajWierszKonfiguracji("UI Scale", SilnikGUI.Statics.TotalScale, {
     trybWalidacji: 1,
     minVal: 0.1,
     maxVal: 5.0,
-    skok: 0.1,
+    skok: 0.02,
     SzerText: 90,
     SzerPola: 100,
+    InfoRight: 0,
     pozycja: "y+10 xp"
 })
-ConfigLine3.Move()
+ConfigLine3.OnEvent("Change", (*) => SilnikGUI.PrzeskalujWszystko(ConfigLine3.Value))
+OgVScroll := ConfigLine3.VScrollAction
+ConfigLine3.VScrollAction := (ctrl, dir) => (OgVScroll(ctrl, dir), SilnikGUI.PrzeskalujWszystko(ctrl.Value))
 
 ; Multiline (Type 3)
 ConfigLine4 := App.DodajWierszKonfiguracji("Multiline mode:", "Line 1: AHK is great!`nLine 2: ColorfulGUI is awesome!", {
@@ -88,7 +94,7 @@ App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
 ; DropDown List
 App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
     (ctrl, index) => SilnikGUI.CustomTooltip("You selected: " . ctrl.Value, { czas: 2000, trybPozycji: "Mouse" }),
-    1, { pos: "xm", padX: 5 }
+    1, { pos: "xm y+10", padX: 5, sepW: 2 }
 )
 ; --- Interactive Buttons ---
 App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---") ; .SetFont("s12 italic")
@@ -137,20 +143,20 @@ ShowDynamicDialog() {
     ; any 'early return' checks anymore. The engine automatically returns
     ; a safe proxy object to swallow any duplicate control creation.
     ; Initialization without title bar, fitting width automatically (AutoFitW: 0.99)
-    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 2, CSBarV: 0, CSBarH: 0, ResizeMarg: 0, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
+    Z := SilnikGUI("DYNAMIC RENAME", "MinSize260x0", { unikalny: "dynamic rename", pokazPasek: 0, createChild: true, zamknijNaEsc: 2, CSBarV: 0, CSBarH: 0, ResizeMarg: 2, GruboscRamki: 2, PadR: 20, PadD: 15, AutoFitW: 0.99 })
 
     Z.GuiObj.OnEvent("Close", (*) => Z := 0)
     ; Z.GuiObj.SetFont("s10")
 
     closeAction := (*) => (Z.Zakoncz(), Z := 0)
-    Z.DodajWierszKonfiguracji("New name:", "Type a.", { trybWalidacji: 2, pozycja: "x20 yp+15", SzerPola: 100, AutoCenter: true, SzRamki: 2, ResizeEditW: true, obslugaEnter: closeAction })
+    Z.DodajWierszKonfiguracji("New name:", "Type a.", { trybWalidacji: 2, pozycja: "x20 yp+15", SzerPola: 100, AutoCenter: true, SzRamki: 2, ResizeEditW: true, ResizeEditH: true, obslugaEnter: closeAction })
 
     btnZapisz := Z.DodajPrzycisk("Save", closeAction, "xm y+20 w100 h30")
     btnAnuluj := Z.DodajPrzycisk("Cancel", closeAction, "yp w100 h30")
 
     Z.CallbackLayout := (Szer, Off := 0, *) => (
         Sk := A_ScreenDPI / 96,
-        RealW := 100 * TotalScale * Sk,
+        RealW := 100 * SilnikGUI.Statics.TotalScale * Sk,
         gap := (Szer - 2 * RealW) / 3,
         btnZapisz.Move(gap + Off, "", "", "", false),
         btnAnuluj.Move(Szer - gap - RealW + Off, "", "", "", false)
@@ -168,7 +174,7 @@ ShowTabTrackingDemo() {
     ; Even if the window is just hidden, the WinAPI IsWindow check ensures
     ; it is correctly found. The State Lock then prevents new controls from
     ; being added to the existing GUI, making early returns completely obsolete.
-    T := SilnikGUI("Tab Tracking Demo", "MinSize200x200", { unikalny: "TabDemo", pokazPasek: 1, createChild: true, zamknijNaEsc: 1, CSBarV: 1, CSBarH: 1, PadD: 30, PadR: 30 })
+    T := SilnikGUI("Tab Tracking Demo", "MinSize100x100", { unikalny: "TabDemo", pokazPasek: 1, createChild: true, zamknijNaEsc: 1, CSBarV: 1, CSBarH: 1, PadD: 30, PadR: 30 })
 
     T.GuiObj.OnEvent("Close", (*) => (T.Zakoncz(), T := 0))
 

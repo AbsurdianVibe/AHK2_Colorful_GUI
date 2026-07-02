@@ -494,23 +494,37 @@ class Grafika extends Motyw {
             Gui: guiObj,
             Hwnd: MainCtrl.Hwnd,
             x: rX, y: rY, w: w, h: h,
+            Grubosc: grubosc, ; Wyciągnięta właściwość grubości
             Ctrls: Ctrls,
-            ; Kompatybilność wsteczna (dla MonitorujWyjscie i logiki resize)
             Top: (wypelnienie ? MainCtrl : Ctrls[1]),
             Bot: (wypelnienie ? MainCtrl : Ctrls[2]),
             Left: (wypelnienie ? MainCtrl : Ctrls[3]),
             Right: (wypelnienie ? MainCtrl : Ctrls[4])
         }
 
+        ; Zapis wartości Base dla silnika skalującego
+        sc := SilnikGUI.Statics.TotalScale
+        Proxy.BaseX := rX / sc
+        Proxy.BaseY := rY / sc
+        Proxy.BaseW := w / sc
+        Proxy.BaseH := h / sc
+        Proxy.BaseGrubosc := grubosc / sc
+
         Proxy.DefineProp("Move", { Call: (this, nx := "", ny := "", nw := "", nh := "") => (
             (nx != "") && this.x := nx, (ny != "") && this.y := ny, (nw != "") && this.w := nw, (nh != "") && this.h := nh,
             (wypelnienie)
                 ? this.Ctrls[1].Move(this.x, this.y, this.w, this.h)
             : (
-                this.Top.Move(this.x, this.y, this.w, grubosc),
-                this.Bot.Move(this.x, this.y + this.h - grubosc, this.w, grubosc),
-                this.Left.Move(this.x, this.y + grubosc, grubosc, Max(0, this.h - 2 * grubosc)),
-                this.Right.Move(this.x + this.w - grubosc, this.y + grubosc, grubosc, Max(0, this.h - 2 * grubosc))
+                this.Top.Move(this.x, this.y, this.w, this.Grubosc),
+                this.Bot.Move(this.x, this.y + this.h - this.Grubosc, this.w, this.Grubosc),
+                this.Left.Move(this.x, this.y + this.Grubosc, this.Grubosc, Max(0, this.h - 2 * this.Grubosc)),
+                this.Right.Move(this.x + this.w - this.Grubosc, this.y + this.Grubosc, this.Grubosc, Max(0, this.h - 2 * this.Grubosc))
+            ),
+            (!SilnikGUI.Statics.HasProp("IsRescaling") || !SilnikGUI.Statics.IsRescaling) && (
+                this.BaseX := this.x / SilnikGUI.Statics.TotalScale,
+                this.BaseY := this.y / SilnikGUI.Statics.TotalScale,
+                this.BaseW := this.w / SilnikGUI.Statics.TotalScale,
+                this.BaseH := this.h / SilnikGUI.Statics.TotalScale
             )
         ) })
 
@@ -535,6 +549,10 @@ class Grafika extends Motyw {
             set: (this, val) => Batch("DefineProp", "ParentCtrl", { Value: val }),
             get: (this) => this.Ctrls[1].ParentCtrl
         })
+
+        ; Przypięcie relacji odwrotnej (kontrolka -> Proxy) dla pętli Zaktualizuj
+        for c in Ctrls
+            c.Proxy := Proxy
 
         return Proxy
     }
@@ -2295,6 +2313,9 @@ class CtlFactory extends ExWinAndPopups {
         poleEdit.BazoweX := dX ; Bazowe X
         poleEdit.AutoCenter := AutoCenter ; Flaga centrowania
         poleEdit.GruboscRamki := Grubosc
+        poleEdit.BaseSzerEtykiety := SzerFinalnaEtykiety / SilnikGUI.Statics.TotalScale
+        poleEdit.BaseMargL := dX / SilnikGUI.Statics.TotalScale
+        poleEdit.BaseGruboscRamki := Grubosc / SilnikGUI.Statics.TotalScale
         poleEdit.FontName := FontName
         poleEdit.FontSize := FontSize
         poleEdit.WysWiersza := hWiersza
@@ -2303,6 +2324,8 @@ class CtlFactory extends ExWinAndPopups {
         poleEdit.CzyDynamiczne := CzyDynamicznePole ; Znacznik dla Pokaz (ochrona statycznych)
         poleEdit.SzerPola := SzerPola ; Przechowuje szerokość pola (niezależnie od dynamicznego dopasowania)
         poleEdit.WysInput := WysInput ; Zapisz wynikową wyskość jako kaganiec
+        poleEdit.BaseSzerPola := poleEdit.SzerPola / SilnikGUI.Statics.TotalScale
+        poleEdit.BaseWysInput := poleEdit.WysInput / SilnikGUI.Statics.TotalScale
         if Backlight == 1
             poleEdit.KolorBazowyTla := BackCol
         poleEdit.KolorBazowy := TextCol
@@ -2582,6 +2605,7 @@ class CtlFactory extends ExWinAndPopups {
         ValueCtrl.SetFont("s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt, SilnikGUI.Statics.GlobFont.Name)
         ArrowCtrl := this.Stan.ChildGui.Add("Text", "x+" . SepW . " yp w" . ArrowW . " h" . WysWiersza . " +0x200 +0x100 Center Background" . SilnikGUI.Motyw.Wklesly . " " . SilnikGUI.Motyw.Tekst, "▼")
         ArrowCtrl.SetFont("s" . Round(Opt.fSize * 0.8 * SilnikGUI.Statics.TotalScale) . " " . Opt.fOpt, SilnikGUI.Statics.GlobFont.Name)
+        ArrowCtrl.BaseSepW := SepW / SilnikGUI.Statics.TotalScale
 
         ; 4. Object Configuration
         ValueCtrl.Opcje := opcje
@@ -2666,12 +2690,23 @@ class CtlFactory extends ExWinAndPopups {
             (this.Stan.UseChild) && this.Stan.ChildGui.PopupActive := true
 
             ; 1. Position (Smart Positioning relative to frame)
-            wysokoscListy := (ValueCtrl.Opcje.Length * WysWiersza)
+            AktualnaSkala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
+            AktW := Opt.scale ? Round((Opt.w / Skala) * AktualnaSkala) : Opt.w
+            AktBorder := Opt.scale ? Round((Opt.Border / Skala) * AktualnaSkala) : Opt.Border
+            AktGrubosc := ramkaObj.Grubosc
+            AktArrowW := Opt.scale ? Round(2.0 * FinalSize * AktualnaSkala) : Round(2.0 * FinalSize)
+            AktSepW := Opt.scale ? Round(Opt.sepW * AktualnaSkala) : Opt.sepW
+
+            ValueCtrl.GetPos(&vX, &vY, &vW, &vH)
+            AktWysWiersza := vH
+            AktSzerText := AktW - (2 * AktGrubosc) - AktArrowW - AktSepW
+
+            wysokoscListy := (ValueCtrl.Opcje.Length * AktWysWiersza)
             try WinGetPos(&rX, &rY, &rW, &rH, "ahk_id " ramkaObj.Hwnd)
             catch
                 rX := 0, rY := 0, rW := 0, rH := 0
             MonitorGetWorkArea(MonitorGetPrimary(), &mL, &mT, &mR, &mB)
-            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, Opt.w, wysokoscListy + (2 * Opt.Border), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
+            pos := SilnikGUI.DopasujDoKotwicy("Anchor", { x: rX, y: rY, w: rW, h: rH }, AktW, wysokoscListy + (2 * AktBorder), ParsedAlign, SilnikGUI.ParsujMove("NoClampX"), 0, 0, { L: mL, T: mT, R: mR, B: mB })
 
             ; 2. GUI Popup
             pGui := Gui("-Caption +ToolWindow +AlwaysOnTop +E0x08000000 +Owner" . this.GuiObj.Hwnd . " -DPIScale")
@@ -2680,7 +2715,7 @@ class CtlFactory extends ExWinAndPopups {
                 WinSetTransparent(pAlpha, pGui.Hwnd)
             }
             pGui.BackColor := SilnikGUI.Motyw.Ramka
-            pGui.MarginX := Opt.Border, pGui.MarginY := Opt.Border
+            pGui.MarginX := AktBorder, pGui.MarginY := AktBorder
             pGui.SetFont("s" . Round(Opt.fSize * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
             pGui.ListCtrls := []
             pGui.Silnik := this ; Assign engine instance for MonitorujStan logic
@@ -2693,19 +2728,19 @@ class CtlFactory extends ExWinAndPopups {
             for i, opcja in ValueCtrl.Opcje {
                 bg := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Motyw.Focus : SilnikGUI.Motyw.Przycisk
                 ram := (i == ValueCtrl.SelectedIndex) ? SilnikGUI.Odcien(SilnikGUI.Motyw.Ramka, SilnikGUI.Motyw.ParamFocus) : SilnikGUI.Motyw.Ramka
-                yPos := (i == 1) ? "y" . Opt.Border : "y+0"
+                yPos := (i == 1) ? "y" . AktBorder : "y+0"
 
                 ; [TRYB CENTER] Dzielimy wiersz na 3 części: Left (wyrównanie), Main (tekst), Right (reszta)
                 ; Zapewnia to idealne pokrycie pozycji X tekstu w popupie i kotwicy.
-                LeftW := (Grubosc) - Opt.Border
+                LeftW := AktGrubosc - AktBorder
                 LeftW := (LeftW > 0) ? LeftW : 0
-                l := pGui.Add("Text", "x" . Opt.Border . " " . yPos . " w" . LeftW . " h" . WysWiersza . " +0x200 Background" . bg)
-                t := pGui.Add("Text", "x+0 yp w" . SzerText . " h" . WysWiersza . " +0x200 " . AlignMode . " Background" . bg, _ApplyAlign(opcja))
-                r1 := pGui.Add("Text", "x+0 yp w" . SepW . " h" . WysWiersza . " +0x200 Background" . ram)
+                l := pGui.Add("Text", "x" . AktBorder . " " . yPos . " w" . LeftW . " h" . AktWysWiersza . " +0x200 Background" . bg)
+                t := pGui.Add("Text", "x+0 yp w" . AktSzerText . " h" . AktWysWiersza . " +0x200 " . AlignMode . " Background" . bg, _ApplyAlign(opcja))
+                r1 := pGui.Add("Text", "x+0 yp w" . AktSepW . " h" . AktWysWiersza . " +0x200 Background" . ram)
 
-                Right2W := Opt.w - Opt.Border - LeftW - SzerText - SepW - Opt.Border
+                Right2W := AktW - AktBorder - LeftW - AktSzerText - AktSepW - AktBorder
                 Right2W := (Right2W > 0) ? Right2W : 0
-                r2 := pGui.Add("Text", "x+0 yp w" . Right2W . " h" . WysWiersza . " +0x200 Background" . bg)
+                r2 := pGui.Add("Text", "x+0 yp w" . Right2W . " h" . AktWysWiersza . " +0x200 Background" . bg)
 
                 itemObj := { Main: t, Left: l, Right1: r1, Right2: r2 }
                 pGui.ListCtrls.Push(itemObj)
@@ -2719,7 +2754,7 @@ class CtlFactory extends ExWinAndPopups {
                 t.HoverAction := bindHover, l.HoverAction := bindHover, r2.HoverAction := bindHover
             }
 
-            pGui.Show("x" . pos.x . " y" . pos.y . " w" . Opt.w . " NA")
+            pGui.Show("x" . pos.x . " y" . pos.y . " w" . AktW . " NA")
             ValueCtrl.PopupGui := pGui
             ih.Start()
 
@@ -2829,20 +2864,20 @@ class CtlFactory extends ExWinAndPopups {
      * Wywoływana automatycznie, gdy SzerPola=0 w DodajWierszKonfiguracji.
      * @param {Integer} SzerEtykiety - Szerokość etykiety (stała).
      * @param {Gui.Edit} ctrl - Kontrolka Edit, której rozmiar ma być dostosowany.
-     * @param {Integer} [MinW = 50] - Minimalna szerokość kontrolki.
-     * @param {Integer} [MinH = 18] - Minimalna wysokość kontrolki.
+     * @param {Integer} MinW - Minimalna szerokość kontrolki (przeskalowana wyżej).
+     * @param {Integer} MinH - Minimalna wysokość kontrolki (przeskalowana wyżej).
      */
-    DostosujRozmiar(SzerEtykiety, ctrl, MinW := 50, MinH := 18, *) {
+    DostosujRozmiar(SzerEtykiety, ctrl, MinW, MinH, *) {
         fName := HasProp(ctrl, "FontName") ? ctrl.FontName : SilnikGUI.Statics.GlobFont.Name
         fSize := HasProp(ctrl, "FontSize") ? ctrl.FontSize : SilnikGUI.Statics.GlobFont.Size
-        FinalSize := Round(fSize * SilnikGUI.Statics.TotalScale)
-        hWiersza := HasProp(ctrl, "WysWiersza") ? ctrl.WysWiersza : 18
+        SkalaWymiaru := SilnikGUI.Statics.TotalScale
+        FinalSize := Round(fSize * SkalaWymiaru)
 
         ; 2. Grubość z cache
-        Grubosc := HasProp(ctrl, "GruboscRamki") ? ctrl.GruboscRamki : Round(2 * ((A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale))
+        Grubosc := HasProp(ctrl, "BaseGruboscRamki") ? Round(ctrl.BaseGruboscRamki * SkalaWymiaru) : (HasProp(ctrl, "GruboscRamki") ? ctrl.GruboscRamki : Round(2 * SkalaWymiaru))
 
         ; BazoweX (domyślnie 10)
-        MargL := HasProp(ctrl, "BazoweX") ? ctrl.BazoweX : 10
+        MargL := HasProp(ctrl, "BaseMargL") ? Round(ctrl.BaseMargL * SkalaWymiaru) : (HasProp(ctrl, "BazoweX") ? ctrl.BazoweX : 10)
         MargP := this.Stan.PadR
         RamkaOkna := this.Stan.GruboscRamki
 
@@ -2867,6 +2902,7 @@ class CtlFactory extends ExWinAndPopups {
 
         ; [FIX] Drugi pomiar wysokości z narzuconą szerokością (Edit dla word-wrap bez spacji)
         wymJednejLinii := SilnikGUI.ZmierzTekst("W", fName, "s" . FinalSize)
+        hWiersza := HasProp(ctrl, "WysWiersza") ? wymJednejLinii.h + Round(4 * SkalaWymiaru) : Round(18 * SkalaWymiaru)
         wymWrap := SilnikGUI.ZmierzTekst(ctrl.Value, fName, "s" . FinalSize, wAktualne)
         lines := Max(1, Ceil(wymWrap.h / wymJednejLinii.h))
         WysokoscLayout := lines * hWiersza
@@ -2884,8 +2920,9 @@ class CtlFactory extends ExWinAndPopups {
         ; 4. Resize okna/kontrolki
         this.GuiObj.GetPos(&x, &y, &w, &h)
 
-        if (HasProp(this.Stan, "MinW") && this.Stan.MinW > NowaSzer)
-            NowaSzer := this.Stan.MinW
+        DynMinW := HasProp(this.Stan, "BaseMinW") ? Round(this.Stan.BaseMinW * SkalaWymiaru) : (HasProp(this.Stan, "MinW") ? this.Stan.MinW : 0)
+        if (DynMinW > NowaSzer)
+            NowaSzer := DynMinW
 
         if (this.CallbackLayout)
             this.CallbackLayout.Call(NowaSzer - (2 * RamkaOkna), (this.Stan.CzyPokazano && !this.Stan.UseChild) ? RamkaOkna : 0, WysokoscLayout, hWiersza)
@@ -2916,13 +2953,13 @@ class CtlFactory extends ExWinAndPopups {
             cfName := HasProp(c, "FontName") ? c.FontName : SilnikGUI.Statics.GlobFont.Name
             cfSize := HasProp(c, "FontSize") ? c.FontSize : SilnikGUI.Statics.GlobFont.Size
 
-            cFinalSize := Round(cfSize * SilnikGUI.Statics.TotalScale)
+            cFinalSize := Round(cfSize * SkalaWymiaru)
 
-            cGrubosc := HasProp(c, "GruboscRamki") ? c.GruboscRamki : Round(2 * ((A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale))
-            cMargL := HasProp(c, "BazoweX") ? c.BazoweX : 10
-            cSzerEtykiety := HasProp(c, "SzerEtykiety") ? c.SzerEtykiety : 0
-            cSzerPola := HasProp(c, "SzerPola") ? c.SzerPola : MinW
-            cWysInput := HasProp(c, "WysInput") ? c.WysInput : MinH
+            cGrubosc := HasProp(c, "BaseGruboscRamki") ? Round(c.BaseGruboscRamki * SkalaWymiaru) : (HasProp(c, "GruboscRamki") ? c.GruboscRamki : Round(2 * SkalaWymiaru))
+            cMargL := HasProp(c, "BaseMargL") ? Round(c.BaseMargL * SkalaWymiaru) : (HasProp(c, "BazoweX") ? c.BazoweX : 10)
+            cSzerEtykiety := HasProp(c, "BaseSzerEtykiety") ? Round(c.BaseSzerEtykiety * SkalaWymiaru) : (HasProp(c, "SzerEtykiety") ? c.SzerEtykiety : 0)
+            cSzerPola := HasProp(c, "BaseSzerPola") ? Round(c.BaseSzerPola * SkalaWymiaru) : (HasProp(c, "SzerPola") ? c.SzerPola : MinW)
+            cWysInput := HasProp(c, "BaseWysInput") ? Round(c.BaseWysInput * SkalaWymiaru) : (HasProp(c, "WysInput") ? c.WysInput : MinH)
 
             cPhW := 0
             if HasProp(c, "PlaceholderCtrl")
@@ -2938,9 +2975,9 @@ class CtlFactory extends ExWinAndPopups {
             cwAktualne := Min(cwAktualne, LimitOkna - cOverhead)
             cwAktualne := Max(cwAktualne, cSzerPola)
 
-            chWiersza := HasProp(c, "WysWiersza") ? c.WysWiersza : 18
             ; [FIX] Drugi pomiar wysokości dla pozostałych kontrolek w trybie word-wrap Edit
             wymJednejLiniiC := SilnikGUI.ZmierzTekst("W", cfName, "s" . cFinalSize)
+            chWiersza := HasProp(c, "WysWiersza") ? wymJednejLiniiC.h + Round(4 * SkalaWymiaru) : Round(18 * SkalaWymiaru)
             wymWrapC := SilnikGUI.ZmierzTekst(c.Value, cfName, "s" . cFinalSize, cwAktualne)
             linesC := Max(1, Ceil(wymWrapC.h / wymJednejLiniiC.h))
             cWysokoscLayout := linesC * chWiersza
@@ -2986,25 +3023,37 @@ class CtlFactory extends ExWinAndPopups {
             }
         }
 
-        ; 4. Callback układu
+        ; [FIX] 5. Obliczenie nowej wielkości okna (AutoFit) i łączony Resize
+        TargetH := h
+        TargetW := Round(NowaSzer + DiffW)
+        this.Stan.LastObszarTick := 0 ; Wymuszenie czyszczenia cache po zmianach układu
+
+        if (this.Stan.AutoFitH > 0 || this.Stan.AutoFitW > 0)
+            ContentAfter := this.ObliczObszarRoboczy()
+
+        if (this.Stan.AutoFitH > 0) {
+            NowaWys := ContentAfter.H + extraFrame
+            LimitOknaH := (this.Stan.AutoFitH > 1) ? this.Stan.AutoFitH : Round(A_ScreenHeight * this.Stan.AutoFitH)
+            NowaWys := Min(NowaWys, LimitOknaH)
+            TargetH := Round(Max(NowaWys + DiffH, HasProp(this.Stan, "MinH") ? this.Stan.MinH : 50))
+        }
+
+        if (this.Stan.AutoFitW > 0) {
+            LimitOknaW := (this.Stan.AutoFitW > 1) ? this.Stan.AutoFitW : Round(A_ScreenWidth * this.Stan.AutoFitW)
+            NowaSzerok := Min(ContentAfter.W, LimitOknaW)
+            TargetW := Round(Max(NowaSzerok + DiffW, DynMinW)) ; Wykorzystuje DynMinW ustalone na początku funkcji
+        }
+
+        DoceloweCW := (this.Stan.AutoFitW > 0 && this.Stan.AutoFitW <= 1) ? (TargetW - DiffW) : NowaSzer
+
+        ; 4. Callback układu (Wywoływany po wyliczeniach, by dysponować docelową powłoką X okna)
         if (this.CallbackLayout) {
-            SzerokoscLayout := NowaSzer - (2 * RamkaOkna)
+            SzerokoscLayout := DoceloweCW - (2 * RamkaOkna)
             OffsetLayout := (this.Stan.CzyPokazano && !this.Stan.UseChild) ? RamkaOkna : 0
             if (!this.Stan.LastLayoutState || this.Stan.LastLayoutState.W != SzerokoscLayout || this.Stan.LastLayoutState.Off != OffsetLayout || this.Stan.LastLayoutState.H != WysokoscLayout) {
                 this.CallbackLayout.Call(SzerokoscLayout, OffsetLayout, WysokoscLayout, hWiersza)
                 this.Stan.LastLayoutState := { W: SzerokoscLayout, Off: OffsetLayout, H: WysokoscLayout }
             }
-        }
-
-        ; [FIX] 5. Obliczenie nowej wysokości okna (AutoFitH) i łączony Resize
-        TargetH := h
-        this.Stan.LastObszarTick := 0 ; Wymuszenie czyszczenia cache po zmianach układu
-        if (this.Stan.AutoFitH > 0) {
-            ContentAfter := this.ObliczObszarRoboczy()
-            NowaWys := ContentAfter.H + extraFrame
-            LimitOknaH := (this.Stan.AutoFitH > 1) ? this.Stan.AutoFitH : Round(A_ScreenHeight * this.Stan.AutoFitH)
-            NowaWys := Min(NowaWys, LimitOknaH)
-            TargetH := Round(Max(NowaWys + DiffH, 50)) ; Bezpieczne minimum
         }
 
         if (this.Stan.CzyPokazano) {
@@ -3199,29 +3248,31 @@ class SubWindows extends CtlFactory {
  * Opiera się na stylach i funkcjach z mouse_ctrl.ahk (ciemny motyw, ramki, walidacja).
  */
 class SilnikGUI extends SubWindows {
+    Kinetyka := unset
+    IsPanel := unset
 
     /**
      * Tworzy nowe okno GUI z zadanym tytułem i stylem.
      * @param {String} tytul - Tytuł okna.
      * @param {String} [opcje=""] - Dodatkowe opcje GUI: +AlwaysOnTop, MinSize[W]x[H]
      * @param {Object} [parametry] - Opcjonalny obiekt konfiguracyjny z parametrami:
-     * - [unikalny: false] {Boolean|String} - Singleton. true = użyj tytułu okna jako ID, String = własne ID.
-     * - [pokazPasek: 1] {Integer} - 0 = Brak paska (Borderless), 1 = Pasek widoczny.
+     * - [AutoFitH: 0] {Number} - Dopasowanie wysokości.
+     * - [AutoFitW: 0] {Number} - Dopasowanie szerokości.
      * - [createChild: true] {Boolean} - Czy tworzyć warstwę kontrolek (ChildGui).
-     * - [zamknijNaEsc: 1] {Integer} - Akcja ESC: 0=Off, 1=Hide, 2=Destroy.
-     * - [CSBarV: 1] {Integer} - Czy pokazać pasek przewijania pionowego (1 lub 0).
      * - [CSBarH: 1] {Integer} - Czy pokazać pasek przewijania poziomego (1 lub 0).
-     * - [ResizeMarg: 6] {Integer} - Margines aktywujący zmianę rozmiaru (Borderless).
-     * - [GruboscRamki: 2] {Integer} - Grubość ramki (jeśli pokazPasek=0).
+     * - [CSBarV: 1] {Integer} - Czy pokazać pasek przewijania pionowego (1 lub 0).
      * - [dragBezPaska: 1] {Integer} - Czy umożliwić przeciąganie okna bez paska (1 lub 0).
+     * - [GruboscRamki: 2] {Integer} - Grubość ramki (jeśli pokazPasek=0).
      * - [MainGUI: false] {Boolean|Function} - Zamyka wszystkie inne instancje SilnikGUI i ubija skrypt: [true] - po posprzątaniu mechanizmów SilnikGUI skrypt zostanie zakmniety prostym ExitApp, [function] - callback po zamknięciu okien -jeśli twój skrypt  ma własny  mechanimz zamykania, podaj go tu, zostanie wykonany po posprzątaniu SilnikGUI)
-     * - [RamkaPanelu: 2] {Integer} - Wewnętrzny odstęp paneli.
+     * - [PadD: 0] {Integer} - Margines od dołu.
      * - [PadL: 0] {Integer} - Margines z lewej strony.
      * - [PadR: 0] {Integer} - Margines z prawej strony.
-     * - [PadD: 0] {Integer} - Margines od dołu.
-     * - [AutoFitW: 0] {Number} - Dopasowanie szerokości.
-     * - [AutoFitH: 0] {Number} - Dopasowanie wysokości.
+     * - [pokazPasek: 1] {Integer} - 0 = Brak paska (Borderless), 1 = Pasek widoczny.
+     * - [RamkaPanelu: 2] {Integer} - Wewnętrzny odstęp paneli.
+     * - [ResizeMarg: GruboscRamki] {Integer} - Margines aktywujący zmianę rozmiaru (Borderless).
      * - [Transparent: 0] {Integer} - Przezroczystość okna (0.0-1.0).
+     * - [unikalny: false] {Boolean|String} - Singleton. true = użyj tytułu okna jako ID, String = własne ID.
+     * - [zamknijNaEsc: 1] {Integer} - Akcja ESC: 0=Off, 1=Hide, 2=Destroy.
      * @return {SilnikGUI}
      */
     static Call(tytul, opcje := "", parametry?) { ; metoda bezpiecznikowa (Singleton) antydubel, rzeczywisty konstruktor to drugi "_New"
@@ -3241,6 +3292,63 @@ class SilnikGUI extends SubWindows {
     ; Statyczny inicjalizator: Wymusza DPI Awareness V2 dla wątku
     static __New() {
         try DllCall("SetThreadDpiAwarenessContext", "ptr", -4, "ptr")
+
+        OgShow := Gui.Prototype.Show
+        Gui.Prototype.DefineProp("Show", { Call: (guiObj, opt?) => (
+            OgShow(guiObj, opt?),
+            guiObj.GetPos(&x, &y, &w, &h),
+            guiObj.GetClientPos(, , &cw, &ch),
+            sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+            guiObj.BaseX := x / sc,
+            guiObj.BaseY := y / sc,
+            guiObj.BaseW := cw / sc,
+            guiObj.BaseH := ch / sc,
+            guiObj.NC_W := w - cw,
+            guiObj.NC_H := h - ch
+        ) })
+
+        OgAdd := Gui.Prototype.Add
+        Gui.Prototype.DefineProp("Add", { Call: (guiObj, type, opt?, text?) => (
+            ctrl := OgAdd(guiObj, type, opt?, text?),
+            ctrl.GetPos(&x, &y, &w, &h),
+            sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+            ctrl.BaseX := x / sc,
+            ctrl.BaseY := y / sc,
+            ctrl.BaseW := w / sc,
+            ctrl.BaseH := h / sc,
+            (!HasProp(ctrl, "BaseFontSize") && SilnikGUI.Statics.HasProp("GlobFont") && SilnikGUI.Statics.GlobFont.HasProp("Size")) ? (ctrl.BaseFontSize := SilnikGUI.Statics.GlobFont.Size) : 0,
+            ctrl
+        ) })
+
+        OgSetFont := Gui.Control.Prototype.SetFont
+        Gui.Control.Prototype.DefineProp("SetFont", { Call: (ctrl, opt?, name?) => (
+            sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+            ((IsSet(opt) && RegExMatch(opt, "i)(?:^|\s)s([\d\.]+)", &m)) && ctrl.BaseFontSize := m[1] / sc),
+            OgSetFont(ctrl, opt?, name?)
+        ) })
+
+        OgMove := Gui.Control.Prototype.Move
+        Gui.Control.Prototype.DefineProp("Move", { Call: (ctrl, x?, y?, w?, h?, args*) => (
+            OgMove(ctrl, x?, y?, w?, h?),
+            ctrl.GetPos(&cx, &cy, &cw, &ch),
+            (IsSet(x) && x != "") && cx := x,
+            (IsSet(y) && y != "") && cy := y,
+            (IsSet(w) && w != "") && cw := w,
+            (IsSet(h) && h != "") && ch := h,
+            (HasProp(ctrl, "Ramka")) && (
+                (HasProp(ctrl, "Rola")) ;  && ctrl.Rola == "CustomButton"
+                    ? ctrl.Ramka.Move(cx - ctrl.Ramka.Grubosc, cy - ctrl.Ramka.Grubosc, cw + 2 * ctrl.Ramka.Grubosc, ch + 2 * ctrl.Ramka.Grubosc)
+                : ctrl.Ramka.Move(cx, cy, cw, ch)
+            ),
+            (!SilnikGUI.Statics.HasProp("IsRescaling") || !SilnikGUI.Statics.IsRescaling) && (
+                sc := SilnikGUI.Statics.HasProp("TotalScale") ? SilnikGUI.Statics.TotalScale : 1.0,
+                ctrl.BaseX := cx / sc,
+                ctrl.BaseY := cy / sc,
+                ctrl.BaseW := cw / sc,
+                ctrl.BaseH := ch / sc
+            )
+        ) })
+
         ; [FIX] Przejście na pasywny nasłuch komunikatów (likwiduje konflikt z Hookiem mouse_ctrl)
         OnMessage(0x020A, (w, l, m, h) => this.ObslugaZdarzenSystemowych(w, l, m, h)) ; WM_MOUSEWHEEL
         OnMessage(0x020E, (w, l, m, h) => this.ObslugaZdarzenSystemowych(w, l, m, h)) ; WM_MOUSEHWHEEL
@@ -3261,6 +3369,264 @@ class SilnikGUI extends SubWindows {
         OnMessage(0x0047, (w, l, m, h) => this.ObslugaZmianyRozmiaruSystem(w, l, m, h)) ; WM_WINDOWPOSCHANGED
 
         SetTimer(ObjBindMethod(this, "GłównaPętlaStanu"), SilnikGUI.TickRate)
+    }
+
+    myApplyHardwareLimits() {
+        MonitorGetWorkArea(1, &WL, &WT, &WR, &WB)
+        safeMaxW := (WR - WL) - (SysGet(32) * 2)
+        safeMaxH := (WB - WT) - (this.Stan.PokazPasek ? SysGet(4) : 0) - (SysGet(33) * 2)
+
+        if HasProp(this.Stan, "MinW") && this.Stan.MinW > safeMaxW
+            this.Stan.MinW := safeMaxW
+        if HasProp(this.Stan, "MinH") && this.Stan.MinH > safeMaxH
+            this.Stan.MinH := safeMaxH
+
+        if HasProp(this.Stan, "MaxW") && this.Stan.MaxW > safeMaxW
+            this.Stan.MaxW := safeMaxW
+        if HasProp(this.Stan, "MaxH") && this.Stan.MaxH > safeMaxH
+            this.Stan.MaxH := safeMaxH
+
+        minOpt := ""
+        if (HasProp(this.Stan, "MinW") && this.Stan.MinW > 0)
+            minOpt .= this.Stan.MinW
+        if (HasProp(this.Stan, "MinH") && this.Stan.MinH > 0)
+            minOpt .= "x" . this.Stan.MinH
+        if (minOpt != "")
+            this.GuiObj.Opt("+MinSize" . minOpt)
+
+        effMaxW := (HasProp(this.Stan, "MaxW") && this.Stan.MaxW > 0) ? this.Stan.MaxW : safeMaxW
+        effMaxH := (HasProp(this.Stan, "MaxH") && this.Stan.MaxH > 0) ? this.Stan.MaxH : safeMaxH
+        this.GuiObj.Opt("+MaxSize" . effMaxW . "x" . effMaxH)
+    }
+
+    static PrzeskalujWszystko(nowaSkala) {
+        this.Statics.IsRescaling := true
+        this.Statics.TotalScale := nowaSkala
+
+        MouseGetPos(, , &mHwnd)
+        pt := Buffer(8, 0)
+        DllCall("GetCursorPos", "Ptr", pt)
+        mx := NumGet(pt, 0, "Int")
+        my := NumGet(pt, 4, "Int")
+
+        for app in this.Statics.AktywneInstancje
+            app.Przeskaluj(nowaSkala, mx, my, mHwnd)
+
+        for app in this.Statics.AktywneInstancje
+            app.WymusPelnyRedraw()
+
+        this.Statics.IsRescaling := false
+    }
+    Przeskaluj(nowaSkala, mx := 0, my := 0, mHwnd := 0) {
+        staraSkala := HasProp(this.Stan, "TotalScale") ? this.Stan.TotalScale : 1.0
+        wspolczynnik := nowaSkala / staraSkala
+        this.Stan.TotalScale := nowaSkala
+
+        myDpiScale := (A_ScreenDPI / 96) * nowaSkala
+        if HasProp(this.Stan, "BasePadR") {
+            this.Stan.ResizeMarg := Round(this.Stan.BaseResizeMarg * myDpiScale)
+            this.Stan.GruboscRamki := Round(this.Stan.BaseGruboscRamki * myDpiScale)
+            this.Stan.RamkaPanelu := Round(this.Stan.BaseRamkaPanelu * myDpiScale)
+            this.Stan.PadL := Round(this.Stan.BasePadL * myDpiScale)
+            this.Stan.PadR := Round(this.Stan.BasePadR * myDpiScale)
+            this.Stan.PadD := Round(this.Stan.BasePadD * myDpiScale)
+        }
+
+        if HasProp(this.Stan, "BaseMinW") && this.Stan.BaseMinW > 0
+            this.Stan.MinW := Round(this.Stan.BaseMinW * myDpiScale)
+        if HasProp(this.Stan, "BaseMinH") && this.Stan.BaseMinH > 0
+            this.Stan.MinH := Round(this.Stan.BaseMinH * myDpiScale)
+        if HasProp(this.Stan, "BaseMaxW") && this.Stan.BaseMaxW > 0
+            this.Stan.MaxW := Round(this.Stan.BaseMaxW * myDpiScale)
+        if HasProp(this.Stan, "BaseMaxH") && this.Stan.BaseMaxH > 0
+            this.Stan.MaxH := Round(this.Stan.BaseMaxH * myDpiScale)
+
+        this.myApplyHardwareLimits()
+
+
+        ; 1. ZAMROŻENIE RENDEROWANIA (Blokujemy TYLKO okno główne, system sam kaskaduje to na dzieci)
+        DllCall("LockWindowUpdate", "Ptr", this.GuiObj.Hwnd)
+        try {
+            if HasProp(this, "Kinetyka") {
+                this.Kinetyka.Cel *= wspolczynnik
+                this.Kinetyka.Curr *= wspolczynnik
+                this.Kinetyka.Vis *= wspolczynnik
+            }
+
+            if (this.Stan.VBar)
+                this.Stan.VBar.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * nowaSkala * (A_ScreenDPI / 96))
+            if (this.Stan.HBar)
+                this.Stan.HBar.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * nowaSkala * (A_ScreenDPI / 96))
+
+            if HasProp(this.GuiObj, "BaseW") {
+                ncw := HasProp(this.GuiObj, "NC_W") ? this.GuiObj.NC_W : 0
+                nch := HasProp(this.GuiObj, "NC_H") ? this.GuiObj.NC_H : 0
+                nw := Round(this.GuiObj.BaseW * nowaSkala) + ncw
+                nh := Round(this.GuiObj.BaseH * nowaSkala) + nch
+
+                isActive := false
+                currHwnd := mHwnd
+                while (currHwnd) {
+                    if (currHwnd == this.GuiObj.Hwnd) {
+                        isActive := true
+                        break
+                    }
+                    currHwnd := DllCall("GetAncestor", "Ptr", currHwnd, "UInt", 1, "Ptr")
+                }
+
+                this.GuiObj.GetPos(&wX, &wY)
+                this.GuiObj.GetClientPos(&cX, &cY, &cW, &cH)
+                borderL := cX - wX
+                borderT := cY - wY
+
+                if (HasProp(this.Stan, "ExactCX") && Abs(cX - Round(this.Stan.ExactCX)) <= 1 && Abs(cY - Round(this.Stan.ExactCY)) <= 1) {
+                    exactCX := this.Stan.ExactCX
+                    exactCY := this.Stan.ExactCY
+                } else {
+                    exactCX := cX
+                    exactCY := cY
+                }
+
+                if (isActive) {
+                    anchorX := mx
+                    anchorY := my
+                } else {
+                    anchorX := exactCX + (cW / 2)
+                    anchorY := exactCY + (cH / 2)
+                }
+
+                relX := anchorX - exactCX
+                relY := anchorY - exactCY
+
+                new_exactCX := anchorX - (relX * wspolczynnik)
+                new_exactCY := anchorY - (relY * wspolczynnik)
+
+                this.Stan.ExactCX := new_exactCX
+                this.Stan.ExactCY := new_exactCY
+
+                if (WinGetMinMax(this.GuiObj.Hwnd) != 0 || (HasProp(this, "IsPanel") && this.IsPanel)) {
+                    this.GuiObj.Move(, , nw, nh)
+                } else {
+                    nX := Round(new_exactCX) - borderL
+                    nY := Round(new_exactCY) - borderT
+                    this.GuiObj.Move(nX, nY, nw, nh)
+                }
+            }
+
+            if (this.Stan.UseChild && HasProp(this.Stan.ChildGui, "BaseW")) {
+                ncw := HasProp(this.Stan.ChildGui, "NC_W") ? this.Stan.ChildGui.NC_W : 0
+                nch := HasProp(this.Stan.ChildGui, "NC_H") ? this.Stan.ChildGui.NC_H : 0
+                nw := Round(this.Stan.ChildGui.BaseW * nowaSkala) + ncw
+                nh := Round(this.Stan.ChildGui.BaseH * nowaSkala)
+                this.Stan.ChildGui.Move(, , nw, nh)
+
+                if HasProp(this.Stan, "ClipGui") && HasProp(this.Stan.ClipGui, "BaseW") {
+                    ncwClip := HasProp(this.Stan.ClipGui, "NC_W") ? this.Stan.ClipGui.NC_W : 0
+                    nchClip := HasProp(this.Stan.ClipGui, "NC_H") ? this.Stan.ClipGui.NC_H : 0
+                    nwClip := Round(this.Stan.ClipGui.BaseW * nowaSkala) + ncwClip
+                    nhClip := Round(this.Stan.ClipGui.BaseH * nowaSkala) + nchClip
+                    this.Stan.ClipGui.Move(, , nwClip, nhClip)
+                }
+            }
+
+            Zaktualizuj(g) {
+                if !g
+                    return
+
+                ramkiProxy := []
+
+                ; Faza 1: Skalowanie kontrolek bazowych (wymiary i fonty)
+                for ctrl in g {
+                    if !HasProp(ctrl, "BaseX")
+                        continue
+
+                    if (HasProp(ctrl, "IsFrame") && ctrl.IsFrame) {
+                        if HasProp(ctrl, "Proxy") {
+                            prx := ctrl.Proxy
+                            if (!HasProp(prx, "SkalaTick") || prx.SkalaTick != nowaSkala) {
+                                prx.SkalaTick := nowaSkala
+                                ramkiProxy.Push(prx)
+                            }
+                        }
+                        continue
+                    }
+
+                    if (HasProp(ctrl, "BaseSepW") && HasProp(ctrl, "ParentCtrl") && ctrl.ParentCtrl) {
+                        anchor := ctrl.ParentCtrl
+                        nx := Round(anchor.BaseX * nowaSkala) + Round(anchor.BaseW * nowaSkala) + Round(ctrl.BaseSepW * nowaSkala)
+                    } else {
+                        nx := Round(ctrl.BaseX * nowaSkala)
+                    }
+                    ny := Round(ctrl.BaseY * nowaSkala)
+                    nw := Round(ctrl.BaseW * nowaSkala)
+                    nh := Round(ctrl.BaseH * nowaSkala)
+
+                    ctrl.Move(nx, ny, nw, nh)
+                    if HasProp(ctrl, "BaseFontSize")
+                        ctrl.SetFont("s" . (ctrl.BaseFontSize * nowaSkala))
+                }
+
+                ; Faza 2: Pozycjonowanie relatywne ramek względem kontrolek-kotwic
+                for prx in ramkiProxy {
+                    prx.Grubosc := Max(1, Round(prx.BaseGrubosc * nowaSkala))
+
+                    hasAnchor := false
+                    if (prx.Ctrls.Length > 0 && HasProp(prx.Ctrls[1], "ParentCtrl") && prx.Ctrls[1].ParentCtrl)
+                        hasAnchor := true
+
+                    if (hasAnchor) {
+                        anchor := prx.Ctrls[1].ParentCtrl
+
+                        ; [FIX] PIXEL PERFECT ALGORITHM - Kompensacja Grubości (Outset) odseparowana od pustego marginesu
+                        ; 1. Ekstrakcja czystych marginesów ze stref bazowych
+                        MargL := (anchor.BaseX - prx.BaseX) - prx.BaseGrubosc
+                        MargT := (anchor.BaseY - prx.BaseY) - prx.BaseGrubosc
+                        MargR := prx.BaseW - (anchor.BaseW + MargL + 2 * prx.BaseGrubosc)
+                        MargB := prx.BaseH - (anchor.BaseH + MargT + 2 * prx.BaseGrubosc)
+
+                        ; 2. Renderowanie zablokowanej geometrii
+                        nAnchorX := Round(anchor.BaseX * nowaSkala)
+                        nAnchorY := Round(anchor.BaseY * nowaSkala)
+                        nAnchorW := Round(anchor.BaseW * nowaSkala)
+                        nAnchorH := Round(anchor.BaseH * nowaSkala)
+
+                        nx := nAnchorX - Round(MargL * nowaSkala) - prx.Grubosc
+                        ny := nAnchorY - Round(MargT * nowaSkala) - prx.Grubosc
+                        nw := nAnchorW + Round(MargL * nowaSkala) + Round(MargR * nowaSkala) + (2 * prx.Grubosc)
+                        nh := nAnchorH + Round(MargT * nowaSkala) + Round(MargB * nowaSkala) + (2 * prx.Grubosc)
+                    } else {
+                        nx := Round(prx.BaseX * nowaSkala)
+                        ny := Round(prx.BaseY * nowaSkala)
+                        nw := Round(prx.BaseW * nowaSkala)
+                        nh := Round(prx.BaseH * nowaSkala)
+                    }
+
+                    prx.Move(nx, ny, nw, nh)
+                }
+            }
+
+            Zaktualizuj(this.GuiObj)
+            if (this.Stan.UseChild)
+                Zaktualizuj(this.Stan.ChildGui)
+
+            this.Stan.LastObszarTick := 0
+
+            if HasProp(this, "GuiObj") && this.GuiObj {
+                try this.GuiObj.GetClientPos(, , &cw, &ch)
+                if (this.Stan.UseChild)
+                    this.AktualizujLayout(cw, ch)
+
+                if (this.CallbackLayout)
+                    this.CallbackLayout.Call(cw, 0, ch, 20)
+            }
+        } finally {
+            ; 2. BEZWZGLĘDNE WZNOWIENIE RENDEROWANIA (Gwarantowane wykonanie)
+            DllCall("LockWindowUpdate", "Ptr", 0)
+
+            ; 3. OSTATECZNY ZRZUT EKRANU (Wymuszenie z flagą RDW_ALLCHILDREN)
+            ; 0x0585 = RDW_INVALIDATE (1) | RDW_ERASE (4) | RDW_ALLCHILDREN (80) | RDW_UPDATENOW (100) | RDW_FRAME (400)
+            DllCall("RedrawWindow", "Ptr", this.GuiObj.Hwnd, "Ptr", 0, "Ptr", 0, "UInt", 0x0585)
+        }
     }
 
     /**
@@ -3462,7 +3828,7 @@ class SilnikGUI extends SubWindows {
 
     ; główny konstruktor, dokumentacja w static Call
     __New(tytul, opcje := "", parametry?) {
-        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: SilnikGUI.ResizeMarg, GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0 })
+        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: ((IsSet(parametry) && parametry.HasProp("GruboscRamki")) ? parametry.GruboscRamki : SilnikGUI.GruboscRamki), GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0 })
         pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadL := parametry.PadL, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent
 
         if !InStr(opcje, "-DPIScale")
@@ -3475,11 +3841,19 @@ class SilnikGUI extends SubWindows {
 
         Skala := (A_ScreenDPI / 96) * SilnikGUI.Statics.TotalScale
 
+        this.Stan.TotalScale := SilnikGUI.Statics.TotalScale
         this.Stan.UseChild := createChild
         this.Stan.CSBarV := CSBarV
         this.Stan.CSBarH := CSBarH
         this.Stan.PokazPasek := pokazPasek
         this.Stan.zamknijNaEsc := zamknijNaEsc
+        this.Stan.BaseResizeMarg := ResizeMarg
+        this.Stan.BaseGruboscRamki := GruboscRamki
+        this.Stan.BaseRamkaPanelu := RamkaPanelu
+        this.Stan.BasePadL := PadL
+        this.Stan.BasePadR := PadR
+        this.Stan.BasePadD := PadD
+
         this.Stan.ResizeMarg := Round(ResizeMarg * Skala)
         this.Stan.GruboscRamki := Round(GruboscRamki * Skala)
         this.Stan.dragBezPaska := dragBezPaska
@@ -3490,10 +3864,37 @@ class SilnikGUI extends SubWindows {
         this.Stan.PadD := Round(PadD * Skala)
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
-        this.Stan.MinW := RegExMatch(opcje, "i)MinSize\s*(\d+)", &m) ? Round(Integer(m[1]) * Skala) : 0
+        this.Stan.MinW := 0
+        this.Stan.MinH := 0
+        this.Stan.MaxW := 0
+        this.Stan.MaxH := 0
+        if RegExMatch(opcje, "i)\+?MinSize\s*(\d+)(?:x(\d+))?", &m) {
+            if (m[1] != "")
+                this.Stan.MinW := Round(Integer(m[1]) * Skala)
+            if (m[2] != "")
+                this.Stan.MinH := Round(Integer(m[2]) * Skala)
+
+            ; Usunięcie MinSize z opcji, żeby AHK nie narzucił nieskalowalnego twardego limitu
+            opcje := RegExReplace(opcje, "i)\+?MinSize\s*\d*(?:x\d*)?", "")
+        }
+        if RegExMatch(opcje, "i)\+?MaxSize\s*(\d+)(?:x(\d+))?", &m) {
+            if (m[1] != "")
+                this.Stan.MaxW := Round(Integer(m[1]) * Skala)
+            if (m[2] != "")
+                this.Stan.MaxH := Round(Integer(m[2]) * Skala)
+
+            opcje := RegExReplace(opcje, "i)\+?MaxSize\s*\d*(?:x\d*)?", "")
+        }
+        this.Stan.BaseMinW := this.Stan.MinW / SilnikGUI.Statics.TotalScale
+        this.Stan.BaseMinH := this.Stan.MinH / SilnikGUI.Statics.TotalScale
+        this.Stan.BaseMaxW := this.Stan.MaxW / SilnikGUI.Statics.TotalScale
+        this.Stan.BaseMaxH := this.Stan.MaxH / SilnikGUI.Statics.TotalScale
 
 
         this.GuiObj := Gui(opcje, tytul)
+
+        this.myApplyHardwareLimits()
+
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
         this.GuiObj.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
@@ -3555,7 +3956,11 @@ class SilnikGUI extends SubWindows {
         if (this.Stan.PokazPasek == 0) {
             this.GuiObj.Opt(ResizeMarg > 0 ? "+Resize" : "-Resize")
             OnMessage(0x0083, (wp, lp, msg, hw) => (hw == hwnd) ? 0 : "")
-            OnMessage(0x0084, ObjBindMethod(SilnikGUI, "ObslugaHitTest", hwnd, ResizeMarg))
+            OnMessage(0x0084, ObjBindMethod(SilnikGUI, "ObslugaHitTest", hwnd, this))
+            if (this.Stan.UseChild) {
+                OnMessage(0x0084, ObjBindMethod(SilnikGUI, "myObslugaHitTestChild", this, this.Stan.ClipGui.Hwnd))
+                OnMessage(0x0084, ObjBindMethod(SilnikGUI, "myObslugaHitTestChild", this, this.Stan.ChildGui.Hwnd))
+            }
             OnMessage(0x0086, (wp, lp, msg, hw) => (hw == hwnd) ? 1 : "") ;(Blokada paska)
 
             ; Przeciąganie dla okien bez paska
@@ -3634,8 +4039,9 @@ class SilnikGUI extends SubWindows {
         }
 
         ; [FIX] Narzucenie fizycznych kagańców okna przed generacją fazy GDI (Anti-Async Lag)
-        if (this.Stan.HasProp("MinW") && this.Stan.MinW > 0)
-            finalW := Max(finalW, this.Stan.MinW)
+        DynMinW := this.Stan.HasProp("BaseMinW") ? Round(this.Stan.BaseMinW * SilnikGUI.Statics.TotalScale) : (this.Stan.HasProp("MinW") ? this.Stan.MinW : 0)
+        if (DynMinW > 0)
+            finalW := Max(finalW, DynMinW)
         if (this.Stan.HasProp("MinH") && this.Stan.MinH > 0)
             finalH := Max(finalH, this.Stan.MinH)
 
@@ -3670,6 +4076,8 @@ class SilnikGUI extends SubWindows {
             try DllCall("SetFocus", "Ptr", this.Stan.ChildGui.Hwnd)
         if (hasResize)
             this.GuiObj.Opt("+Resize")
+
+        this.myApplyHardwareLimits()
     }
 
     /**
@@ -3677,12 +4085,12 @@ class SilnikGUI extends SubWindows {
      * Usuwa artefakty graficzne (ghosting) ramek.
      */
     WymusPelnyRedraw() {
-        if (this.GuiObj)
-            WinRedraw("ahk_id " . this.GuiObj.Hwnd)
-        if (this.Stan.UseChild && this.Stan.ClipGui)
-            WinRedraw("ahk_id " . this.Stan.ClipGui.Hwnd)
-        if (this.Stan.UseChild && this.Stan.ChildGui)
-            WinRedraw("ahk_id " . this.Stan.ChildGui.Hwnd)
+        if (this.GuiObj && DllCall("IsWindow", "Ptr", this.GuiObj.Hwnd))
+            WinRedraw(this.GuiObj.Hwnd)
+        if (this.Stan.UseChild && this.Stan.ClipGui && DllCall("IsWindow", "Ptr", this.Stan.ClipGui.Hwnd))
+            WinRedraw(this.Stan.ClipGui.Hwnd)
+        if (this.Stan.UseChild && this.Stan.ChildGui && DllCall("IsWindow", "Ptr", this.Stan.ChildGui.Hwnd))
+            WinRedraw(this.Stan.ChildGui.Hwnd)
         if (this.Stan.UseChild) {
             (this.Stan.VBar) && this.Stan.VBar.Redraw()
             (this.Stan.HBar) && this.Stan.HBar.Redraw()
@@ -4042,8 +4450,8 @@ class SilnikGUI extends SubWindows {
             w := (ApplyScale && w !== "") ? Round(w * Skala) : w
             h := (ApplyScale && h !== "") ? Round(h * Skala) : h
 
-            ; 1. Przygotowanie (Offset ramki)
-            off := (HasProp(this.MainCtrl, "GruboscRamki") ? this.MainCtrl.GruboscRamki : 0)
+            ; 1. Przygotowanie (Offset ramki - priorytet dla zaktualizowanej grubości)
+            off := HasProp(this.MainCtrl, "Ramka") ? this.MainCtrl.Ramka.Grubosc : (HasProp(this.MainCtrl, "GruboscRamki") ? this.MainCtrl.GruboscRamki : 0)
 
             nx := (x != "") ? (x + off) : unset
             ny := (y != "") ? (y + off) : unset
@@ -4053,14 +4461,25 @@ class SilnikGUI extends SubWindows {
             this.MainCtrl.Move(nx?, ny?, w == "" ? unset : w, h == "" ? unset : h)
             this.MainCtrl.GetPos(&newX, &newY, &newW, &newH)
 
+            (IsSet(nx) && nx != "") && newX := nx
+            (IsSet(ny) && ny != "") && newY := ny
+
+            ; Obejście blokady GetPos podczas suwaka (utrzymanie prawidłowych wymiarów dla Krok 4)
+            if (SilnikGUI.Statics.HasProp("IsRescaling") && SilnikGUI.Statics.IsRescaling && HasProp(this.MainCtrl, "BaseW") && w == "") {
+                newW := Round(this.MainCtrl.BaseW * SilnikGUI.Statics.TotalScale)
+                newH := Round(this.MainCtrl.BaseH * SilnikGUI.Statics.TotalScale)
+            }
+            (w != "") && newW := w
+            (h != "") && newH := h
+
             dX := newX - oldX, dY := newY - oldY
 
-            if (dX = 0 && dY = 0)
+            if (dX = 0 && dY = 0 && w == "" && h == "")
                 return
 
             ; 3. Aplikuj Deltę do reszty elementów (Dekoracje: Etykiety, Strzałki)
             for item in this.Elementy {
-                ; Pomiń Lidera i Ramkę (Ramka jest liczona osobno)
+                ; Pomiń Lidera oraz Ramkę (Ramka jest doliczana z Union Rect w Krok 4)
                 if (item.Hwnd == this.MainCtrl.Hwnd || (HasProp(this.MainCtrl, "Ramka") && item == this.MainCtrl.Ramka))
                     continue
 
@@ -4074,6 +4493,9 @@ class SilnikGUI extends SubWindows {
                 minX := 99999, minY := 99999, maxX := -99999, maxY := -99999
                 for coreItem in this.CoreControls {
                     coreItem.GetPos(&cX, &cY, &cW, &cH)
+                    if (coreItem.Hwnd == this.MainCtrl.Hwnd) {
+                        cX := newX, cY := newY, cW := newW, cH := newH
+                    }
                     minX := Min(minX, cX)
                     minY := Min(minY, cY)
                     maxX := Max(maxX, cX + cW)
@@ -4203,49 +4625,80 @@ class SilnikGUI extends SubWindows {
     }
 
     /**
-     * Funkcja pomocnicza do obsługi stref zmiany rozmiaru w oknie bezramkowym.
-     * Wywoływana z OnMessage dla WM_NCHITTEST (0x0084) w celu określenia, czy kursor znajduje się na krawędzi okna i jaki jest odpowiedni kod hit testu.
-     * @param {Integer} targetHwnd - Uchwyt okna docelowego, dla którego ma być obsługiwany hit test.
-     * @param {Integer} margines - Grubość strefy krawędzi (w pikselach), która będzie reagować na zmianę rozmiaru.
-     * @param {Integer} wParam - WPARAM z OnMessage, nie używany.
-     * @param {Integer} lParam - LPARAM z OnMessage, zawiera współrzędne kursora.
-     * @param {Integer} msg - Komunikat Windows (oczekiwany 0x0084).
-     * @param {Integer} hwnd - Uchwyt okna, dla którego jest wywoływana funkcja.
+     * @private Internal evaluator for edge zones based on global coordinates.
      */
-    static ObslugaHitTest(targetHwnd, margines, wParam, lParam, msg, hwnd) {
+    static myRozpoznajStrefy(hwnd, lParam, margines) {
+        WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " hwnd)
+        x := lParam & 0xFFFF
+        y := (lParam >> 16) & 0xFFFF
+
+        return {
+            Top: (y >= wY && y < wY + margines),
+            Bottom: (y >= wY + wH - margines && y < wY + wH),
+            Left: (x >= wX && x < wX + margines),
+            Right: (x >= wX + wW - margines && x < wX + wW)
+        }
+    }
+
+    /**
+     * Receptor handler for WM_NCHITTEST in borderless windows.
+     * Identifies active edge zones and returns directional flags (e.g., HTTOP) to the system.
+     * @param {Integer} targetHwnd - Target window handle for hit testing.
+     * @param {SilnikGUI} instancjaSilnika - Main GUI engine instance to retrieve dynamic ResizeMarg.
+     * @param {Integer} wParam - WPARAM from OnMessage (unused).
+     * @param {Integer} lParam - LPARAM containing cursor coordinates.
+     * @param {Integer} msg - Windows message code.
+     * @param {Integer} hwnd - Handle of the window triggering the event.
+     */
+    static ObslugaHitTest(targetHwnd, instancjaSilnika, wParam, lParam, msg, hwnd) {
         if (hwnd != targetHwnd)
             return
 
         if WinGetMinMax("ahk_id " hwnd)
             return 1 ; HTCLIENT
 
-        x := lParam & 0xFFFF
-        y := (lParam >> 16) & 0xFFFF
+        strefy := SilnikGUI.myRozpoznajStrefy(hwnd, lParam, instancjaSilnika.Stan.ResizeMarg)
 
-        WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " hwnd)
-
-        top := (y >= wY && y < wY + margines)
-        bottom := (y >= wY + wH - margines && y < wY + wH)
-        left := (x >= wX && x < wX + margines)
-        right := (x >= wX + wW - margines && x < wX + wW)
-
-        if (top && left)
+        if (strefy.Top && strefy.Left)
             return 13 ; HTTOPLEFT
-        if (top && right)
+        if (strefy.Top && strefy.Right)
             return 14 ; HTTOPRIGHT
-        if (bottom && left)
+        if (strefy.Bottom && strefy.Left)
             return 16 ; HTBOTTOMLEFT
-        if (bottom && right)
+        if (strefy.Bottom && strefy.Right)
             return 17 ; HTBOTTOMRIGHT
-        if (top)
+        if (strefy.Top)
             return 12 ; HTTOP
-        if (bottom)
+        if (strefy.Bottom)
             return 15 ; HTBOTTOM
-        if (left)
+        if (strefy.Left)
             return 10 ; HTLEFT
-        if (right)
+        if (strefy.Right)
             return 11 ; HTRIGHT
         return 1 ; HTCLIENT
+    }
+
+    /**
+     * Delegator handler for WM_NCHITTEST.
+     * Detects cursor overlap on parent's edge margins from within child windows. Returns HTTRANSPARENT (-1) to force event bubbling.
+     * @param {SilnikGUI} instancjaSilnika - Main GUI engine instance.
+     * @param {Integer} targetHwnd - Target child window handle.
+     * @param {Integer} wParam - WPARAM from OnMessage (unused).
+     * @param {Integer} lParam - LPARAM containing cursor coordinates.
+     * @param {Integer} msg - Windows message code.
+     * @param {Integer} hwnd - Handle of the window triggering the event.
+     */
+    static myObslugaHitTestChild(instancjaSilnika, targetHwnd, wParam, lParam, msg, hwnd) {
+        if (hwnd != targetHwnd)
+            return
+
+        if WinGetMinMax("ahk_id " instancjaSilnika.GuiObj.Hwnd)
+            return
+
+        strefy := SilnikGUI.myRozpoznajStrefy(instancjaSilnika.GuiObj.Hwnd, lParam, instancjaSilnika.Stan.ResizeMarg)
+
+        if (strefy.Top || strefy.Bottom || strefy.Left || strefy.Right)
+            return -1 ; HTTRANSPARENT
     }
 
     /**
@@ -4274,20 +4727,21 @@ class SilnikGUI extends SubWindows {
         ; 3. Decyzja (Iteracyjna)
         ShowV := false, ShowH := false
         BarSize := this.Stan.VBar ? this.Stan.VBar.BarSize : (this.Stan.HBar ? this.Stan.HBar.BarSize : 20)
+        tol := 1 ; [FIX] Tolerancja na zaokraglenia zmiennoprzecinkowe (Epsilon)
 
         ; A: Pion
-        if this.Stan.CSBarV && (ContentH > AvailH) {
+        if this.Stan.CSBarV && (ContentH > AvailH + tol) {
             ShowV := true
             AvailW -= (BarSize + gap)
         }
 
         ; B: Poziom
-        if this.Stan.CSBarH && (ContentW > AvailW) {
+        if this.Stan.CSBarH && (ContentW > AvailW + tol) {
             ShowH := true
             AvailH -= (BarSize + gap)
 
             ; [STRATEGIA 2] Adaptacyjny Shrink: Kompresja elastycznych kontrolek przed VBar
-            if (ContentH > AvailH) {
+            if (ContentH > AvailH + tol) {
                 for c in this.Stan.Kontrolki {
                     if (HasProp(c, "FlexH") && c.FlexH) {
                         c.GetPos(&cX, &cY, &cW, &cH)
@@ -4307,7 +4761,7 @@ class SilnikGUI extends SubWindows {
         }
 
         ; C: Korekta zwrotna
-        if this.Stan.CSBarV && (!ShowV && ContentH > AvailH) {
+        if this.Stan.CSBarV && (!ShowV && ContentH > AvailH + tol) {
             ShowV := true
             AvailW -= (BarSize + gap)
         }
@@ -4704,8 +5158,8 @@ class SilnikGUI extends SubWindows {
         }
         ; Metoda wymuszająca natychmiastowe odświeżenie paska na ekranie. Przydatna po asynchronicznych zmianach pozycji scrolla lub rozmiaru, gdy nie używamy atomowego DWP.
         Redraw() {
-            if (this.IsVisible)
-                WinRedraw("ahk_id " . this.BarGui.Hwnd)
+            if (this.IsVisible && this.BarGui && DllCall("IsWindow", "Ptr", this.BarGui.Hwnd))
+                WinRedraw(this.BarGui.Hwnd)
         }
 
         ; --- WSPÓLNY SILNIK KINETYCZNY (KONSUMENT) ---
