@@ -2864,17 +2864,14 @@ class CtlFactory extends ExWinAndPopups {
      * Wywoływana automatycznie, gdy SzerPola=0 w DodajWierszKonfiguracji.
      * @param {Integer} SzerEtykiety - Szerokość etykiety (stała).
      * @param {Gui.Edit} ctrl - Kontrolka Edit, której rozmiar ma być dostosowany.
-     * @param {Integer} [MinW = 50] - Minimalna szerokość kontrolki.
-     * @param {Integer} [MinH = 18] - Minimalna wysokość kontrolki.
+     * @param {Integer} MinW - Minimalna szerokość kontrolki (przeskalowana wyżej).
+     * @param {Integer} MinH - Minimalna wysokość kontrolki (przeskalowana wyżej).
      */
-    DostosujRozmiar(SzerEtykiety, ctrl, MinW := 50, MinH := 18, *) {
+    DostosujRozmiar(SzerEtykiety, ctrl, MinW, MinH, *) {
         fName := HasProp(ctrl, "FontName") ? ctrl.FontName : SilnikGUI.Statics.GlobFont.Name
         fSize := HasProp(ctrl, "FontSize") ? ctrl.FontSize : SilnikGUI.Statics.GlobFont.Size
         SkalaWymiaru := SilnikGUI.Statics.TotalScale
         FinalSize := Round(fSize * SkalaWymiaru)
-
-        MinW := Round(MinW * SkalaWymiaru)
-        MinH := Round(MinH * SkalaWymiaru)
 
         ; 2. Grubość z cache
         Grubosc := HasProp(ctrl, "BaseGruboscRamki") ? Round(ctrl.BaseGruboscRamki * SkalaWymiaru) : (HasProp(ctrl, "GruboscRamki") ? ctrl.GruboscRamki : Round(2 * SkalaWymiaru))
@@ -3381,12 +3378,12 @@ class SilnikGUI extends SubWindows {
             this.Stan.MinW := safeMaxW
         if HasProp(this.Stan, "MinH") && this.Stan.MinH > safeMaxH
             this.Stan.MinH := safeMaxH
-            
+
         if HasProp(this.Stan, "MaxW") && this.Stan.MaxW > safeMaxW
             this.Stan.MaxW := safeMaxW
         if HasProp(this.Stan, "MaxH") && this.Stan.MaxH > safeMaxH
             this.Stan.MaxH := safeMaxH
-            
+
         minOpt := ""
         if (HasProp(this.Stan, "MinW") && this.Stan.MinW > 0)
             minOpt .= this.Stan.MinW
@@ -3441,7 +3438,7 @@ class SilnikGUI extends SubWindows {
             this.Stan.MaxW := Round(this.Stan.BaseMaxW * myDpiScale)
         if HasProp(this.Stan, "BaseMaxH") && this.Stan.BaseMaxH > 0
             this.Stan.MaxH := Round(this.Stan.BaseMaxH * myDpiScale)
-            
+
         this.myApplyHardwareLimits()
 
 
@@ -3874,7 +3871,7 @@ class SilnikGUI extends SubWindows {
                 this.Stan.MinW := Round(Integer(m[1]) * Skala)
             if (m[2] != "")
                 this.Stan.MinH := Round(Integer(m[2]) * Skala)
-            
+
             ; Usunięcie MinSize z opcji, żeby AHK nie narzucił nieskalowalnego twardego limitu
             opcje := RegExReplace(opcje, "i)\+?MinSize\s*\d*(?:x\d*)?", "")
         }
@@ -3883,7 +3880,7 @@ class SilnikGUI extends SubWindows {
                 this.Stan.MaxW := Round(Integer(m[1]) * Skala)
             if (m[2] != "")
                 this.Stan.MaxH := Round(Integer(m[2]) * Skala)
-            
+
             opcje := RegExReplace(opcje, "i)\+?MaxSize\s*\d*(?:x\d*)?", "")
         }
         this.Stan.BaseMinW := this.Stan.MinW / SilnikGUI.Statics.TotalScale
@@ -3893,9 +3890,9 @@ class SilnikGUI extends SubWindows {
 
 
         this.GuiObj := Gui(opcje, tytul)
-        
+
         this.myApplyHardwareLimits()
-        
+
         this.GuiObj.Silnik := this ; [FIX] Referencja zwrotna dla ObslugaInterakcji
         this.GuiObj.BackColor := SilnikGUI.Motyw.Tlo
         this.GuiObj.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
@@ -4077,6 +4074,8 @@ class SilnikGUI extends SubWindows {
             try DllCall("SetFocus", "Ptr", this.Stan.ChildGui.Hwnd)
         if (hasResize)
             this.GuiObj.Opt("+Resize")
+
+        this.myApplyHardwareLimits()
     }
 
     /**
