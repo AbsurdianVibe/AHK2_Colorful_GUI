@@ -4558,6 +4558,22 @@ class SilnikGUI extends SubWindows {
     }
 
     /**
+     * @private Internal evaluator for edge zones based on global coordinates.
+     */
+    static myRozpoznajStrefy(hwnd, lParam, margines) {
+        WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " hwnd)
+        x := lParam & 0xFFFF
+        y := (lParam >> 16) & 0xFFFF
+        
+        return {
+            Top: (y >= wY && y < wY + margines),
+            Bottom: (y >= wY + wH - margines && y < wY + wH),
+            Left: (x >= wX && x < wX + margines),
+            Right: (x >= wX + wW - margines && x < wX + wW)
+        }
+    }
+
+    /**
      * Receptor handler for WM_NCHITTEST in borderless windows.
      * Identifies active edge zones and returns directional flags (e.g., HTTOP) to the system.
      * @param {Integer} targetHwnd - Target window handle for hit testing.
@@ -4574,33 +4590,23 @@ class SilnikGUI extends SubWindows {
         if WinGetMinMax("ahk_id " hwnd)
             return 1 ; HTCLIENT
 
-        margines := instancjaSilnika.Stan.ResizeMarg
+        strefy := SilnikGUI.myRozpoznajStrefy(hwnd, lParam, instancjaSilnika.Stan.ResizeMarg)
 
-        x := lParam & 0xFFFF
-        y := (lParam >> 16) & 0xFFFF
-
-        WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " hwnd)
-
-        top := (y >= wY && y < wY + margines)
-        bottom := (y >= wY + wH - margines && y < wY + wH)
-        left := (x >= wX && x < wX + margines)
-        right := (x >= wX + wW - margines && x < wX + wW)
-
-        if (top && left)
+        if (strefy.Top && strefy.Left)
             return 13 ; HTTOPLEFT
-        if (top && right)
+        if (strefy.Top && strefy.Right)
             return 14 ; HTTOPRIGHT
-        if (bottom && left)
+        if (strefy.Bottom && strefy.Left)
             return 16 ; HTBOTTOMLEFT
-        if (bottom && right)
+        if (strefy.Bottom && strefy.Right)
             return 17 ; HTBOTTOMRIGHT
-        if (top)
+        if (strefy.Top)
             return 12 ; HTTOP
-        if (bottom)
+        if (strefy.Bottom)
             return 15 ; HTBOTTOM
-        if (left)
+        if (strefy.Left)
             return 10 ; HTLEFT
-        if (right)
+        if (strefy.Right)
             return 11 ; HTRIGHT
         return 1 ; HTCLIENT
     }
@@ -4622,19 +4628,9 @@ class SilnikGUI extends SubWindows {
         if WinGetMinMax("ahk_id " instancjaSilnika.GuiObj.Hwnd)
             return
 
-        margines := instancjaSilnika.Stan.ResizeMarg
+        strefy := SilnikGUI.myRozpoznajStrefy(instancjaSilnika.GuiObj.Hwnd, lParam, instancjaSilnika.Stan.ResizeMarg)
 
-        x := lParam & 0xFFFF
-        y := (lParam >> 16) & 0xFFFF
-
-        WinGetPos(&wX, &wY, &wW, &wH, "ahk_id " instancjaSilnika.GuiObj.Hwnd)
-
-        top := (y >= wY && y < wY + margines)
-        bottom := (y >= wY + wH - margines && y < wY + wH)
-        left := (x >= wX && x < wX + margines)
-        right := (x >= wX + wW - margines && x < wX + wW)
-
-        if (top || bottom || left || right)
+        if (strefy.Top || strefy.Bottom || strefy.Left || strefy.Right)
             return -1 ; HTTRANSPARENT
     }
 
