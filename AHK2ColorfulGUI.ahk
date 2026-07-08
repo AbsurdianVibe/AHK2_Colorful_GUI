@@ -1,5 +1,5 @@
 #Requires AutoHotkey v2.0
-
+;TEST AUTOMATYZACJI AI
 class ConfigGUI extends Gui {
     static _TickRate := 15
     ; [TickRate=15] - Globalne taktowanie silnika (ms). Wartości <15 wymuszają wysoką rozdzielczość zegara (timeBeginPeriod).
