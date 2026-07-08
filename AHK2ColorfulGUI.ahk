@@ -3270,6 +3270,7 @@ class SilnikGUI extends SubWindows {
      * - [pokazPasek: 1] {Integer} - 0 = Brak paska (Borderless), 1 = Pasek widoczny.
      * - [RamkaPanelu: 2] {Integer} - Wewnętrzny odstęp paneli.
      * - [ResizeMarg: GruboscRamki] {Integer} - Margines aktywujący zmianę rozmiaru (Borderless).
+     * - [ScreenSizeLimit: true] {Boolean} - Czy ograniczać wymiary GUI do dostępnego rozmiaru ekranu.
      * - [Transparent: 0] {Integer} - Przezroczystość okna (0.0-1.0).
      * - [unikalny: false] {Boolean|String} - Singleton. true = użyj tytułu okna jako ID, String = własne ID.
      * - [zamknijNaEsc: 1] {Integer} - Akcja ESC: 0=Off, 1=Hide, 2=Destroy.
@@ -3372,9 +3373,14 @@ class SilnikGUI extends SubWindows {
     }
 
     myApplyHardwareLimits() {
-        MonitorGetWorkArea(1, &WL, &WT, &WR, &WB)
-        safeMaxW := (WR - WL) - (SysGet(32) * 2)
-        safeMaxH := (WB - WT) - (this.Stan.PokazPasek ? SysGet(4) : 0) - (SysGet(33) * 2)
+        if (!HasProp(this.Stan, "ScreenSizeLimit") || this.Stan.ScreenSizeLimit) {
+            MonitorGetWorkArea(1, &WL, &WT, &WR, &WB)
+            safeMaxW := (WR - WL) - (SysGet(32) * 2)
+            safeMaxH := (WB - WT) - (this.Stan.PokazPasek ? SysGet(4) : 0) - (SysGet(33) * 2)
+        } else {
+            safeMaxW := 999999
+            safeMaxH := 999999
+        }
 
         if HasProp(this.Stan, "MinW") && this.Stan.MinW > safeMaxW
             this.Stan.MinW := safeMaxW
@@ -3396,6 +3402,11 @@ class SilnikGUI extends SubWindows {
 
         effMaxW := (HasProp(this.Stan, "MaxW") && this.Stan.MaxW > 0) ? this.Stan.MaxW : safeMaxW
         effMaxH := (HasProp(this.Stan, "MaxH") && this.Stan.MaxH > 0) ? this.Stan.MaxH : safeMaxH
+
+        ; Zapis do stanu, aby inne metody mogły czerpać z SSoT
+        this.Stan.EffMaxW := effMaxW
+        this.Stan.EffMaxH := effMaxH
+
         this.GuiObj.Opt("+MaxSize" . effMaxW . "x" . effMaxH)
     }
 
@@ -3828,8 +3839,8 @@ class SilnikGUI extends SubWindows {
 
     ; główny konstruktor, dokumentacja w static Call
     __New(tytul, opcje := "", parametry?) {
-        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: ((IsSet(parametry) && parametry.HasProp("GruboscRamki")) ? parametry.GruboscRamki : SilnikGUI.GruboscRamki), GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0 })
-        pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadL := parametry.PadL, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent
+        parametry := Utils.MergeOptions(parametry?, { pokazPasek: SilnikGUI.PokazPasek, createChild: SilnikGUI.UseChild, zamknijNaEsc: SilnikGUI.zamknijNaEsc, CSBarV: SilnikGUI.CSBarV, CSBarH: SilnikGUI.CSBarH, ResizeMarg: ((IsSet(parametry) && parametry.HasProp("GruboscRamki")) ? parametry.GruboscRamki : SilnikGUI.GruboscRamki), GruboscRamki: SilnikGUI.GruboscRamki, dragBezPaska: SilnikGUI.dragBezPaska, MainGUI: false, RamkaPanelu: SilnikGUI.RamkaPanelu, PadL: SilnikGUI.PadL, PadR: SilnikGUI.PadR, PadD: SilnikGUI.PadD, AutoFitW: SilnikGUI.AutoFitW, AutoFitH: SilnikGUI.AutoFitH, Transparent: 0.0, ScreenSizeLimit: true })
+        pokazPasek := parametry.pokazPasek, createChild := parametry.createChild, zamknijNaEsc := parametry.zamknijNaEsc, CSBarV := parametry.CSBarV, CSBarH := parametry.CSBarH, ResizeMarg := parametry.ResizeMarg, GruboscRamki := parametry.GruboscRamki, dragBezPaska := parametry.dragBezPaska, MainGUI := parametry.MainGUI, RamkaPanelu := parametry.RamkaPanelu, PadL := parametry.PadL, PadR := parametry.PadR, PadD := parametry.PadD, AutoFitW := parametry.AutoFitW, AutoFitH := parametry.AutoFitH, Transparent := parametry.Transparent, ScreenSizeLimit := parametry.ScreenSizeLimit
 
         if !InStr(opcje, "-DPIScale")
             opcje .= " -DPIScale "
@@ -3864,6 +3875,7 @@ class SilnikGUI extends SubWindows {
         this.Stan.PadD := Round(PadD * Skala)
         this.Stan.AutoFitW := AutoFitW
         this.Stan.AutoFitH := AutoFitH
+        this.Stan.ScreenSizeLimit := ScreenSizeLimit
         this.Stan.MinW := 0
         this.Stan.MinH := 0
         this.Stan.MaxW := 0
@@ -4044,6 +4056,11 @@ class SilnikGUI extends SubWindows {
             finalW := Max(finalW, DynMinW)
         if (this.Stan.HasProp("MinH") && this.Stan.MinH > 0)
             finalH := Max(finalH, this.Stan.MinH)
+
+        ; --- Wykorzystanie SSoT z myApplyHardwareLimits ---
+        this.myApplyHardwareLimits()
+        finalW := Min(finalW, this.Stan.EffMaxW)
+        finalH := Min(finalH, this.Stan.EffMaxH)
 
         ; Czyszczenie Opt z wymiarów, aby nie dublować parametrów
         Opt := Trim(RegExReplace(Opt, "i)(?:^|\s)[wh]\d+", ""))

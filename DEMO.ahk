@@ -19,7 +19,8 @@ App := SilnikGUI("AHK2 Colorful GUI - Feature Demo", "+MinSize380x380 +MaxSize40
     PadD: 20,
     PadR: 20,
     PadL: 20,
-    pokazPasek: 1
+    pokazPasek: 1,
+    ScreenSizeLimit: true
 })
 PadL := 20
 
