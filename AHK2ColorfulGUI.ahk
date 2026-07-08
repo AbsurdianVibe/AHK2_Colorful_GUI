@@ -5035,6 +5035,7 @@ class SilnikGUI extends SubWindows {
             ; [STRATEGIA 3] Tworzenie niezależnego pod-okna dla paska (Sub-Container)
             this.BarGui := Gui("-Caption -Border +Parent" . Silnik.GuiObj.Hwnd . " +0x02000000 -DPIScale")
             this.BarGui.BackColor := SilnikGUI.Motyw.Tlo
+            this.BarGui.IsScrollbar := true
             this.BarGui.Silnik := Silnik ; Przekazanie referencji (pozwala podświetlać ramkę przy Hover)
             GuiObj := this.BarGui
 
