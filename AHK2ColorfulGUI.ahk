@@ -2204,6 +2204,14 @@ class CtlFactory extends ExWinAndPopups {
 
         ctrl := this.Stan.ChildGui.Add(Type, Options, Text)
 
+        if RegExMatch(FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol)
+            ctrl.KolorBazowy := mCol[1]
+        else if RegExMatch(Options, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol)
+            ctrl.KolorBazowy := mCol[1]
+
+        if RegExMatch(Options, "i)Background([0-9a-fA-F]{6})\b", &mBg)
+            ctrl.KolorBazowyTla := mBg[1]
+
         this.Stan.ChildGui.SetFont("s" . Round(10 * SilnikGUI.Statics.TotalScale) . " " . SilnikGUI.Motyw.Tekst, SilnikGUI.Statics.GlobFont.Name)
 
         this.Stan.Kontrolki.Push(ctrl)
@@ -2304,6 +2312,7 @@ class CtlFactory extends ExWinAndPopups {
         if (etykieta != "") {
             txtCtrl.ParentCtrl := poleEdit
             poleEdit.EtykietaCtrl := txtCtrl ; Przypisanie PO Ramka(), aby nie objęła etykiety
+            txtCtrl.KolorBazowy := SilnikGUI.PobierzHex(opcje.TextCol)
         }
         if SzRamki > 0 {
             ramkaObj.ParentCtrl := poleEdit
@@ -2328,7 +2337,7 @@ class CtlFactory extends ExWinAndPopups {
         poleEdit.BaseWysInput := poleEdit.WysInput / SilnikGUI.Statics.TotalScale
         if Backlight == 1
             poleEdit.KolorBazowyTla := BackCol
-        poleEdit.KolorBazowy := TextCol
+        poleEdit.KolorBazowy := SilnikGUI.PobierzHex(opcje.TextCol)
         poleEdit.InfoRight := InfoRight
 
         ; 4. Walidacja i zdarzenia
@@ -2476,6 +2485,11 @@ class CtlFactory extends ExWinAndPopups {
         txt.ParentCtrl := CheckMark
         ramkaObj.ParentCtrl := CheckMark
 
+        if RegExMatch(opcje.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol) {
+            CheckMark.KolorBazowy := mCol[1]
+            txt.KolorBazowy := mCol[1]
+        }
+
         ; Nadpisanie właściwości Value (Logika 0/1 -> Tekst)
         CheckMark.DefineProp("Value", {
             Get: (*) => CheckMark.InternalValue,
@@ -2622,6 +2636,11 @@ class CtlFactory extends ExWinAndPopups {
         ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc, , 0)
         ramkaObj.ParentCtrl := ValueCtrl
         ValueCtrl.Ramka := ramkaObj
+
+        if RegExMatch(Opt.fOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol) {
+            ValueCtrl.KolorBazowy := mCol[1]
+            ArrowCtrl.KolorBazowy := mCol[1]
+        }
 
         ; 5. Scroll Logic (Change value in place OR navigate in list)
         _ScrollAction(ctrl, k) {
@@ -2829,6 +2848,10 @@ class CtlFactory extends ExWinAndPopups {
         ; 3. WŁAŚCIWY PRZYCISK (Pozycjonowanie absolutne wewnątrz Dummy)
         btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . " " . SilnikGUI.Motyw.Tekst . " +0x0200 +0x100 +Tabstop", tekst)
         btn.SetFont("s" . Round(Opt.FontSize * SilnikGUI.Statics.TotalScale) . " " . Opt.FontOpt, SilnikGUI.Statics.GlobFont.Name)
+        
+        if RegExMatch(Opt.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol)
+            btn.KolorBazowy := mCol[1]
+            
         this.Stan.Kontrolki.Push(btn) ; [FIX] Rejestracja w systemie (dla Ramka i stylów)
 
         ; [MOD] Wrapper Multiklik: Flash + Callback
@@ -4259,6 +4282,7 @@ class SilnikGUI extends SubWindows {
 
             ; Logika koloru tekstu (Globalny vs Custom)
             DajKolorTxt := (ctrl) => (HasProp(ctrl, "KolorBazowy") ? "c" . (IsActive ? ctrl.KolorBazowy : SilnikGUI.Odcien(ctrl.KolorBazowy, -SilnikGUI.Motyw.FactorNieaktywny)) : (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny)))
+            DajKolorTla := (ctrl) => (HasProp(ctrl, "KolorBazowyTla") ? " Background" . (IsActive ? ctrl.KolorBazowyTla : SilnikGUI.Odcien(ctrl.KolorBazowyTla, -SilnikGUI.Motyw.FactorNieaktywny)) : "")
 
             colTxt := (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny))
             this.Stan.AktualnyKolorTekstu := colTxt
@@ -4286,7 +4310,7 @@ class SilnikGUI extends SubWindows {
                     } else if (HasProp(c, "Rola") && c.Rola == "CustomButton") {
                         c.Opt("Background" . colBtn . " " . colTxt . " Redraw")
                     } else if (c.Type = "Text" || c.Type = "Edit") {
-                        c.Opt(DajKolorTxt(c) . " Redraw")
+                        c.Opt(DajKolorTxt(c) . DajKolorTla(c) . " Redraw")
                     }
                 }
             }

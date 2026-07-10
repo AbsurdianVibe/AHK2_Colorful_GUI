@@ -30,18 +30,66 @@ Welcome := App.Add("Text", "X" . padL + 10 . "  y+20", "Welcome to AHK2ColorfulG
 Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", { DelayON: 1000, czas: 3000, trybPozycji: Welcome })
 ; App.Stan.ChildGui.SetFont("s10 norm")
 ; App.Stan.ChildGui.SetFont("s12 italic")
-Welcome2 := App.Add("Text", "x" . padL + 10. " y+15 cAAAAAA", "--- Input Fields ---")
+SliderValue := 20
+Welcome2 := App.Add("Text", "x" . padL + 10. " y+15", "--- Input Fields ---", , , "c00ff00")
 Welcome2.GetPos(, , &W2W, &W2H)
 ;Welcome2.Move(320, 50, , , 1)
 
 ; String Validation (Type 2)
-ConfigLine1 := App.DodajWierszKonfiguracji("standard mode:", "Guest User", {
-    trybWalidacji: 2,
+ConfigLine1 := App.DodajWierszKonfiguracji("standard mode:", SliderValue, {
+    trybWalidacji: 0,
     SzerPola: 200,
     SzerText: 90,
-    pozycja: "y+20 xp"
+    pozycja: "y+20 xp",
+    minVal: 0,
+    maxVal: 20,
+    FontOpt: "c00ff00",
+    textcol: "c00ff00"
 })
+/**
+ * Updates progress bar and text overlay values.
+ * @param {GuiCtrl|Number} myArg - The edit control instance triggering the event, or initial number.
+ */
+;#region Prototyp Maskowania Osiowego
+myUpdateProgress(myArg, *) {
+    myMaxVal := 20
+    myVal := IsObject(myArg) ? Number(myArg.Value || 0) : Number(myArg)
 
+    for myCtrl in [sipderPrototypeText, sipderPrototypeTextWhite] {
+        myCtrl.Value := myVal
+    }
+
+    sipderPrototypeBg.GetPos(&baseX, &baseY, &currentW, &realH)
+
+    static myOriginalW := 0
+    if (myOriginalW == 0)
+        myOriginalW := currentW
+
+    myTextDim := SilnikGUI.ZmierzTekst(String(myVal), SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
+
+    myXOffset := Round((myOriginalW / 2) - (myTextDim.w / 2))
+    myXStart := baseX + myXOffset
+    myProgressW := Round(myOriginalW * (myVal / myMaxVal))
+
+    sipderPrototypeBg.Move(baseX, baseY, myProgressW, realH, 0)
+    sipderPrototypeText.Move(myXStart, baseY, myOriginalW - myXOffset, realH, 0)
+
+    if (myProgressW <= myXOffset) {
+        sipderPrototypeTextWhite.Visible := false
+    } else {
+        sipderPrototypeTextWhite.Visible := true
+        sipderPrototypeTextWhite.Move(myXStart, baseY, myProgressW - myXOffset, realH, 0)
+    }
+}
+ConfigLine1.OnEvent("Change", myUpdateProgress)
+myOgVScroll1 := ConfigLine1.VScrollAction
+ConfigLine1.VScrollAction := (ctrl, dir) => (myOgVScroll1(ctrl, dir), myUpdateProgress(ctrl))
+
+sipderPrototypeText := App.Add("Text", "xp yp w190 h20 Left Background000000 cffffff", SliderValue)
+sipderPrototypeBg := App.Add("Text", "y+10 xp w190 h20 Background0000ff", "")
+sipderPrototypeTextWhite := App.Add("Text", "xp yp w190 h20 Left Background0000ff c000000", SliderValue)
+myUpdateProgress(SliderValue)
+;#endregion
 ; Integer Validation (Type 0) with limits and scroll step
 ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
     trybWalidacji: 0,
