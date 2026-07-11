@@ -153,7 +153,7 @@ App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
 ; DropDown List
 App.DDList(["First Option", "Second Option", "Third Option", "Fourth Option"],
     (ctrl, index) => SilnikGUI.CustomTooltip("You selected: " . ctrl.Value, { czas: 2000, trybPozycji: "Mouse" }),
-    1, { pos: "xm y+10", padX: 5, sepW: 2 }
+    1, { pos: "xm y+10", padX: 5, sepW: 2, fOpt: "c009900" }
 )
 ; --- Interactive Buttons ---
 App.Add("Text", "xm y+20", "--- Dialogs & Tooltips ---") ; .SetFont("s12 italic")
@@ -164,7 +164,7 @@ App.DodajPrzycisk("Show Error Dialog", (ctrl, *) => (SilnikGUI.OknoBledu("Critic
 ; Custom Tooltip
 App.DodajPrzycisk("Show Tooltip", (ctrl, *) => (
     SilnikGUI.CustomTooltip("This is a stylized tooltip!`nIt follows the mouse and supports`nmultiple lines.`n.[3].`n...And separators!", { transparent: 0.2, czas: 3000, czyPogrubione: 1 })
-), "x+1 yp", , { Pad: 20, PadX: 30 })
+), "x+1 yp", , { Pad: 20, PadX: 30, FontOpt: "c29ff29" })
 
 ; Auto-expanding dialog demo
 App.DodajPrzycisk("Dynamic Window", (ctrl, *) => (

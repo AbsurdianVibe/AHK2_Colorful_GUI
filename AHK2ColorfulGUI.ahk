@@ -383,7 +383,7 @@ class Motyw extends Utils {
      * @param {Number} [paramFocus=0.1] - Siła rozjaśnienia fokusie
      * @param {Number} [factorWklesly=-0.1] - Współczynnik przyciemnienia tła elementów wklęsłych (Edit, Checkbox).
      */
-    static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := 0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1) {
+    static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := -0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1) {
         ; Czyszczenie HEX
         bazowy := RegExReplace(Motyw.PobierzHex(bazowyHex), "[^0-9a-fA-F]", "")
         warn := RegExReplace(Motyw.PobierzHex(warnHex), "[^0-9a-fA-F]", "")
@@ -734,34 +734,39 @@ class Grafika extends Motyw {
         (kolorTekstu == "") && kolorTekstu := SilnikGUI.Motyw.Tekst
         (KolorMotywu == "") && KolorMotywu := SilnikGUI.Motyw.Tlo
 
+        ; Odzyskanie bazowego koloru tekstu dla danej kontrolki
+        myKolorTxt := HasProp(ctrl, "KolorBazowy") ? ctrl.KolorBazowy : kolorTekstu
+
         ; 2. Aplikuj styl (Switch)
         switch (HasProp(ctrl, "Rola") ? ctrl.Rola : ctrl.Type) {
-            ; [FIX] Odwrócona kolejność: Najpierw RAMKA (Tło), potem KONTROLKA (Treść)
-            ; Zapobiega zamazywaniu kontrolki przez ramkę podczas odświeżania
             case "CSBarButton":
-                ctrl.Opt("Background" . DajKolor(KolorMotywu, param) . " c" . DajKolor(kolorTekstu, param) . " Redraw")
+                ctrl.Opt("Background" . DajKolor(KolorMotywu, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "CustomButton":
                 (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
-                ctrl.Opt("Background" . DajKolor(kolorPrzycisku, param) . " c" . DajKolor(kolorTekstu, param) . " Redraw")
+                ctrl.Opt("Background" . DajKolor(kolorPrzycisku, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "Checkbox":
                 ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
-                ctrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " c" . DajKolor(kolorTekstu, param) . " Redraw")
+                ctrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "DDList":
                 HasProp(ctrl, "Ramka") && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
                 HasProp(ctrl, "SepCtrl") && ctrl.SepCtrl.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
-                HasProp(ctrl, "ArrowCtrl") && ctrl.ArrowCtrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " Redraw")
-                ctrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " Redraw")
+                HasProp(ctrl, "ArrowCtrl") && ctrl.ArrowCtrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
+                ctrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "CustSlider":
                 (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
-                ctrl.Opt("Background" . DajKolor(ctrl.KolorBazowyTla, param) . " Redraw")
                 for c in ctrl.Maski {
-                    myParam := HasProp(c, "OdwrotnyHover") ? -param : param
-                    c.Opt("Background" . DajKolor(c.KolorBazowyTla, myParam) . (HasProp(c, "KolorBazowy") ? (" c" . DajKolor(c.KolorBazowy, myParam)) : "") . " Redraw")
+                    myParam := HasProp(c, "OdwrotnyHover") ? param : param
+                    c.Opt("Background" . DajKolor(c.KolorBazowyTla, myParam))
+                    if HasProp(c, "KolorBazowy")
+                        c.SetFont("c" . DajKolor(c.KolorBazowy, param))
                 }
+                ctrl.Opt("Background" . DajKolor(ctrl.KolorBazowyTla, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
+                for c in ctrl.Maski
+                    c.Redraw()
             case "Edit":
                 (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
                 (HasProp(ctrl, "PlaceholderCtrl")) && ctrl.PlaceholderCtrl.Opt("Background" . DajKolor(ctrl.PlaceholderCtrl.KolorBazowy, param) . " Redraw")
-                ctrl.Opt("Background" . DajKolor(ctrl.KolorBazowyTla, param) . " Redraw")
+                ctrl.Opt("Background" . DajKolor(ctrl.KolorBazowyTla, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "Panel":
                 (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
         }
@@ -2853,11 +2858,19 @@ class CtlFactory extends ExWinAndPopups {
         iH := Max(1, dH - (2 * Grubosc))
 
         ; 3. WŁAŚCIWY PRZYCISK (Pozycjonowanie absolutne wewnątrz Dummy)
-        btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . " " . SilnikGUI.Motyw.Tekst . " +0x0200 +0x100 +Tabstop", tekst)
-        btn.SetFont("s" . Round(Opt.FontSize * SilnikGUI.Statics.TotalScale) . " " . Opt.FontOpt, SilnikGUI.Statics.GlobFont.Name)
+        inicjalnyKolor := ""
+        if RegExMatch(Opt.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol) {
+            inicjalnyKolor := " c" . mCol[1]
+        } else {
+            inicjalnyKolor := " " . SilnikGUI.Motyw.Tekst
+        }
 
-        if RegExMatch(Opt.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol)
+        btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . inicjalnyKolor . " +0x0200 +0x100 +Tabstop", tekst)
+        btn.SetFont("s" . Round(Opt.FontSize * SilnikGUI.Statics.TotalScale) . " " . RegExReplace(Opt.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", ""), SilnikGUI.Statics.GlobFont.Name)
+
+        if (mCol)
             btn.KolorBazowy := mCol[1]
+
 
         this.Stan.Kontrolki.Push(btn) ; [FIX] Rejestracja w systemie (dla Ramka i stylów)
 
@@ -3136,11 +3149,13 @@ class CtlFactory extends ExWinAndPopups {
         BackBig := this.Add("Text", "xp y+10 w194 h24 +Tabstop +0x100 Background" . BackCol . " c" . BackCol, "")
         BackBig.KolorBazowyTla := BackCol
         BackBig.Rola := "CustSlider"
-        BackRight := this.Add("Text", "xp+2 yp+2 w190 h20 Left +0x200 Background" . BackCol . " c" . BackTxtCol, tekstPoczatkowy)
+        BackRight := this.Add("Text", "xp+2 yp+2 w190 h20 Left +0x200 Background" . BackCol, tekstPoczatkowy)
+        BackRight.Opt("c" . BackTxtCol)
         BackRight.KolorBazowyTla := BackCol, BackRight.KolorBazowy := BackTxtCol
         FrontLeft := this.Add("Text", "yp xp w190 h20 Background" . FrontCol, "")
         FrontLeft.KolorBazowyTla := FrontCol, FrontLeft.OdwrotnyHover := true
-        FrontRight := this.Add("Text", "xp yp w0 h20 Left +0x200 Background" . FrontCol . " c" . FrontTxttCol, tekstPoczatkowy)
+        FrontRight := this.Add("Text", "xp yp w0 h20 Left +0x200 Background" . FrontCol, tekstPoczatkowy)
+        FrontRight.Opt("c" . FrontTxttCol)
         FrontRight.KolorBazowyTla := FrontCol, FrontRight.KolorBazowy := FrontTxttCol, FrontRight.OdwrotnyHover := true
 
         ramkaObj := this.Ramka(BackBig, 0, 0, "", 2, , 0)
@@ -4425,8 +4440,8 @@ class SilnikGUI extends SubWindows {
             this.Stan.AktualnyKolorPrzycisku := colBtn
 
             ; Logika koloru tekstu (Globalny vs Custom)
-            DajKolorTxt := (ctrl) => (HasProp(ctrl, "KolorBazowy") ? "c" . (IsActive ? ctrl.KolorBazowy : SilnikGUI.Odcien(ctrl.KolorBazowy, -SilnikGUI.Motyw.FactorNieaktywny)) : (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny)))
-            DajKolorTla := (ctrl) => (HasProp(ctrl, "KolorBazowyTla") ? " Background" . (IsActive ? ctrl.KolorBazowyTla : SilnikGUI.Odcien(ctrl.KolorBazowyTla, -SilnikGUI.Motyw.FactorNieaktywny)) : "")
+            DajKolorTxt := (ctrl) => (HasProp(ctrl, "KolorBazowy") ? "c" . (IsActive ? ctrl.KolorBazowy : SilnikGUI.Odcien(ctrl.KolorBazowy, SilnikGUI.Motyw.FactorNieaktywny)) : (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny)))
+            DajKolorTla := (ctrl) => (HasProp(ctrl, "KolorBazowyTla") ? " Background" . (IsActive ? ctrl.KolorBazowyTla : SilnikGUI.Odcien(ctrl.KolorBazowyTla, SilnikGUI.Motyw.FactorNieaktywny)) : "")
 
             colTxt := (IsActive ? SilnikGUI.Motyw.Tekst : ("c" . SilnikGUI.Motyw.Nieaktywny))
             this.Stan.AktualnyKolorTekstu := colTxt
