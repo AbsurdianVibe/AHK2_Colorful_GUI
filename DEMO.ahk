@@ -57,11 +57,11 @@ myUpdateProgress(myArg, *) {
     myMaxVal := 20
     myVal := IsObject(myArg) ? Number(myArg.Value || 0) : Number(myArg)
 
-    for myCtrl in [sipderPrototypeText, sipderPrototypeTextWhite] {
+    for myCtrl in [BackRight, FrontRight] {
         myCtrl.Value := myVal
     }
 
-    sipderPrototypeBg.GetPos(&baseX, , &currentW)
+    FrontLeft.GetPos(&baseX, , &currentW)
     baseX := baseX / SilnikGUI.Statics.TotalScale
     static myOriginalW := 0
     if (myOriginalW == 0)
@@ -73,22 +73,27 @@ myUpdateProgress(myArg, *) {
     myXStart := baseX + myXOffset
     myProgressW := Max(0, Round(myOriginalW * (myVal / myMaxVal)))
 
-    sipderPrototypeBg.Move(baseX, , myProgressW, , 1)
+    FrontLeft.Move(baseX, , myProgressW, , 1)
     myTextW := Max(0, myOriginalW - myXOffset)
-    sipderPrototypeText.Move(myXStart, , myTextW, , 1)
+    BackRight.Move(myXStart, , myTextW, , 1)
 
 
     myWhiteW := Max(0, myProgressW - myXOffset)
-    sipderPrototypeTextWhite.Move(myXStart, , myWhiteW, , 1)
+    FrontRight.Move(myXStart, , myWhiteW, , 1)
 }
 ConfigLine1.OnEvent("Change", myUpdateProgress)
 myOgVScroll1 := ConfigLine1.VScrollAction
+
+BackCol := SilnikGUI.Motyw.Wklesly
+BackTxtCol := SilnikGUI.Motyw.Tekst
+FrontCol := BackTxtCol
+FrontTxttCol := BackCol
 ConfigLine1.VScrollAction := (ctrl, dir) => (myOgVScroll1(ctrl, dir), myUpdateProgress(ctrl))
-bigback := App.Add("Text", "xp y+10 w194 h24 Background000000", "")
-sipderPrototypeText := App.Add("Text", "xp+2 yp+2 w190 h20 Left Background000000 cffffff", SliderValue)
-sipderPrototypeBg := App.Add("Text", "yp xp w190 h20 Backgroundffffff", "")
-sipderPrototypeTextWhite := App.Add("Text", "xp yp w0 h20 Left Backgroundffffff c000000", SliderValue)
-App.Ramka(bigback, , 0)
+BackBig := App.Add("Text", "xp y+10 w194 h24 Background" . BackCol, "")
+BackRight := App.Add("Text", "xp+2 yp+2 w190 h20 Left Background" . BackCol . " c" . BackTxtCol, SliderValue)
+FrontLeft := App.Add("Text", "yp xp w190 h20 Background" . FrontCol, "")
+FrontRight := App.Add("Text", "xp yp w0 h20 Left Background" . FrontCol . " c" . FrontTxttCol, SliderValue)
+App.Ramka(BackBig, , 0)
 myUpdateProgress(SliderValue)
 ;#endregion
 ; Integer Validation (Type 0) with limits and scroll step
