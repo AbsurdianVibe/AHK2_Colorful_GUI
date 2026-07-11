@@ -96,6 +96,10 @@ FrontRight := App.Add("Text", "xp yp w0 h20 Left Background" . FrontCol . " c" .
 App.Ramka(BackBig, , 0)
 myUpdateProgress(SliderValue)
 ;#endregion
+
+; Nowa zhermetyzowana metoda CustSlider na podstawie powyzszego
+MyCustSlider := App.CustSlider("CustSlider", 75, { minVal: 0, maxVal: 100 })
+
 ; Integer Validation (Type 0) with limits and scroll step
 ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
     trybWalidacji: 0,

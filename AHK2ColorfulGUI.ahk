@@ -2848,10 +2848,10 @@ class CtlFactory extends ExWinAndPopups {
         ; 3. WŁAŚCIWY PRZYCISK (Pozycjonowanie absolutne wewnątrz Dummy)
         btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . " " . SilnikGUI.Motyw.Tekst . " +0x0200 +0x100 +Tabstop", tekst)
         btn.SetFont("s" . Round(Opt.FontSize * SilnikGUI.Statics.TotalScale) . " " . Opt.FontOpt, SilnikGUI.Statics.GlobFont.Name)
-        
+
         if RegExMatch(Opt.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol)
             btn.KolorBazowy := mCol[1]
-            
+
         this.Stan.Kontrolki.Push(btn) ; [FIX] Rejestracja w systemie (dla Ramka i stylów)
 
         ; [MOD] Wrapper Multiklik: Flash + Callback
@@ -3100,6 +3100,136 @@ class CtlFactory extends ExWinAndPopups {
             this.Stan.PopupGuiObj.Zamknij()
         for dziecko in this.Stan.Dzieci
             dziecko.ZamknijPopupy()
+    }
+
+    /**
+     * Initializes and registers a custom slider with axial masking and dynamic styling.
+     * @param {String} tekstPoczatkowy - Initial text displayed inside the slider.
+     * @param {Number} wartoscPoczatkowa - Initial numeric value of the slider.
+     * @param {Object} [Opcje] - Configuration object with alphabetical properties:
+     * - [deadzone: 5] {Integer} Distance threshold (in pixels) for distinguishing drag vs click-to-jump.
+     * - [holdTimeout: 200] {Integer} Time limit (in ms) to register a quick click.
+     * - [maxVal: 100] {Number} Maximum allowed value (upper limit for virtual wall).
+     * - [minVal: 0] {Number} Minimum allowed value (lower limit for virtual wall).
+     * @tag WinAPI: "IsSilnikInput" (for hover background inheritance).
+     * @returns {SilnikGUI.GrupaKontrolek} - Created control group instance.
+     */
+    CustSlider(tekstPoczatkowy, wartoscPoczatkowa, Opcje?) {
+        if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
+            return SilnikDummyProxy()
+        opcje := Utils.MergeOptions(Opcje?, { deadzone: 5, holdTimeout: 200, minVal: 0, maxVal: 100 })
+        minV := opcje.minVal, maxV := opcje.maxVal
+        dz := opcje.deadzone, ht := opcje.holdTimeout
+
+        BackCol := SilnikGUI.Motyw.Wklesly
+        BackTxtCol := SilnikGUI.Motyw.Tekst
+        FrontCol := BackTxtCol
+        FrontTxttCol := BackCol
+
+        BackBig := this.Add("Text", "xp y+10 w194 h24 +0x100 Background" . BackCol, "")
+        BackRight := this.Add("Text", "xp+2 yp+2 w190 h20 Left +0x200 Background" . BackCol . " c" . BackTxtCol, tekstPoczatkowy)
+        FrontLeft := this.Add("Text", "yp xp w190 h20 Background" . FrontCol, "")
+        FrontRight := this.Add("Text", "xp yp w0 h20 Left +0x200 Background" . FrontCol . " c" . FrontTxttCol, tekstPoczatkowy)
+
+        ramkaObj := this.Ramka(BackBig, 0, 0, "", 2, , 0)
+
+        ; Rejestracja backgroundów do dziedziczenia mechaniki silnika
+        Utils.SetTag(BackBig.Hwnd, "IsSilnikInput")
+        for c in ramkaObj.Ctrls
+            Utils.SetTag(c.Hwnd, "IsSilnikInput")
+
+        BackBig.Value := wartoscPoczatkowa
+
+        myUpdateProgress(myVal) {
+            ; Wirtualna sciana
+            if (myVal < minV)
+                myVal := minV
+            if (myVal > maxV)
+                myVal := maxV
+
+            for myCtrl in [BackRight, FrontRight] {
+                myCtrl.Value := myVal
+            }
+
+            FrontLeft.GetPos(&baseX, , &currentW)
+            baseX := baseX / SilnikGUI.Statics.TotalScale
+
+            static myOriginalW := 0
+            if (myOriginalW == 0)
+                myOriginalW := currentW / SilnikGUI.Statics.TotalScale
+
+            myXOffset := 0
+            myXStart := baseX + myXOffset
+            myProgressW := Max(0, Round(myOriginalW * (myVal / maxV)))
+
+            FrontLeft.Move(baseX, , myProgressW, , 1)
+            myTextW := Max(0, myOriginalW - myXOffset)
+            BackRight.Move(myXStart, , myTextW, , 1)
+            myWhiteW := Max(0, myProgressW - myXOffset)
+            FrontRight.Move(myXStart, , myWhiteW, , 1)
+            
+            BackBig.Redraw()
+            BackRight.Redraw()
+            FrontLeft.Redraw()
+            FrontRight.Redraw()
+
+            return myVal
+        }
+
+        ; Scroll logic
+        _ScrollAction(ctrl, k) {
+            newVal := ctrl.Value + k
+            ctrl.Value := myUpdateProgress(newVal)
+        }
+        BackBig.VScrollAction := _ScrollAction
+
+        BackRight.ParentCtrl := BackBig
+        FrontLeft.ParentCtrl := BackBig
+        FrontRight.ParentCtrl := BackBig
+        for c in ramkaObj.Ctrls
+            c.ParentCtrl := BackBig
+
+        ; Drag & Click logic
+        _MouseDown(ctrl, *) {
+            MouseGetPos(&startX, &startY)
+            startT := A_TickCount
+            startVal := ctrl.Value
+
+            ctrl.GetPos(&bx, &by, &bw)
+            valScale := maxV / bw
+
+            isDrag := false
+            While GetKeyState("LButton", "P") {
+                Sleep(10)
+                MouseGetPos(&currX, &currY)
+                dystans := Sqrt((currX - startX) ** 2 + (currY - startY) ** 2)
+
+                if (dystans > dz || (A_TickCount - startT) > ht) {
+                    isDrag := true
+                    deltaX := currX - startX
+                    newVal := startVal + Round(deltaX * valScale)
+                    ctrl.Value := myUpdateProgress(newVal)
+                }
+            }
+
+            if (!isDrag) {
+                MouseGetPos(&currX, &currY)
+                dystans := Sqrt((currX - startX) ** 2 + (currY - startY) ** 2)
+                deltaT := A_TickCount - startT
+                if (dystans <= dz && deltaT <= ht) {
+                    klikX := currX - bx
+                    newVal := Round((klikX / bw) * maxV)
+                    ctrl.Value := myUpdateProgress(newVal)
+                }
+            }
+        }
+        BackBig.OnEvent("Click", (*) => "")
+        BackBig.MouseDownAction := _MouseDown
+
+        ; Inicjalizacja geometryczna
+        BackBig.Value := myUpdateProgress(wartoscPoczatkowa)
+
+        return SilnikGUI.GrupaKontrolek([BackBig, BackRight, FrontLeft, FrontRight], [BackBig, ramkaObj])
     }
 
     ; Zaślepki dla analizatora statycznego VSC (implementacja w klasie dziedziczącej SilnikGUI)
