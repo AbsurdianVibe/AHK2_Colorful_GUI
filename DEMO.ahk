@@ -4,7 +4,7 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2b2b2b")
-TotalScale := 1
+TotalScale := 1.5
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
@@ -30,7 +30,9 @@ Welcome := App.Add("Text", "X" . padL + 10 . "  y+20", "Welcome to AHK2ColorfulG
 Welcome.HoverAction := (*) => SilnikGUI.CustomTooltip("This is anchor type tooltip", { DelayON: 1000, czas: 3000, trybPozycji: Welcome })
 ; App.Stan.ChildGui.SetFont("s10 norm")
 ; App.Stan.ChildGui.SetFont("s12 italic")
-SliderValue := 20
+
+
+SliderValue := 1
 Welcome2 := App.Add("Text", "x" . padL + 10. " y+15", "--- Input Fields ---", , , "c00ff00")
 Welcome2.GetPos(, , &W2W, &W2H)
 ;Welcome2.Move(320, 50, , , 1)
@@ -59,35 +61,34 @@ myUpdateProgress(myArg, *) {
         myCtrl.Value := myVal
     }
 
-    sipderPrototypeBg.GetPos(&baseX, &baseY, &currentW, &realH)
-
+    sipderPrototypeBg.GetPos(&baseX, , &currentW)
+    baseX := baseX / SilnikGUI.Statics.TotalScale
     static myOriginalW := 0
     if (myOriginalW == 0)
-        myOriginalW := currentW
+        myOriginalW := currentW / SilnikGUI.Statics.TotalScale
 
     myTextDim := SilnikGUI.ZmierzTekst(String(myVal), SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
 
     myXOffset := Round((myOriginalW / 2) - (myTextDim.w / 2))
     myXStart := baseX + myXOffset
-    myProgressW := Round(myOriginalW * (myVal / myMaxVal))
+    myProgressW := Max(0, Round(myOriginalW * (myVal / myMaxVal)))
 
-    sipderPrototypeBg.Move(baseX, baseY, myProgressW, realH, 0)
-    sipderPrototypeText.Move(myXStart, baseY, myOriginalW - myXOffset, realH, 0)
+    sipderPrototypeBg.Move(baseX, , myProgressW, , 1)
+    myTextW := Max(0, myOriginalW - myXOffset)
+    sipderPrototypeText.Move(myXStart, , myTextW, , 1)
 
-    if (myProgressW <= myXOffset) {
-        sipderPrototypeTextWhite.Visible := false
-    } else {
-        sipderPrototypeTextWhite.Visible := true
-        sipderPrototypeTextWhite.Move(myXStart, baseY, myProgressW - myXOffset, realH, 0)
-    }
+
+    myWhiteW := Max(0, myProgressW - myXOffset)
+    sipderPrototypeTextWhite.Move(myXStart, , myWhiteW, , 1)
 }
 ConfigLine1.OnEvent("Change", myUpdateProgress)
 myOgVScroll1 := ConfigLine1.VScrollAction
 ConfigLine1.VScrollAction := (ctrl, dir) => (myOgVScroll1(ctrl, dir), myUpdateProgress(ctrl))
-
-sipderPrototypeText := App.Add("Text", "xp yp w190 h20 Left Background000000 cffffff", SliderValue)
-sipderPrototypeBg := App.Add("Text", "y+10 xp w190 h20 Background0000ff", "")
-sipderPrototypeTextWhite := App.Add("Text", "xp yp w190 h20 Left Background0000ff c000000", SliderValue)
+bigback := App.Add("Text", "xp y+10 w194 h24 Background000000", "")
+sipderPrototypeText := App.Add("Text", "xp+2 yp+2 w190 h20 Left Background000000 cffffff", SliderValue)
+sipderPrototypeBg := App.Add("Text", "yp xp w190 h20 Backgroundffffff", "")
+sipderPrototypeTextWhite := App.Add("Text", "xp yp w0 h20 Left Backgroundffffff c000000", SliderValue)
+App.Ramka(bigback, , 0)
 myUpdateProgress(SliderValue)
 ;#endregion
 ; Integer Validation (Type 0) with limits and scroll step
