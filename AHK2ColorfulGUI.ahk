@@ -419,6 +419,7 @@ class Motyw extends Utils {
         SilnikGUI.Motyw.Slider := SilnikGUI.Odcien(bazowy, factorSlider)
         SilnikGUI.Motyw.ParamFocus := paramFocus
         SilnikGUI.Motyw.ParamHover := paramFocus * 0.6
+        SilnikGUI.Motyw.ParamDrag := paramFocus * 2.0
 
         if (isLight)
             SilnikGUI.Motyw.Wklesly := SilnikGUI.Odcien(bazowy, factorWklesly)
@@ -756,10 +757,11 @@ class Grafika extends Motyw {
                 HasProp(ctrl, "ArrowCtrl") && ctrl.ArrowCtrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
                 ctrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "CustSlider":
+                sliderParam := param + ((HasProp(ctrl, "IsDragging") && ctrl.IsDragging) ? SilnikGUI.Motyw.ParamDrag : 0)
                 HasProp(ctrl, "Ramka") && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
                 HasProp(ctrl, "BackRight") && ctrl.BackRight.Opt("Background" . DajKolor(ctrl.BackRight.KolorBazowyTla, param) . " c" . DajKolor(ctrl.BackRight.KolorBazowy, param) . " Redraw")
-                HasProp(ctrl, "FrontLeft") && ctrl.FrontLeft.Opt("Background" . DajKolor(ctrl.FrontLeft.KolorBazowyTla, param) . " Redraw")
-                HasProp(ctrl, "FrontRight") && ctrl.FrontRight.Opt("Background" . DajKolor(ctrl.FrontRight.KolorBazowyTla, param) . " c" . DajKolor(ctrl.FrontRight.KolorBazowy, param) . " Redraw")
+                HasProp(ctrl, "FrontLeft") && ctrl.FrontLeft.Opt("Background" . DajKolor(ctrl.FrontLeft.KolorBazowyTla, sliderParam) . " Redraw")
+                HasProp(ctrl, "FrontRight") && ctrl.FrontRight.Opt("Background" . DajKolor(ctrl.FrontRight.KolorBazowyTla, sliderParam) . " c" . DajKolor(ctrl.FrontRight.KolorBazowy, sliderParam) . " Redraw")
                 ctrl.Opt("Background" . DajKolor(ctrl.KolorBazowyTla, param) . " c" . DajKolor(myKolorTxt, param) . " Redraw")
             case "Edit":
                 (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
@@ -3217,6 +3219,9 @@ class CtlFactory extends ExWinAndPopups {
 
         ; Drag & Click logic
         _MouseDown(ctrl, *) {
+            ctrl.IsDragging := true
+            SilnikGUI.NadajStyl(ctrl, HasProp(ctrl, "Stan") ? ctrl.Stan.Val : 3)
+
             MouseGetPos(&startX, &startY)
             startT := A_TickCount
             startVal := ctrl.Value
@@ -3248,6 +3253,9 @@ class CtlFactory extends ExWinAndPopups {
                     ctrl.Value := myUpdateProgress(newVal)
                 }
             }
+            
+            ctrl.IsDragging := false
+            SilnikGUI.NadajStyl(ctrl, HasProp(ctrl, "Stan") ? ctrl.Stan.Val : 3)
         }
         BackBig.OnEvent("Click", (*) => "")
         BackBig.MouseDownAction := _MouseDown
