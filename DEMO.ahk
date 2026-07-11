@@ -3,7 +3,7 @@
 ;throw Error("CRITICAL_TEST_CRASH")
 
 ; Set dark theme base color, or any color you want!
-SilnikGUI.Konfiguruj("2b2b2b")
+SilnikGUI.Konfiguruj("2b2b2b", , , 0.2, , , 0.3)
 TotalScale := 1.5
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
@@ -46,7 +46,7 @@ ConfigLine1 := App.DodajWierszKonfiguracji("standard mode:", SliderValue, {
     minVal: 0,
     maxVal: 20,
     FontOpt: "c00ff00",
-    textcol: "c00ff00"
+    textcol: "c5e7a5e"
 })
 /**
  * Updates progress bar and text overlay values.

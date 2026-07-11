@@ -751,6 +751,13 @@ class Grafika extends Motyw {
                 HasProp(ctrl, "SepCtrl") && ctrl.SepCtrl.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
                 HasProp(ctrl, "ArrowCtrl") && ctrl.ArrowCtrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " Redraw")
                 ctrl.Opt("Background" . DajKolor(SilnikGUI.Motyw.Wklesly, param) . " Redraw")
+            case "CustSlider":
+                (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
+                ctrl.Opt("Background" . DajKolor(ctrl.KolorBazowyTla, param) . " Redraw")
+                for c in ctrl.Maski {
+                    myParam := HasProp(c, "OdwrotnyHover") ? -param : param
+                    c.Opt("Background" . DajKolor(c.KolorBazowyTla, myParam) . (HasProp(c, "KolorBazowy") ? (" c" . DajKolor(c.KolorBazowy, myParam)) : "") . " Redraw")
+                }
             case "Edit":
                 (HasProp(ctrl, "Ramka")) && ctrl.Ramka.Opt("Background" . DajKolor(kolorRamki, param) . " Redraw")
                 (HasProp(ctrl, "PlaceholderCtrl")) && ctrl.PlaceholderCtrl.Opt("Background" . DajKolor(ctrl.PlaceholderCtrl.KolorBazowy, param) . " Redraw")
@@ -3123,13 +3130,18 @@ class CtlFactory extends ExWinAndPopups {
 
         BackCol := SilnikGUI.Motyw.Wklesly
         BackTxtCol := SilnikGUI.Motyw.Tekst
-        FrontCol := BackTxtCol
+        FrontCol := SilnikGUI.Motyw.Przycisk
         FrontTxttCol := BackCol
 
-        BackBig := this.Add("Text", "xp y+10 w194 h24 +0x100 Background" . BackCol, "")
+        BackBig := this.Add("Text", "xp y+10 w194 h24 +Tabstop +0x100 Background" . BackCol . " c" . BackCol, "")
+        BackBig.KolorBazowyTla := BackCol
+        BackBig.Rola := "CustSlider"
         BackRight := this.Add("Text", "xp+2 yp+2 w190 h20 Left +0x200 Background" . BackCol . " c" . BackTxtCol, tekstPoczatkowy)
+        BackRight.KolorBazowyTla := BackCol, BackRight.KolorBazowy := BackTxtCol
         FrontLeft := this.Add("Text", "yp xp w190 h20 Background" . FrontCol, "")
+        FrontLeft.KolorBazowyTla := FrontCol, FrontLeft.OdwrotnyHover := true
         FrontRight := this.Add("Text", "xp yp w0 h20 Left +0x200 Background" . FrontCol . " c" . FrontTxttCol, tekstPoczatkowy)
+        FrontRight.KolorBazowyTla := FrontCol, FrontRight.KolorBazowy := FrontTxttCol, FrontRight.OdwrotnyHover := true
 
         ramkaObj := this.Ramka(BackBig, 0, 0, "", 2, , 0)
 
@@ -3158,7 +3170,8 @@ class CtlFactory extends ExWinAndPopups {
             if (myOriginalW == 0)
                 myOriginalW := currentW / SilnikGUI.Statics.TotalScale
 
-            myXOffset := 0
+            myTextDim := SilnikGUI.ZmierzTekst(String(myVal), SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
+            myXOffset := Round((myOriginalW / 2) - (myTextDim.w / 2))
             myXStart := baseX + myXOffset
             myProgressW := Max(0, Round(myOriginalW * (myVal / maxV)))
 
@@ -3167,7 +3180,7 @@ class CtlFactory extends ExWinAndPopups {
             BackRight.Move(myXStart, , myTextW, , 1)
             myWhiteW := Max(0, myProgressW - myXOffset)
             FrontRight.Move(myXStart, , myWhiteW, , 1)
-            
+
             BackBig.Redraw()
             BackRight.Redraw()
             FrontLeft.Redraw()
@@ -3228,6 +3241,7 @@ class CtlFactory extends ExWinAndPopups {
 
         ; Inicjalizacja geometryczna
         BackBig.Value := myUpdateProgress(wartoscPoczatkowa)
+        BackBig.Maski := [BackRight, FrontLeft, FrontRight]
 
         return SilnikGUI.GrupaKontrolek([BackBig, BackRight, FrontLeft, FrontRight], [BackBig, ramkaObj])
     }
