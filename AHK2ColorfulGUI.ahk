@@ -3198,7 +3198,8 @@ class CtlFactory extends ExWinAndPopups {
             myTextDim := SilnikGUI.ZmierzTekst(formattedVal, SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
             myXOffset := Round((myOriginalW / 2) - (myTextDim.w / 2))
             myXStart := baseX + myXOffset
-            myProgressW := Max(0, Round(myOriginalW * (myVal / maxV)))
+            percentage := (maxV == minV) ? 0 : ((myVal - minV) / (maxV - minV))
+            myProgressW := Max(0, Round(myOriginalW * percentage))
 
             myGui := FrontLeft.Gui
             FrontLeft.Move(baseX, , myProgressW)
@@ -3243,7 +3244,7 @@ class CtlFactory extends ExWinAndPopups {
             startVal := ctrl.Value
 
             ctrl.GetPos(&bx, &by, &bw)
-            valScale := maxV / bw
+            valScale := (maxV - minV) / bw
 
             isDrag := false
             lastNewVal := -1
@@ -3275,7 +3276,7 @@ class CtlFactory extends ExWinAndPopups {
                 deltaT := A_TickCount - startT
                 if (dystans <= dz && deltaT <= ht) {
                     klikX := currX - bx
-                    newVal := (klikX / bw) * maxV
+                    newVal := minV + (klikX / bw) * (maxV - minV)
                     if (st > 0)
                         newVal := Round(Round(newVal / st) * st, 6)
                     

@@ -98,7 +98,7 @@ myUpdateProgress(SliderValue)
 ;#endregion
 
 ; Nowa zhermetyzowana metoda CustSlider na podstawie powyzszego
-MyCustSlider := App.CustSlider("Global UI Scale", TotalScale, { minVal: 0.1, maxVal: 5, step: 0.05, decimals: 2 })
+MyCustSlider := App.CustSlider("Global UI Scale", TotalScale, { minVal: 0.5, maxVal: 2, step: 0.1, decimals: 2 })
 MyCustSlider.ChangeAction := (ctrl) => SilnikGUI.PrzeskalujWszystko(ctrl.Value)
 
 ; Integer Validation (Type 0) with limits and scroll step
