@@ -3128,17 +3128,19 @@ class CtlFactory extends ExWinAndPopups {
      * @param {Number} wartoscPoczatkowa - Initial numeric value of the slider.
      * @param {Object} [Opcje] - Configuration object with alphabetical properties:
      * - [deadzone: 5] {Integer} Distance threshold (in pixels) for distinguishing drag vs click-to-jump.
+     * - [decimals: 2] {Integer} Liczba miejsc po przecinku w wyświetlanej wartości.
      * - [holdTimeout: 200] {Integer} Time limit (in ms) to register a quick click.
      * - [maxVal: 100] {Number} Maximum allowed value (upper limit for virtual wall).
      * - [minVal: 0] {Number} Minimum allowed value (lower limit for virtual wall).
+     * - [step: 0] {Number} Skok wartości suwaka (0 = płynny).
      * @tag WinAPI: "IsSilnikInput" (for hover background inheritance).
      * @returns {SilnikGUI.GrupaKontrolek} - Created control group instance.
      */
     CustSlider(tekstPoczatkowy, wartoscPoczatkowa, Opcje?) {
         if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
             return SilnikDummyProxy()
-        opcje := Utils.MergeOptions(Opcje?, { deadzone: 5, holdTimeout: 200, minVal: 0, maxVal: 100 })
-        minV := opcje.minVal, maxV := opcje.maxVal
+        opcje := Utils.MergeOptions(Opcje?, { deadzone: 5, holdTimeout: 200, minVal: 0, maxVal: 100, step: 0, decimals: 2 })
+        minV := opcje.minVal, maxV := opcje.maxVal, st := opcje.step, dec := opcje.decimals
         dz := opcje.deadzone, ht := opcje.holdTimeout
 
         BackCol := SilnikGUI.Motyw.Wklesly
@@ -3173,13 +3175,18 @@ class CtlFactory extends ExWinAndPopups {
             ;  DllCall("user32\LockWindowUpdate", "Ptr", FrontLeft.Gui.hwnd)
 
 
+            if (st > 0)
+                myVal := Round(Round(myVal / st) * st, 6)
+
             if (myVal < minV)
                 myVal := minV
             if (myVal > maxV)
                 myVal := maxV
 
+            formattedVal := Format("{:." dec "f}", myVal)
+
             for myCtrl in [BackRight, FrontRight] {
-                myCtrl.Value := myVal
+                myCtrl.Value := formattedVal
             }
             FrontLeft.GetPos(&baseX, , &currentW)
             baseX := baseX / SilnikGUI.Statics.TotalScale
@@ -3188,7 +3195,7 @@ class CtlFactory extends ExWinAndPopups {
             if (myOriginalW == 0)
                 myOriginalW := currentW / SilnikGUI.Statics.TotalScale
 
-            myTextDim := SilnikGUI.ZmierzTekst(String(myVal), SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
+            myTextDim := SilnikGUI.ZmierzTekst(formattedVal, SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
             myXOffset := Round((myOriginalW / 2) - (myTextDim.w / 2))
             myXStart := baseX + myXOffset
             myProgressW := Max(0, Round(myOriginalW * (myVal / maxV)))
@@ -3212,8 +3219,11 @@ class CtlFactory extends ExWinAndPopups {
 
         ; Scroll logic
         _ScrollAction(ctrl, k) {
-            newVal := ctrl.Value + k
+            krok := (st > 0) ? st : 1
+            newVal := ctrl.Value + (k * krok)
             ctrl.Value := myUpdateProgress(newVal)
+            if HasProp(ctrl, "ChangeAction")
+                ctrl.ChangeAction()
         }
         BackBig.VScrollAction := _ScrollAction
 
@@ -3245,12 +3255,16 @@ class CtlFactory extends ExWinAndPopups {
                 if (dystans > dz || (A_TickCount - startT) > ht) {
                     isDrag := true
                     deltaX := currX - startX
-                    newVal := startVal + Round(deltaX * valScale)
+                    newVal := startVal + (deltaX * valScale)
+                    if (st > 0)
+                        newVal := Round(Round(newVal / st) * st, 6)
                     if (newVal != lastNewVal) {
                         DllCall("user32\LockWindowUpdate", "Ptr", FrontLeft.Gui.hwnd)
                         ctrl.Value := myUpdateProgress(newVal)
                         DllCall("user32\LockWindowUpdate", "Ptr", 0)
                         lastNewVal := newVal
+                        if HasProp(ctrl, "ChangeAction")
+                            ctrl.ChangeAction()
                     }
                 }
             }
@@ -3261,8 +3275,15 @@ class CtlFactory extends ExWinAndPopups {
                 deltaT := A_TickCount - startT
                 if (dystans <= dz && deltaT <= ht) {
                     klikX := currX - bx
-                    newVal := Round((klikX / bw) * maxV)
-                    ctrl.Value := myUpdateProgress(newVal)
+                    newVal := (klikX / bw) * maxV
+                    if (st > 0)
+                        newVal := Round(Round(newVal / st) * st, 6)
+                    
+                    if (newVal != ctrl.Value) {
+                        ctrl.Value := myUpdateProgress(newVal)
+                        if HasProp(ctrl, "ChangeAction")
+                            ctrl.ChangeAction()
+                    }
                 }
             }
 
