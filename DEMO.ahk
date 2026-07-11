@@ -3,7 +3,7 @@
 ;throw Error("CRITICAL_TEST_CRASH")
 
 ; Set dark theme base color, or any color you want!
-SilnikGUI.Konfiguruj("2b2b2b", , , 0.2, , , 0.3)
+SilnikGUI.Konfiguruj("2b2b2b")
 TotalScale := 1.5
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
