@@ -380,11 +380,13 @@ class Motyw extends Utils {
      * @param {Number} [factorTekst=0.8] - Współczynnik rozjaśnienia głównego tekstu.
      * @param {String} [warnHex="bd4646"] - Kolor ostrzegawczy (np. dla błędów).
      * @param {Number} [factorPrzycisk=0.1] - Współczynnik rozjaśnienia przycisku.
-     * @param {Number} [paramFocus=0.1] - Siła rozjaśnienia fokusie
+     * @param {Number} [paramFocus=0.1] - Współczynnik rozjasnienia przycisku w trybie focus
      * @param {Number} [factorWklesly=-0.1] - Współczynnik przyciemnienia tła elementów wklęsłych (Edit, Checkbox).
      * @param {Number} [factorSlider=0.5] - Współczynnik rozjaśnienia suwaka (CustSlider).
+     * @param {Number} [ParamHover=0.08] - Współczynnik rozjaśnienia tła przycisku podczas najazdu myszką (Hover).
+     * @param {Number} [ParamDrag=0.25] - Współczynnik rozjaśnienia tła przycisku podczas przeciągania (Drag).
      */
-    static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := -0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1, factorSlider := 0.5) {
+    static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := -0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1, factorSlider := 0.5, ParamHover := 0.08, ParamDrag := 0.25) {
         ; Czyszczenie HEX
         bazowy := RegExReplace(Motyw.PobierzHex(bazowyHex), "[^0-9a-fA-F]", "")
         warn := RegExReplace(Motyw.PobierzHex(warnHex), "[^0-9a-fA-F]", "")
@@ -418,8 +420,8 @@ class Motyw extends Utils {
         SilnikGUI.Motyw.Focus := SilnikGUI.Odcien(bazowy, factorPrzycisk + paramFocus)
         SilnikGUI.Motyw.Slider := SilnikGUI.Odcien(bazowy, factorSlider)
         SilnikGUI.Motyw.ParamFocus := paramFocus
-        SilnikGUI.Motyw.ParamHover := paramFocus * 0.6
-        SilnikGUI.Motyw.ParamDrag := paramFocus * 2.0
+        SilnikGUI.Motyw.ParamHover := ParamHover
+        SilnikGUI.Motyw.ParamDrag := ParamDrag
 
         if (isLight)
             SilnikGUI.Motyw.Wklesly := SilnikGUI.Odcien(bazowy, factorWklesly)
@@ -3133,15 +3135,16 @@ class CtlFactory extends ExWinAndPopups {
      * - [maxVal: 100] {Number} Maximum allowed value (upper limit for virtual wall).
      * - [minVal: 0] {Number} Minimum allowed value (lower limit for virtual wall).
      * - [step: 0] {Number} Skok wartości suwaka (0 = płynny).
+     * - [innerMarg: 2] {Integer} Margines wewnętrzny między krawędzią kontrolki a tłem.
      * @tag WinAPI: "IsSilnikInput" (for hover background inheritance).
      * @returns {SilnikGUI.GrupaKontrolek} - Created control group instance.
      */
     CustSlider(tekstPoczatkowy, wartoscPoczatkowa, Opcje?) {
         if (HasProp(this.Stan, "IsLocked") && this.Stan.IsLocked)
             return SilnikDummyProxy()
-        opcje := Utils.MergeOptions(Opcje?, { deadzone: 5, holdTimeout: 200, minVal: 0, maxVal: 100, step: 0, decimals: 2 })
+        opcje := Utils.MergeOptions(Opcje?, { deadzone: 5, holdTimeout: 200, minVal: 0, maxVal: 100, step: 0, decimals: 2, innerMarg: 2 })
         minV := opcje.minVal, maxV := opcje.maxVal, st := opcje.step, dec := opcje.decimals
-        dz := opcje.deadzone, ht := opcje.holdTimeout
+        dz := opcje.deadzone, ht := opcje.holdTimeout, InnerMarg := opcje.innerMarg
 
         BackCol := SilnikGUI.Motyw.Wklesly
         BackTxtCol := SilnikGUI.Motyw.Tekst
@@ -3188,12 +3191,14 @@ class CtlFactory extends ExWinAndPopups {
             for myCtrl in [BackRight, FrontRight] {
                 myCtrl.Value := formattedVal
             }
-            FrontLeft.GetPos(&baseX, , &currentW)
-            baseX := baseX / SilnikGUI.Statics.TotalScale
-
+            BackBig.GetPos(&baseX, &baseY, &currentW, &currentH)
+            IMarg := InnerMarg * SilnikGUI.Statics.TotalScale
+            baseX := Round((baseX + IMarg) / SilnikGUI.Statics.TotalScale)
+            baseY := Round((baseY + IMarg) / SilnikGUI.Statics.TotalScale)
+            currentH := Round((currentH - IMarg * 2) / SilnikGUI.Statics.TotalScale)
             static myOriginalW := 0
             if (myOriginalW == 0)
-                myOriginalW := currentW / SilnikGUI.Statics.TotalScale
+                myOriginalW := Round((currentW - 2 * IMarg) / SilnikGUI.Statics.TotalScale)
 
             myTextDim := SilnikGUI.ZmierzTekst(formattedVal, SilnikGUI.Statics.GlobFont.Name, "s" . Round(SilnikGUI.Statics.GlobFont.Size * SilnikGUI.Statics.TotalScale))
             myXOffset := Round((myOriginalW / 2) - (myTextDim.w / 2))
@@ -3202,11 +3207,11 @@ class CtlFactory extends ExWinAndPopups {
             myProgressW := Max(0, Round(myOriginalW * percentage))
 
             myGui := FrontLeft.Gui
-            FrontLeft.Move(baseX, , myProgressW)
+            FrontLeft.Move(baseX, baseY, myProgressW, currentH)
             myTextW := Max(0, myOriginalW - myXOffset)
-            BackRight.Move(myXStart, , myTextW)
+            BackRight.Move(myXStart, baseY, myTextW, currentH)
             myWhiteW := Max(0, myProgressW - myXOffset)
-            FrontRight.Move(myXStart, , myWhiteW)
+            FrontRight.Move(myXStart, baseY, myWhiteW, currentH)
 
             ;    BackBig.Redraw()
             BackRight.Redraw()
@@ -3279,7 +3284,7 @@ class CtlFactory extends ExWinAndPopups {
                     newVal := minV + (klikX / bw) * (maxV - minV)
                     if (st > 0)
                         newVal := Round(Round(newVal / st) * st, 6)
-                    
+
                     if (newVal != ctrl.Value) {
                         ctrl.Value := myUpdateProgress(newVal)
                         if HasProp(ctrl, "ChangeAction")

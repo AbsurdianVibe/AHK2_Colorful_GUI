@@ -4,7 +4,7 @@
 
 ; Set dark theme base color, or any color you want!
 SilnikGUI.Konfiguruj("2b2b2b", , , , , , , ,)
-TotalScale := 1.5
+TotalScale := 1.1
 SilnikGUI.Statics.GlobFont.Name := "times new roman"
 ;todo what to do witch GlobFont.Size?????
 SilnikGUI.Statics.GlobFont.Size := 11
@@ -98,8 +98,8 @@ myUpdateProgress(SliderValue)
 ;#endregion
 
 ; Nowa zhermetyzowana metoda CustSlider na podstawie powyzszego
-MyCustSlider := App.CustSlider("Global UI Scale", TotalScale, { minVal: 0.5, maxVal: 2, step: 0.1, decimals: 2 })
-MyCustSlider.ChangeAction := (ctrl) => SilnikGUI.PrzeskalujWszystko(ctrl.Value)
+MyCustSlider := App.CustSlider("Global UI Scale", TotalScale, { minVal: 0.5, maxVal: 4, step: 0.01, decimals: 2, InnerMarg: 0 })
+; MyCustSlider.ChangeAction := (ctrl) => SilnikGUI.PrzeskalujWszystko(ctrl.Value)
 
 ; Integer Validation (Type 0) with limits and scroll step
 ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
