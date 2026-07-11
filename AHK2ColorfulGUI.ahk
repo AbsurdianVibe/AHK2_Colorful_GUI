@@ -376,14 +376,15 @@ class Motyw extends Utils {
      * 
      * @param {String} bazowyHex - Główny kolor tła (np. "363533").
      * @param {Number} [factorRamka=0.2] - Współczynnik rozjaśnienia ramki.
-     * @param {Number} [factorNieaktywny=0.4] - Współczynnik rozjaśnienia tekstu nieaktywnego.
+     * @param {Number} [factorNieaktywny=-0.4] - Współczynnik rozjaśnienia tekstu nieaktywnego.
      * @param {Number} [factorTekst=0.8] - Współczynnik rozjaśnienia głównego tekstu.
      * @param {String} [warnHex="bd4646"] - Kolor ostrzegawczy (np. dla błędów).
      * @param {Number} [factorPrzycisk=0.1] - Współczynnik rozjaśnienia przycisku.
      * @param {Number} [paramFocus=0.1] - Siła rozjaśnienia fokusie
      * @param {Number} [factorWklesly=-0.1] - Współczynnik przyciemnienia tła elementów wklęsłych (Edit, Checkbox).
+     * @param {Number} [factorSlider=0.5] - Współczynnik rozjaśnienia suwaka (CustSlider).
      */
-    static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := -0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1) {
+    static Konfiguruj(bazowyHex, factorRamka := 0.2, factorNieaktywny := -0.4, factorTekst := 0.8, warnHex := "bd4646", factorPrzycisk := 0.1, paramFocus := 0.1, factorWklesly := -0.1, factorSlider := 0.5) {
         ; Czyszczenie HEX
         bazowy := RegExReplace(Motyw.PobierzHex(bazowyHex), "[^0-9a-fA-F]", "")
         warn := RegExReplace(Motyw.PobierzHex(warnHex), "[^0-9a-fA-F]", "")
@@ -405,6 +406,7 @@ class Motyw extends Utils {
             factorTekst := -Abs(factorTekst)
             factorPrzycisk := -Abs(factorPrzycisk)
             paramFocus := -Abs(paramFocus)
+            factorSlider := -Abs(factorSlider)
         }
 
         ; 1. Parametry globalne
@@ -414,6 +416,7 @@ class Motyw extends Utils {
         SilnikGUI.Motyw.Ramka := SilnikGUI.Odcien(bazowy, factorRamka)
         SilnikGUI.Motyw.Przycisk := SilnikGUI.Odcien(bazowy, factorPrzycisk)
         SilnikGUI.Motyw.Focus := SilnikGUI.Odcien(bazowy, factorPrzycisk + paramFocus)
+        SilnikGUI.Motyw.Slider := SilnikGUI.Odcien(bazowy, factorSlider)
         SilnikGUI.Motyw.ParamFocus := paramFocus
         SilnikGUI.Motyw.ParamHover := paramFocus * 0.6
 
@@ -3138,7 +3141,7 @@ class CtlFactory extends ExWinAndPopups {
 
         BackCol := SilnikGUI.Motyw.Wklesly
         BackTxtCol := SilnikGUI.Motyw.Tekst
-        FrontCol := BackTxtCol
+        FrontCol := SilnikGUI.Motyw.Slider
         FrontTxttCol := BackCol
 
         BackBig := this.Add("Text", "xp y+10 w194 h24 +Tabstop +0x100 Background" . BackCol . " c" . BackCol, "")
