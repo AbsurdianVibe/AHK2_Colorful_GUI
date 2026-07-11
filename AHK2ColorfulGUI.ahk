@@ -3152,7 +3152,7 @@ class CtlFactory extends ExWinAndPopups {
         BackRight := this.Add("Text", "xp+2 yp+2 w190 h20 Left +0x200 Background" . BackCol, tekstPoczatkowy)
         BackRight.Opt("c" . BackTxtCol)
         BackRight.KolorBazowyTla := BackCol, BackRight.KolorBazowy := BackTxtCol
-        FrontLeft := this.Add("Text", "yp xp w190 h20 Background" . FrontCol, "")
+        FrontLeft := this.Add("Text", "yp xp w190 h20 +0x100 Background" . FrontCol, "")
         FrontLeft.KolorBazowyTla := FrontCol
         FrontRight := this.Add("Text", "xp yp w0 h20 Left +0x200 Background" . FrontCol, tekstPoczatkowy)
         FrontRight.Opt("c" . FrontTxttCol)
@@ -3169,6 +3169,10 @@ class CtlFactory extends ExWinAndPopups {
 
         myUpdateProgress(myVal) {
             ; Wirtualna sciana
+
+            ;  DllCall("user32\LockWindowUpdate", "Ptr", FrontLeft.Gui.hwnd)
+
+
             if (myVal < minV)
                 myVal := minV
             if (myVal > maxV)
@@ -3177,7 +3181,6 @@ class CtlFactory extends ExWinAndPopups {
             for myCtrl in [BackRight, FrontRight] {
                 myCtrl.Value := myVal
             }
-
             FrontLeft.GetPos(&baseX, , &currentW)
             baseX := baseX / SilnikGUI.Statics.TotalScale
 
@@ -3190,16 +3193,19 @@ class CtlFactory extends ExWinAndPopups {
             myXStart := baseX + myXOffset
             myProgressW := Max(0, Round(myOriginalW * (myVal / maxV)))
 
-            FrontLeft.Move(baseX, , myProgressW, , 1)
+            myGui := FrontLeft.Gui
+            FrontLeft.Move(baseX, , myProgressW)
             myTextW := Max(0, myOriginalW - myXOffset)
-            BackRight.Move(myXStart, , myTextW, , 1)
+            BackRight.Move(myXStart, , myTextW)
             myWhiteW := Max(0, myProgressW - myXOffset)
-            FrontRight.Move(myXStart, , myWhiteW, , 1)
+            FrontRight.Move(myXStart, , myWhiteW)
 
-            BackBig.Redraw()
+            ;    BackBig.Redraw()
             BackRight.Redraw()
             FrontLeft.Redraw()
             FrontRight.Redraw()
+
+            ;   DllCall("user32\LockWindowUpdate", "Ptr", 0)
 
             return myVal
         }
@@ -3230,8 +3236,9 @@ class CtlFactory extends ExWinAndPopups {
             valScale := maxV / bw
 
             isDrag := false
+            lastNewVal := -1
             While GetKeyState("LButton", "P") {
-                Sleep(10)
+                Sleep(20)
                 MouseGetPos(&currX, &currY)
                 dystans := Sqrt((currX - startX) ** 2 + (currY - startY) ** 2)
 
@@ -3239,7 +3246,12 @@ class CtlFactory extends ExWinAndPopups {
                     isDrag := true
                     deltaX := currX - startX
                     newVal := startVal + Round(deltaX * valScale)
-                    ctrl.Value := myUpdateProgress(newVal)
+                    if (newVal != lastNewVal) {
+                        DllCall("user32\LockWindowUpdate", "Ptr", FrontLeft.Gui.hwnd)
+                        ctrl.Value := myUpdateProgress(newVal)
+                        DllCall("user32\LockWindowUpdate", "Ptr", 0)
+                        lastNewVal := newVal
+                    }
                 }
             }
 
@@ -3253,7 +3265,7 @@ class CtlFactory extends ExWinAndPopups {
                     ctrl.Value := myUpdateProgress(newVal)
                 }
             }
-            
+
             ctrl.IsDragging := false
             SilnikGUI.NadajStyl(ctrl, HasProp(ctrl, "Stan") ? ctrl.Stan.Val : 3)
         }

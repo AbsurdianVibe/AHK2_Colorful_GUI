@@ -98,7 +98,9 @@ myUpdateProgress(SliderValue)
 ;#endregion
 
 ; Nowa zhermetyzowana metoda CustSlider na podstawie powyzszego
-MyCustSlider := App.CustSlider("CustSlider", 75, { minVal: 0, maxVal: 100 })
+MyCustSlider := App.CustSlider("CustSlider", TotalScale, { minVal: 0, maxVal: 5 })
+OgVScroll := MyCustSlider.VScrollAction
+MyCustSlider.VScrollAction := (ctrl, dir) => (OgVScroll(ctrl, dir), SilnikGUI.PrzeskalujWszystko(ctrl.Value))
 
 ; Integer Validation (Type 0) with limits and scroll step
 ConfigLine2 := App.DodajWierszKonfiguracji("Integer mode:", 50, {
@@ -123,8 +125,6 @@ ConfigLine3 := App.DodajWierszKonfiguracji("UI Scale", SilnikGUI.Statics.TotalSc
     pozycja: "y+10 xp"
 })
 ConfigLine3.OnEvent("Change", (*) => SilnikGUI.PrzeskalujWszystko(ConfigLine3.Value))
-OgVScroll := ConfigLine3.VScrollAction
-ConfigLine3.VScrollAction := (ctrl, dir) => (OgVScroll(ctrl, dir), SilnikGUI.PrzeskalujWszystko(ctrl.Value))
 
 ; Multiline (Type 3)
 ConfigLine4 := App.DodajWierszKonfiguracji("Multiline mode:", "Line 1: AHK is great!`nLine 2: ColorfulGUI is awesome!", {
