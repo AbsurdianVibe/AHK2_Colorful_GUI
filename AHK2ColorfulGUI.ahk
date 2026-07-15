@@ -2412,7 +2412,7 @@ class CtlFactory extends ExWinAndPopups {
         ; Bounding Box - pozycjonowanie dla kolejnych kontrolek (xp, xm, y+)
         SzerCalkowita := SzerFinalnaEtykiety + SzerPola + (2 * Grubosc) + ((InfoRight && SzerFinalnaEtykiety > 0) ? 10 : 0)
         WysCalkowita := Max(WysWiersza, WysInput + (2 * Grubosc))
-        BoundingBox := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " w" . SzerCalkowita . " h" . WysCalkowita . " Hidden")
+        BoundingBox := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " w" . SzerCalkowita . " h" . WysCalkowita . " Hidden BackgroundTrans")
         BoundingBox.IsDummy := true
         poleEdit.BoundingBox := BoundingBox
 
@@ -2479,7 +2479,7 @@ class CtlFactory extends ExWinAndPopups {
         ; Bounding Box - pozycjonowanie dla kolejnych kontrolek (xp, xm, y+)
         SzerCalkowita := tW + WymiarBox + (2 * Grubosc) + 10
         WysCalkowita := Max(tH, WymiarBox + (2 * Grubosc))
-        BoundingBox := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " w" . SzerCalkowita . " h" . WysCalkowita . " Hidden")
+        BoundingBox := this.Stan.ChildGui.Add("Text", "x" . dX . " y" . dY . " w" . SzerCalkowita . " h" . WysCalkowita . " Hidden BackgroundTrans")
         BoundingBox.IsDummy := true
         CheckMark.BoundingBox := BoundingBox
 
@@ -2647,7 +2647,7 @@ class CtlFactory extends ExWinAndPopups {
         ArrowCtrl.ParentCtrl := ValueCtrl
         ValueCtrl.ArrowCtrl := ArrowCtrl ; Assign BEFORE Ramka() to include the arrow
         this.Stan.Kontrolki.Push(ValueCtrl)
-        ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc, , 0)
+        ramkaObj := this.Ramka(ValueCtrl, 0, 0, "", Grubosc, 0, 0)
         ramkaObj.ParentCtrl := ValueCtrl
         ValueCtrl.Ramka := ramkaObj
 
