@@ -2848,10 +2848,10 @@ class CtlFactory extends ExWinAndPopups {
         ; 3. WŁAŚCIWY PRZYCISK (Pozycjonowanie absolutne wewnątrz Dummy)
         btn := this.Stan.ChildGui.Add("Text", "x" . iX . " y" . iY . " w" . iW . " h" . iH . " Center Background" . SilnikGUI.Motyw.Przycisk . " " . SilnikGUI.Motyw.Tekst . " +0x0200 +0x100 +Tabstop", tekst)
         btn.SetFont("s" . Round(Opt.FontSize * SilnikGUI.Statics.TotalScale) . " " . Opt.FontOpt, SilnikGUI.Statics.GlobFont.Name)
-        
+
         if RegExMatch(Opt.FontOpt, "i)(?:^|\s)c([0-9a-fA-F]{6})(?:\s|$)", &mCol)
             btn.KolorBazowy := mCol[1]
-            
+
         this.Stan.Kontrolki.Push(btn) ; [FIX] Rejestracja w systemie (dla Ramka i stylów)
 
         ; [MOD] Wrapper Multiklik: Flash + Callback
@@ -5042,7 +5042,7 @@ class SilnikGUI extends SubWindows {
          * @tag WinAPI: "IsSilnikScrollbarBtn" (przyciski), "IsSilnikScrollbarThumb" (suwak), "IsSilnikScrollbarTrack" (tło).
          */
         __New(Silnik, Typ) {
-            skala := SilnikGUI.Statics.TotalScale
+            skala := SilnikGUI.Statics.TotalScale * (A_ScreenDPI / 96)
             this.Silnik := Silnik
             this.Typ := Typ ; "V" lub "H"
             this.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * skala) ; Skalowana szerokość
