@@ -5249,7 +5249,7 @@ class SilnikGUI extends SubWindows {
          * @tag WinAPI: "IsSilnikScrollbarBtn" (przyciski), "IsSilnikScrollbarThumb" (suwak), "IsSilnikScrollbarTrack" (tło).
          */
         __New(Silnik, Typ) {
-            skala := SilnikGUI.Statics.TotalScale
+            skala := SilnikGUI.Statics.TotalScale * (A_ScreenDPI / 96)
             this.Silnik := Silnik
             this.Typ := Typ ; "V" lub "H"
             this.BarSize := Round(SilnikGUI.ConfigScroll.BarSize * skala) ; Skalowana szerokość
