@@ -2303,7 +2303,15 @@ class CtlFactory extends ExWinAndPopups {
             ramkaObj := this.Ramka(poleEdit, 0, 0, "", Grubosc, , 0)
         ; [FIX] Inteligentna karetka: Pamięć pozycji, brak to wieloliniowe do początku (0), jednoliniowe do końca
         poleEdit.OnEvent("LoseFocus", (ctrl, *) => (SendMessage(0x00B0, wp := Buffer(4), 0, ctrl), ctrl.LastCaretPos := NumGet(wp, "UInt")))
-        poleEdit.OnEvent("Focus", (ctrl, *) => SetTimer(() => (HasProp(ctrl, "LBtnDownTick") && A_TickCount - ctrl.LBtnDownTick < 50) ? "" : (pos := HasProp(ctrl, "LastCaretPos") ? ctrl.LastCaretPos : ((trybWalidacji == 3) ? 0 : StrLen(ctrl.Value)), PostMessage(0xB1, pos, pos, ctrl)), -10))
+        poleEdit.OnEvent("Focus", (ctrl, *) => SetTimer(myRestoreCaret.Bind(ctrl, trybWalidacji), -10))
+        myRestoreCaret(c, valMode) {
+            try {
+                if (HasProp(c, "LBtnDownTick") && A_TickCount - c.LBtnDownTick < 50)
+                    return
+                pos := HasProp(c, "LastCaretPos") ? c.LastCaretPos : ((valMode == 3) ? 0 : StrLen(c.Value))
+                PostMessage(0xB1, pos, pos, c)
+            }
+        }
 
         ; Znacznik interakcji dla centralnego routera fokusu
         poleEdit.MouseDownAction := (ctrl, *) => ctrl.LBtnDownTick := A_TickCount
